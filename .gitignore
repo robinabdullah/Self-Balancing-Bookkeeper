@@ -4,6 +4,7 @@ node_modules/
 # next.js / build
 .next/
 .next-e2e/
+.next-parity/
 out/
 build/
 *.tsbuildinfo
@@ -27,6 +28,9 @@ test-results/
 playwright-report/
 tests/e2e/.auth/
 blob-report/
+
+# the parity harness's dumps (N-1.1); local only
+.parity/
 
 # real workbooks: never committed here (D-069)
 docs/source/

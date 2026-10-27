@@ -11,7 +11,9 @@
     "format": "prettier --write .",
     "test": "vitest run --project unit",
     "test:int": "vitest run --project integration",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "parity": "tsx scripts/parity/run.ts self",
+    "parity:ref": "tsx scripts/parity/run.ts ref"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",

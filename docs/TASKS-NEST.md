@@ -7,9 +7,10 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S2 (N-0.4 … N-0.6) done and approved: one root commit, pushed to the private repo
-  `Self-Balancing-Bookkeeper` (`main` + `dev`).
-- **Next:** S3 (`/next-phase S3`): N-1.1 … N-1.4. Check the first CI run on `dev` first.
+- **Session:** S3 in progress. N-1.1 (the parity harness) is done and waiting for review. S3 stops
+  for review after each step (the user chose this, because the moves can't be split later).
+  The first CI run on `dev` is green.
+- **Next:** N-1.2 (workspaces plus `apps/web`), after N-1.1 is committed.
 - **Blocked on:** —
 
 ## How to use
@@ -28,6 +29,15 @@ cited.
   see exactly what moved. The reference's behavior is the target unless a D entry says otherwise.
 - **Parity** (from N-1.1) means the harness dump of this repo's local build matches the baseline
   dump of the reference's local build.
+  - `npm run parity:ref` makes the baseline. It exports the reference HEAD with `git archive`
+    into `D:/Projects/MBL-parity-ref`, then installs and builds it there. The copy is re-exported
+    only when the reference moves (an HF-n).
+  - `npm run parity` dumps this repo's build and compares it with the baseline. It exits 1 on any
+    difference and reports TTFB.
+  - Both seed local Supabase with the fictional parity book (`scripts/parity/seed.ts`) and run
+    `next start` on port 3011 at a fixed clock (20 Oct 2026, 11:00 Dhaka).
+  - Dumps go to the gitignored `.parity/`. Never run it while E2E or `npm run dev` uses the
+    local DB.
 - **Running the work:**
   - A session is `/next-phase S<n>`: the steps (left uncommitted), then the phase gate, then a
     stop for the user's review. The user says when to commit, or commits themselves. The next session starts in a new conversation.
@@ -193,15 +203,43 @@ Screenshots: a card page with the synthetic cards; the GitHub repo with one comm
 ### Session S3
 Screenshots: the parity report; Home, Stock, a PDF (unchanged).
 
-- [ ] **N-1.1 Parity harness and baseline**
+- [x] **N-1.1 Parity harness and baseline** (2026-10-27)
   - **Ref:** a local build of the reference
-  - [ ] A seed of fictional data (including the business profile).
-  - [ ] A route manifest with search-param variants.
-  - [ ] Dumps: `innerText` at 360/1280, PDF text via unpdf, XLSX cells, audit rows after a
+  - [x] A seed of fictional data (including the business profile).
+  - [x] A route manifest with search-param variants.
+  - [x] Dumps: `innerText` at 360/1280, PDF text via unpdf, XLSX cells, audit rows after a
     scripted write sequence, TTFB.
-  - [ ] Run it on a local build of the reference to make the baseline.
+  - [x] Run it on a local build of the reference to make the baseline.
+  - **Tests:** [x] U-N-1.1.1 normalize · [x] U-N-1.1.2 compare · [x] U-N-1.1.3 TTFB report ·
+    [x] I-N-1.1.1 the parity book balances (hand-checked totals) · [x] I-N-1.1.2 re-seeding gives
+    the same rows.
   - **Acceptance:** two runs on the reference are identical; this repo's build matches the
     baseline.
+  - **Result (2026-10-27):** `scripts/parity/` (9 files, ≤ 471 lines each); `npm run parity:ref`
+    and `npm run parity`.
+    - **Seed:** direct SQL with fixed ids and stamps, like `books.test.ts`, so it doesn't depend
+      on the actions N-3 rewrites. It holds an opening, Aug closed (the engine computes the close),
+      Sep and Oct open, and 36 entries across purchases, sales, both returns, a reversal and 15
+      money types. It also has bank accounts, saved card details and the business profile.
+      Hand-checked: cash ৳4,72,700, customer dues ৳1,82,000 and ৳90,000, supplier due ৳35,000,
+      card dues ৳1,25,200 and ৳30,500.
+    - **Clock:** the app reads the real time, so `next start` is preloaded with
+      `scripts/parity/clock.cjs`. It starts the clock at 20 Oct 2026 11:00 Dhaka, so the baseline
+      stays valid on later days. The browser uses Playwright's `clock.setSystemTime`.
+    - **Masking:** only uuids (aliased in order), DB timestamps and the PDFs' "Generated" time.
+    - **Dumps (202 files):** 92 routes × 2 viewports, 9 PDFs, 5 workbooks, the export, and the
+      audit rows of 12 UI writes. Those writes are a customer, an expense with its edit and delete,
+      a payment and its reversal, a sale, a card purchase, a Sep close and re-open, business
+      details, and the export.
+    - **Results:** reference vs reference MATCH; this repo vs the baseline MATCH. A one-character
+      change is caught (exit 1). TTFB ≈ 9.6 s over the 92 routes on both builds.
+    - **Counts:** unit 718 (+3); integration +2.
+    - **Notes:**
+      - The reference copy is `D:/Projects/MBL-parity-ref`, made with `git archive` (`src` plus
+        the configs, no docs or tests).
+      - Every `next build` adds its dist's types to `tsconfig.json`; the `.next-parity` lines are
+        kept.
+      - One run takes ~4 min with a fresh build.
 - [ ] **N-1.2 Workspaces plus `apps/web`**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/next.config.ts`, `playwright.config.ts`,
     `vitest.config.ts`, `scripts/deploy.sh`

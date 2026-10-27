@@ -34,6 +34,8 @@ const eslintConfig = [
       "node_modules/**",
       ".next/**",
       ".next-e2e/**",
+      ".next-parity/**",
+      ".parity/**",
       "out/**",
       "build/**",
       "next-env.d.ts",
