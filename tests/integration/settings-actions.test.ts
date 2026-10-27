@@ -1,62 +1,45 @@
-import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "@mbl/db";
-import { setTheme } from "@/server/actions/settings";
-import { getProfile } from "@/server/auth";
-import { loadBooks } from "@/server/books";
-import { localSupabase } from "../e2e/local-supabase";
+import type { INestApplication } from "@nestjs/common";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import type { ShellView } from "../../apps/api/src/shell/shell.controller";
+import { type TestUser, as, deleteUsers, signedInUser, startApi } from "./api";
 import { localSql } from "./local-db";
 
 // CR-017 (D-037; UIDD §4.13): Settings → Theme is saved on the user's own profile and audited.
-// The session and `revalidatePath` are stood in for as in action.test.ts. A theme posts nothing,
-// so the books stay balanced.
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-
+// N-2.5: through the api as Partner A (the facade keeps the old names), with real sign-ins. A
+// theme posts nothing, so the books stay balanced.
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
-const users: string[] = [];
+let app: INestApplication;
+type Partner = TestUser & { id: string; updatedAt: string };
+let a: Partner;
+let b: Partner;
 
-async function partner(name: string) {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `settings-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  users.push(data.user.id);
-  const [p] = await sql<{ id: string; updatedAt: Date }[]>`
-    insert into profiles (user_id, name, role) values (${data.user.id}, ${name}, 'partner')
-    returning id, updated_at as "updatedAt"`;
-  return { userId: data.user.id, id: p.id, updatedAt: p.updatedAt.toISOString() };
+async function partner(name: string): Promise<Partner> {
+  const user = await signedInUser(sql, "partner", name);
+  const [p] = await sql<{ updatedAt: Date }[]>`
+    select updated_at as "updatedAt" from profiles where id = ${user.profileId}`;
+  return { ...user, id: user.profileId!, updatedAt: p.updatedAt.toISOString() };
 }
 
-let a: Awaited<ReturnType<typeof partner>>;
-let b: Awaited<ReturnType<typeof partner>>;
-
 beforeAll(async () => {
+  app = await startApi();
   a = await partner("Partner A");
   b = await partner("Partner B");
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: a.userId });
   await sql`truncate audit_log`;
 });
 
 afterAll(async () => {
   await sql`truncate audit_log`;
-  await sql`delete from profiles where user_id in ${sql(users)}`;
-  for (const id of users) await admin.auth.admin.deleteUser(id);
+  await app.close();
+  await deleteUsers(sql);
   await sql.end();
-  await db.$client.end();
 });
 
 const themeOf = async (id: string) =>
   (await sql<{ theme: string }[]>`select theme from profiles where id = ${id}`)[0].theme;
+const setTheme = (input: unknown) => as(app, a).setTheme(input);
 
 describe("CR-017 Settings → Theme", () => {
   it("I-CR-017.1 a new profile starts on Night Owl; a change is saved and audited", async () => {
@@ -75,10 +58,10 @@ describe("CR-017 Settings → Theme", () => {
       before: { theme: "night_owl" },
       after: { theme: "light" },
     });
-    expect((await getProfile())?.theme).toBe("light");
+    expect((await as(app, a).getProfile())?.theme).toBe("light");
     if (result.status === "ok") a.updatedAt = result.updatedAt!;
-    const { books } = await loadBooks();
-    expect(books.invariant.difference).toBe(0);
+    const { balance } = await as(app, a).read<ShellView>("/views/shell");
+    expect(balance.difference).toBe(0);
   });
 
   it("I-CR-017.1 a partner can't change the other partner's theme", async () => {

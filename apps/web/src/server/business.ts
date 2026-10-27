@@ -32,8 +32,8 @@ export async function getLogo() {
   return row?.logo ?? null;
 }
 
-export const logoSrc = (b: { logoVersion: string | null } | null) =>
-  b?.logoVersion ? `/logo?v=${b.logoVersion}` : null;
+// N-2.5: moved to domain (the api's /views/shell uses it too).
+export { logoSrc } from "@mbl/domain/business";
 
 export type Owner = { kind: OwnerKind; id: string | null; label: string };
 

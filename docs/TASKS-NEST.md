@@ -7,12 +7,22 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S3 done (2026-10-27), committed locally, not pushed: N-1.1 (`5f72103`), N-1.2
-  (`f60cd2c`, `e719669`), N-1.3 (`b144a48`, `0535088`) and N-1.4 (`6b00b50`, `ba0cd91`).
-  - Phase gate: typecheck and lint clean; unit 720; integration 141; E2E 25 passed, 2 skipped
-    (smoke, home, stock, pdf, export; night_owl); parity MATCH (202 files).
-  - At N-7.2, update the VPS's installed unit file to run `apps/web/server.js` (N-1.2).
-- **Next:** S4 (`/next-phase S4`, in a new conversation), after S3 is pushed and CI is green.
+- **Session:** S4 done (2026-10-27), uncommitted, waiting for the user's review: N-2.1 … N-2.5.
+  - **CI on the S3 push (run 40555560370) failed in `checks`:**
+    - `parity-seed.test.ts` saw no August close. The seed closes August as `partner@test.local`,
+      and only E2E's global setup created that user, which the `checks` job never runs.
+    - Fix (its own `fix(...)` commit): `ensurePartner()` in `tests/e2e/global-setup.ts`, called
+      by `seedParity`.
+    - Reproduced locally by deleting the user (fails as on CI), and green with the fix.
+  - **Phase gate:**
+    - typecheck and lint clean;
+    - unit 721; integration 153;
+    - E2E 52 passed, 7 skipped (smoke, home, stock, pdf, export, settings, shell, ui-dark;
+      night_owl);
+    - parity MATCH (202 files).
+  - At N-7.2, update the VPS's installed unit file to run `apps/web/server.js` (N-1.2), and do the
+    production key-type check (moved from N-2.3).
+- **Next:** S5 (`/next-phase S5`, in a new conversation), after S4 is pushed and CI is green.
 - **Blocked on:** —
 
 ## How to use
@@ -369,42 +379,257 @@ from Nest.
 ### Session S4
 Screenshots: the shell (top bar, balance chip), the theme switch, Swagger `/docs`.
 
-- [ ] **N-2.1 Spike: packaging**
+- [x] **N-2.1 Spike: packaging**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/pdf/document.tsx`, `src/server/passkeys.ts`
-  - [ ] The Nest webpack build bundles `@mbl/*`, react-pdf (ESM-only), ExcelJS, simplewebauthn and
+  - [x] The Nest webpack build bundles `@mbl/*`, react-pdf (ESM-only), ExcelJS, simplewebauthn and
     the chosen Swagger library (`nestjs-zod` vs zod 4 `z.toJSONSchema`).
-  - [ ] Copied to an empty folder, the build serves `/health`, one PDF, one XLSX and the
+  - [x] Copied to an empty folder, the build serves `/health`, one PDF, one XLSX and the
     registration options. Record the RSS.
   - **Acceptance:** the written result in this step decides the bundle and the Swagger library.
-- [ ] **N-2.2 api skeleton**
+  - **Result (2026-10-27):**
+    - **Nest 11, not 12:**
+      - Nest 12 (Aug 2026) ships ESM-only (`"type": "module"`), and `nestjs-zod` supports only
+        Nest ≤ 11.
+      - Nest 11.2.8 is CJS like the rest of the repo.
+    - **The bundle:** plain `webpack` + `swc-loader` (`apps/api/webpack.config.js`), not the Nest
+      CLI.
+      - The CLI adds angular-devkit, and its default `webpack-node-externals` would need a custom
+        config anyway.
+      - swc keeps the decorator metadata.
+      - The output is one self-contained `dist/main.js` (10 MB with the spike's libraries) plus
+        `dist/fonts`; nothing is external.
+      - The tweaks:
+        - `server-only` is aliased to an empty module;
+        - Nest's lazy optional requires (microservices, websockets, class-validator,
+          class-transformer) are ignored when they aren't installed;
+        - `__dirname` stays real, so `env.ts` points `PDF_FONT_DIR` at `dist/fonts`.
+    - **Empty-folder run** (only `dist/` copied, no `node_modules`), all 200:
+      - `/health`;
+      - the invoice PDF, whose text is right incl. `৳` from the Bengali fallback, at 26 KB and
+        0.18 s cold;
+      - an XLSX with a money cell of 12,345 and a date cell;
+      - `generateRegistrationOptions`.
+    - **RSS:** 127 MB after boot, 177 MB after 5 PDF + 5 XLSX, 218 MB peak with Swagger loaded,
+      and 142 MB settled. The planned `MemoryMax=768M` has room.
+    - **Swagger:** `@nestjs/swagger` with zod 4's
+      `z.toJSONSchema(schema, { target: "openapi-3.0", io: "input" })` in an `@ApiBody`
+      (`apps/api/src/swagger.ts`, `ZodBody`).
+      - This adds no dependency and no global pipe (design rule 2: write bodies go to the runner's
+        own Zod step).
+      - `nestjs-zod` was not needed.
+      - Swagger UI's assets come from `swagger-ui-dist` by `__dirname`, so they 404 inside the
+        bundle. N-2.2 therefore keeps `@nestjs/swagger` external and loads it only outside
+        production.
+    - **`npm audit`:**
+      - Most findings are already on HEAD: body-parser, qs, undici, zod < 4.6.6, uuid, fast-uri,
+        ip-address.
+      - The new deps add `multer` (via platform-express; no upload route yet) and `js-yaml` (via
+        Swagger; dev only).
+      - None is fixed here.
+    - The spike controller and its libraries (react-pdf, ExcelJS, simplewebauthn) were removed
+      again. N-3.8 and N-5 add them back with the real code.
+- [x] **N-2.2 api skeleton**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/db/index.ts` (the CR-030 note)
-  - [ ] Zod-validated config, a DbModule (one pool, closed on shutdown), `/health` (`select 1`),
+  - [x] Zod-validated config, a DbModule (one pool, closed on shutdown), `/health` (`select 1`),
     a 1 MB JSON limit, bind 127.0.0.1, Swagger in dev only.
-  - **Tests:** [ ] I-N-2.2.x: the pool closes; Swagger is absent when `NODE_ENV=production`.
-- [ ] **N-2.3 Auth and context**
+  - **Tests:** [x] I-N-2.2.x: the pool closes; Swagger is absent when `NODE_ENV=production`.
+  - **Result (2026-10-27):**
+    - **`apps/api` (`@mbl/api`):**
+      - `config.ts` is a Zod env check. A bad value stops the boot with its name only, e.g.
+        "Bad api environment: DATABASE_URL".
+      - `ConfigModule` and `DbModule` are global.
+      - `/health` runs `select 1` and answers 503 "Database unavailable" when the DB is down.
+      - `app.ts` `setupApp()` is shared by `main.ts` and the test facade. It sets the 1 MB
+        `express.json` with Nest's own body parser off, enables shutdown hooks, and serves
+        Swagger at `/docs` unless `NODE_ENV=production`.
+      - `main.ts` binds `127.0.0.1:${API_PORT}` (default 3003).
+    - **The DB client factory:** `@mbl/db/client` exports `pgClient(url, options)` (the D-032
+      options) and `createDb(client)`.
+      - Web's `index.ts` keeps its one `globalThis` client (CR-030, U-CR-030.4 green) through it.
+      - The api's `DbModule` owns its own pool (`application_name = mbl-api`) and ends it in
+        `onApplicationShutdown`.
+    - **The bundle:**
+      - `webpack.config.mjs` (ESM, so lint passes) bundles `@nestjs/swagger`;
+      - only the lazy `swagger-ui-dist/absolute-path.js` stays external. That way dev serves the
+        UI's files from `node_modules`, and production never calls it.
+      - Checked on the built bundle: dev `/docs` and its JS are 200; with `NODE_ENV=production`,
+        `/docs` is 404 and `/health` is 200.
+    - **Repo config:**
+      - the root `tsconfig.json` gains `experimentalDecorators` + `emitDecoratorMetadata`;
+      - Vitest's integration project transforms with `unplugin-swc` (decorator metadata);
+      - eslint and `.gitignore` skip `apps/api/dist`.
+    - **Tests:** `tests/integration/api-skeleton.test.ts` covers I-N-2.2.1 (pool ends on
+      `app.close()`, mutation-checked), I-N-2.2.2 (Swagger dev only), I-N-2.2.3 (`/health`) and
+      I-N-2.2.4 (> 1 MB → 413). The facade's `startApi()` is in `tests/integration/api.ts`.
+    - **Results:** integration 145 (+4; the 141 existing are green under swc); typecheck and lint
+      clean.
+- [x] **N-2.3 Auth and context**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/auth.ts`,
     `src/lib/supabase/server.ts`, `src/proxy.ts`
-  - [ ] ALS middleware, a JWT guard (`jose`, `@Public`), the render memo (`X-Render-Id`), and
+  - [x] ALS middleware, a JWT guard (`jose`, `@Public`), the render memo (`X-Render-Id`), and
     `requirePartner` from the context.
-  - [ ] Spike: local `jwt_expiry=60` across expiries.
-  - [ ] 👤 Production key-type check (a production read, needs the user's OK at the time).
-  - **Tests:** [ ] supertest: 401 for missing, expired or garbage tokens; a non-partner can read
+  - [x] Spike: local `jwt_expiry=60` across expiries.
+  - 👤 Production key-type check: the user moved it to N-7.2 (2026-10-27). The guard supports
+    both key types until then.
+  - **Tests:** [x] supertest: 401 for missing, expired or garbage tokens; a non-partner can read
     but gets 403 on a write route; no 401 across expiries.
-- [ ] **N-2.4 Web API client and test harness**
+  - **Result (2026-10-27):**
+    - **Context** (`apps/api/src/auth/context.ts`):
+      - an `AsyncLocalStorage` store per request, set by express middleware in `setupApp`;
+      - it holds `{ method, renderId, userId, email, memo }`;
+      - `renderId` is web's `X-Render-Id`, kept only when it is a UUID.
+    - **`JwtGuard`** (global `APP_GUARD`; `@Public()` skips it):
+      - reads `Authorization: Bearer`;
+      - verifies with `jose`: `aud = authenticated`, `iss = ${SUPABASE_URL}/auth/v1`, `exp`;
+      - checks the signature by the project's JWKS (ES256/RS256), or with HS256 by
+        `SUPABASE_JWT_SECRET` only when that is set;
+      - any failure → 401 "Not signed in";
+      - no identity header is trusted.
+      - **Found:** local Supabase (CLI 2.120) signs user tokens with **ES256** and publishes its
+        JWKS. So JWKS is the main path, and dev, E2E and CI need no secret.
+    - **`AuthService.requirePartner()`:**
+      - reads the context, then the `profiles` row with `role = partner`, memoised;
+      - throws `UnauthorizedException("Not signed in")` or
+        `ForbiddenException("Only partners can do this")`, the reference's words.
+      - `getProfile()` came with N-2.5.
+    - **Render memo** (`auth/memo.ts`):
+      - `memo(key, load)` shares a load per `userId:renderId` for 30 s on a GET with an
+        `X-Render-Id`; otherwise it is per request, so a write never reads a render's value;
+      - a failed load is not kept.
+    - **Spike `jwt_expiry = 60`** (local config set, Supabase restarted, then reverted):
+      - setup: the E2E builds of api and web, with the partner's theme set to Dark, so a 401 on
+        the root layout's `/me` would show as Night Owl;
+      - 9 renders of `/`, `/stock`, `/settings` and `/journal` over 3½ min, more than 3
+        expiries: all stayed signed in, Dark, with the shell;
+      - a theme save after the expiries was saved;
+      - both server logs show 0 errors and 0 401s;
+      - `proxy.ts`'s `getUser()` refreshes the cookie before each render, so web never forwards
+        an expired token.
+    - **Tests:** `tests/integration/api-auth.test.ts` (5):
+      - I-N-2.3.1:
+        - a real local token passes;
+        - 401 "Not signed in" for: none, garbage, a malformed token, a forged ES256 (own key,
+          same `kid`), expired, another secret, `aud = anon`, another issuer, no `sub`, the anon
+          key, and no `Bearer`;
+        - HS256 passes only with the secret configured.
+      - I-N-2.3.2: partner, investor and a user without a profile all read; only the partner
+        writes (403 "Only partners can do this", and 401 without a token).
+      - I-N-2.3.3: the memo per render and user; none without an id, with a bad id, or on a
+        POST.
+      - I-N-2.3.4: `@Public`.
+      - Mutation-checked: dropping the audience check, the issuer check, or the GET-only memo
+        each fails a test.
+    - The facade's `signedInUser()` creates an Auth user and a profile, then signs in through
+      local Supabase Auth for a real access token.
+- [x] **N-2.4 Web API client and test harness**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/tests/integration/setup.ts`, `local-db.ts`,
     `playwright.config.ts`
-  - [ ] The token from `getSession`, forwarded headers, the render id, timeouts, 401 → login,
+  - [x] The token from `getSession`, forwarded headers, the render id, timeouts, 401 → login,
     404 → `notFound`, `Jsonify`.
-  - [ ] Playwright runs two servers (api 3002 first, web 3001).
-  - [ ] The integration facade (old function names, a JSON round trip,
+  - [x] Playwright runs two servers (api 3002 first, web 3001).
+  - [x] The integration facade (old function names, a JSON round trip,
     `Test.createTestingModule`); Vitest plus unplugin-swc.
   - **Acceptance:** `next build` passes with the API down; the full E2E is green with two servers.
-- [ ] **N-2.5 First slice: `/branding`, `/me`, `/views/shell`, `setTheme`**
+  - **Result (2026-10-27):**
+    - **`apps/web/src/api/client.ts`** (server-only):
+      - `accessToken()` is the session's token from `getSession()`, once per request;
+      - `send()` awaits `cookies()` first, so a build never calls the api;
+      - it forwards `X-Forwarded-Host` (else `host`), `X-Forwarded-Proto` and `User-Agent`, only
+        when the request had them, so the api keeps the reference's defaults;
+      - one `X-Render-Id` per render, on reads only;
+      - a 15 s `AbortSignal.timeout` and `no-store`; nothing is retried.
+      - `api<T>()`: 401 → `/login`, 404 → `notFound()`, other non-2xx throws; an empty 200
+        body (Nest's `null`) → `null`.
+      - `apiOrNull<T>()`: a 401 is `null`, for the root layout, where a redirect would loop on
+        `/login`.
+      - `call()`: 200/409/422 → the body, else it throws.
+      - `write()`: `call()`, then `revalidatePath("/", "layout")` on ok.
+    - **`Jsonify<T>`** (`apps/web/src/api/jsonify.ts`): Date → string; functions and
+      `undefined` dropped.
+    - **`Result`** moved to `@mbl/domain/result`. Web's `action.ts` re-exports it, the api
+      runner uses it, and so does `write()`.
+    - **Ports** (one table, in `.env.example` and the configs):
+      - dev: web 3000, api 3003 (`npm run dev` runs both with `concurrently`; the api rebuilds
+        with `webpack --watch` and restarts with `node --watch`);
+      - E2E: 3001, 3002;
+      - parity: 3011, 3012;
+      - production: 4006 (N-7.1).
+      - `.env.local` gains `SUPABASE_URL`, `API_PORT` and `API_URL` (local values).
+    - **Playwright:** `webServer` is an array, api first: build if stale (`API_FILES` →
+      `apps/api/dist/main.js`), `node apps/api/dist/main.js`, waiting on `/health`,
+      `NODE_ENV=production`. Web gets `API_URL`.
+    - **Parity:** `self` also builds and serves the api on 3012 with the same `clock.cjs` and
+      `PARITY_NOW`, and stops both. `ref` is unchanged.
+    - **CI:** `checks` runs `npm run build:api`.
+    - **Facade** (`tests/integration/api.ts`):
+      - `startApi(config, controllers)`;
+      - `signedInUser()` and `deleteUsers()`;
+      - `as(app, user)` gives `read`, `write` (200/409/422 → `Result`, else it throws, as web's
+        `write()` does) and the old names (`getProfile`, `setTheme`).
+    - **Tests:**
+      - U-N-2.4.1 `tests/engine/jsonify.test.ts` (`expectTypeOf`; mutation-checked: Dates kept
+        → typecheck fails);
+      - I-N-2.4.1: the facade round trip, used by `settings-actions.test.ts` (N-2.5);
+      - M-N-2.4.1: `next build` passed with nothing listening on 3001–3003.
+      - E2E smoke passed with two servers. The full E2E runs on CI after the push (D-065); the
+        phase specs ran locally in N-2.5.
+    - The subagent also re-formatted a few untouched lines of `scripts/parity/run.ts` with
+      Prettier. It wasn't Prettier-clean before.
+- [x] **N-2.5 First slice: `/branding`, `/me`, `/views/shell`, `setTheme`**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/app/layout.tsx`, `src/app/(app)/layout.tsx`,
     `src/server/business.ts`, `src/server/actions/settings.ts`
-  - [ ] Spike: a 60 ms DB delay (toxiproxy).
+  - [x] Spike: a 60 ms DB delay (toxiproxy).
   - **Acceptance:** one `loadBooksData` per render (counter test); TTFB within +10%; the theme
     E2E is green; parity.
+  - **Result (2026-10-27):**
+    - **api services** (ports of the Ref, with `db` → `this.db` and `cache()` → `memo()`):
+      - `BusinessService.getBusiness()`;
+      - `BooksService.loadBooksData()` and `loadBooks(asOf)`. The query code is identical to
+        web's (`git diff -w`); only the class wrapper differs.
+      - `AuthService.getProfile()`.
+    - **Endpoints:**
+      - `GET /branding` (`@Public`): `{ name, shortName, logoVersion }`;
+      - `GET /me`: `{ id, theme, updatedAt }` or null;
+      - `GET /views/shell`: `{ name, logo, email, closing, balance }`, computed as
+        `(app)/layout.tsx` did;
+      - `PUT /me/theme` → the runner.
+    - **The runner moved early (user decision):**
+      - `apps/api/src/action/runner.ts` is web's `runAction` verbatim (checked with `git diff -w`),
+        with `requirePartner` from the context and no `revalidatePath`;
+      - `ResultStatus` maps ok → 200, duplicate/conflict → 409, invalid → 422;
+      - web's other actions keep web's `runAction` until S5.
+    - **Web:**
+      - the root layout reads `/branding` (title) and `apiOrNull("/me")` (theme);
+      - `(app)/layout.tsx` makes one `/views/shell` call. The JSX is unchanged, and the RSC
+        `getUser()` round trip is gone.
+      - `setTheme` = `write("PUT", "/me/theme", input)`.
+      - `logoSrc` moved to `@mbl/domain/business`; web re-exports it.
+      - View types are imported type-only from `@mbl/api/*` (`apps/api/package.json` `exports`).
+    - **Deviation:** the login page (not a Ref of this step) also reads `/branding`, because its
+      title and logo need the same public data. Its text is unchanged; parity covers `/login`.
+    - **Temporary:** Home still loads the books in web as well (`(app)/page.tsx`, until N-4.2), so
+      one Home render loads them once in each process.
+    - **Tests:**
+      - `settings-actions.test.ts` is ported to the facade: the same 3 test ids, real sign-ins,
+        and the books-balance check through `/views/shell`.
+      - `api-shell.test.ts`:
+        - I-N-2.5.1: one `loadBooksData` for `/views/shell` ×2, `/me` and `/branding` in one
+          render, then 2 after a new render. Mutation-checked: without the memo it gets 2.
+        - I-N-2.5.2: `/views/shell` equals the values web's layout computes, on the parity book.
+        - I-N-2.5.3: `/branding` is public; `/me` and `/views/shell` are 401 without a token.
+      - E2E settings, shell, ui-dark and smoke (night_owl): 30 passed, 5 skipped (viewport-only
+        tests).
+    - **Parity:** MATCH (202 files). TTFB over 92 routes was 9633 → 5651 ms (−41%) against the
+      morning's baseline; the final gate run gave 9633 → 6256 ms (−35%).
+    - **Spike: 60 ms DB delay** (toxiproxy on 55323 in front of 55322, a measured 65 ms per round
+      trip; both builds dumped back to back through it):
+      - MATCH (202 files);
+      - TTFB over 92 routes: reference 21390 → this repo 18190 ms (**−15%**);
+      - `/` 225 → 210 ms, `/settings` 283 → 194 ms, `/stock` 231 → 197 ms.
+      - The extra api hop costs less than the reference's per-render GoTrue `getUser()`, even
+        with Home's books loaded on both sides.
+      - Not modelled: production's DB and Auth are cross-region from the VPS, so `getUser()`
+        costs more there. That only helps this repo.
 
 ---
 
@@ -419,7 +644,9 @@ Screenshots: each form saving, the duplicate warning, the Undo toast.
 
 - [ ] **N-3.1 Write runner and the Setup lists**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/action.ts`, `src/server/actions/setup.ts`
-  - [ ] Port `runAction` almost verbatim; add the status interceptor and web's `write()`/`call()`.
+  - [x] Port `runAction` almost verbatim; add the status interceptor and web's `write()`/`call()`.
+    Done early in N-2.5 (user decision, 2026-10-27): `apps/api/src/action/{runner,result-status}.ts`
+    and `apps/web/src/api/client.ts`. Web's `runAction` stays until its last caller moves.
   - [ ] The Setup lists (`savePerson` … `saveModel`, `setActive`, `removeRow`) set the pattern.
   - **Tests:** [ ] `action.test` and `setup-actions.test` green via the facade; the `setup.spec`
     E2E.
@@ -560,6 +787,11 @@ Screenshots: the rehearsal log; the production smoke test.
   - [ ] Rehearse deploy → rollback → deploy in WSL with systemd.
   - **Acceptance:** the rehearsal log is in this step.
 - [ ] **N-7.2 👤 Switch** (the user's go-ahead, at a quiet time)
+  - [ ] 👤 Production key-type check (moved from N-2.3), before the api's `.env` is written:
+    `curl -s https://<project>.supabase.co/auth/v1/.well-known/jwks.json`.
+    - Keys listed → JWKS; the api needs only `SUPABASE_URL`.
+    - `{"keys":[]}` → HS256; the api also needs `SUPABASE_JWT_SECRET`.
+    - Then drop the unused path from `apps/api/src/auth/jwt.guard.ts`.
   - [ ] Node 24 via nvm; clone this repo to the VPS (deploy key); web and api `.env` (mode 600)
     from the old `.env.local`; the units; deploy.
   - [ ] Smoke test with both partners: login, save/delete, PDF, reveal.

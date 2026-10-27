@@ -7,6 +7,8 @@ node_modules/
 .next-parity/
 out/
 build/
+# the api bundle (N-2.1)
+apps/api/dist/
 *.tsbuildinfo
 next-env.d.ts
 

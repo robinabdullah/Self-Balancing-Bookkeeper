@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
+import swc from "unplugin-swc";
 import { defineConfig } from "vitest/config";
-import { LOCAL_DB_URL } from "./tests/integration/local-db";
+import { LOCAL_DB_URL, LOCAL_SUPABASE_URL } from "./tests/integration/local-db";
 
 export default defineConfig({
   resolve: {
@@ -20,6 +21,20 @@ export default defineConfig({
       },
       {
         extends: true,
+        // N-2.2: Nest's DI needs decorator metadata, which esbuild doesn't emit; swc does.
+        plugins: [
+          swc.vite({
+            jsc: {
+              parser: { syntax: "typescript", tsx: true, decorators: true },
+              transform: {
+                legacyDecorator: true,
+                decoratorMetadata: true,
+                react: { runtime: "automatic" },
+              },
+              target: "es2022",
+            },
+          }),
+        ],
         test: {
           name: "integration",
           include: ["tests/integration/**/*.test.ts"],
@@ -28,7 +43,7 @@ export default defineConfig({
           setupFiles: ["tests/integration/setup.ts"],
           // One shared local DB: files run one at a time.
           fileParallelism: false,
-          env: { DATABASE_URL: LOCAL_DB_URL },
+          env: { DATABASE_URL: LOCAL_DB_URL, SUPABASE_URL: LOCAL_SUPABASE_URL },
         },
       },
     ],

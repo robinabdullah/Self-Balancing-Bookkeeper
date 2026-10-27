@@ -7,6 +7,8 @@ import { localSupabase } from "./tests/e2e/local-supabase";
 // A port of its own, so E2E never reuses a `npm run dev` pointed at the cloud DB. E2E_PORT
 // overrides it if Windows/Hyper-V reserves the port (`netsh int ipv4 show excludedportrange`).
 const PORT = Number(process.env.E2E_PORT ?? 3001);
+// N-2.4: the Nest API beside Next, on a port of its own (never 3003, the dev api).
+const API_PORT = Number(process.env.E2E_API_PORT ?? 3002);
 const supabase = localSupabase();
 // N-1.2: the app is apps/web; its server runs there (cwd), so its paths are relative to it.
 const APP = "apps/web";
@@ -35,6 +37,19 @@ const buildIsFresh =
   !process.env.CI &&
   existsSync(`${APP}/${DIST}/BUILD_ID`) &&
   statSync(`${APP}/${DIST}/BUILD_ID`).mtimeMs > Math.max(...APP_FILES.map(newest));
+
+// N-2.4: the api bundle is reused the same way; its marker is the built file.
+const API_FILES = [
+  "apps/api/src",
+  "apps/api/webpack.config.mjs",
+  "apps/api/package.json",
+  "packages",
+  "package-lock.json",
+];
+const apiIsFresh =
+  !process.env.CI &&
+  existsSync("apps/api/dist/main.js") &&
+  statSync("apps/api/dist/main.js").mtimeMs > Math.max(...API_FILES.map(newest));
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -77,21 +92,39 @@ export default defineConfig({
   // ever more slowly (0.7 s → 15 s) as its memory grew, and tests timed out waiting (CR-027).
   // The build goes to `.next-e2e`, so a running `npm run dev` keeps its `.next`. `next start`
   // warns about `output: "standalone"` but serves the same build the VPS runs.
-  webServer: {
-    command: `${buildIsFresh ? "" : "npx next build && "}npx next start --hostname 127.0.0.1 --port ${PORT}`,
-    cwd: APP,
-    url: `http://127.0.0.1:${PORT}`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 300_000,
-    // Process env beats .env.local in Next (also for the NEXT_PUBLIC_ values baked in at build),
-    // so the app talks to local Supabase only.
-    env: {
-      NEXT_DIST_DIR: DIST,
-      DATABASE_URL: supabase.dbUrl,
-      NEXT_PUBLIC_SUPABASE_URL: supabase.url,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: supabase.anonKey,
-      // A test-only key for saved card details (D-046); the real one is only on the VPS.
-      CARD_SECRET_KEY: E2E_CARD_KEY,
+  // N-2.4: two servers, the api first (web will call it).
+  webServer: [
+    {
+      command: `${apiIsFresh ? "" : "npm run build -w @mbl/api && "}node apps/api/dist/main.js`,
+      cwd: ".",
+      url: `http://127.0.0.1:${API_PORT}/health`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 300_000,
+      env: {
+        DATABASE_URL: supabase.dbUrl,
+        SUPABASE_URL: supabase.url,
+        API_PORT: String(API_PORT),
+        // Production mode: no Swagger.
+        NODE_ENV: "production",
+      },
     },
-  },
+    {
+      command: `${buildIsFresh ? "" : "npx next build && "}npx next start --hostname 127.0.0.1 --port ${PORT}`,
+      cwd: APP,
+      url: `http://127.0.0.1:${PORT}`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 300_000,
+      // Process env beats .env.local in Next (also for the NEXT_PUBLIC_ values baked in at build),
+      // so the app talks to local Supabase only.
+      env: {
+        NEXT_DIST_DIR: DIST,
+        DATABASE_URL: supabase.dbUrl,
+        NEXT_PUBLIC_SUPABASE_URL: supabase.url,
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: supabase.anonKey,
+        // A test-only key for saved card details (D-046); the real one is only on the VPS.
+        CARD_SECRET_KEY: E2E_CARD_KEY,
+        API_URL: `http://127.0.0.1:${API_PORT}`,
+      },
+    },
+  ],
 });

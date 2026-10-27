@@ -13,6 +13,7 @@ import {
   editErrors,
   pairEditErrors,
 } from "@mbl/domain/guards";
+import type { Result } from "@mbl/domain/result";
 import { rowId } from "@mbl/domain/validation/fields";
 import { requirePartner } from "@/server/auth";
 
@@ -36,11 +37,7 @@ export type Row = Record<string, unknown> & { id: string; updatedAt: Date };
 /** insert/reverse create a row (reverse = a new entry with `reverses_id`, SRS §8); Undo = delete. */
 export type Op = "insert" | "reverse" | "update" | "delete";
 
-export type Result =
-  | { status: "ok"; id: string; updatedAt: string | null } // null after a delete
-  | { status: "duplicate"; id: string; by: string; at: string }
-  | { status: "conflict"; message: string }
-  | { status: "invalid"; errors: Errors };
+export type { Result };
 
 type Ctx = { userId: string; current: Row | null };
 

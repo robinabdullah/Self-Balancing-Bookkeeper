@@ -38,6 +38,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # N-2.4: proves the api bundle builds (E2E builds it again for its own run).
+      - name: Build API
+        run: npm run build:api
+
       - name: Unit tests
         run: npm test
 

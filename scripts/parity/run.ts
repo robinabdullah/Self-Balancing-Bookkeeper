@@ -4,7 +4,15 @@
 // route's text at 360 and 1280, the PDFs' text, the Excel cells → the write sequence → its audit
 // rows. Local DB only; never while E2E or `npm run dev` uses local Supabase (D-065).
 import { type ChildProcess, execSync, spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { type Browser, type BrowserContext, chromium, devices } from "@playwright/test";
 import ExcelJS from "exceljs";
@@ -13,7 +21,17 @@ import { E2E_CARD_KEY, loginAsPartner } from "../../tests/e2e/helpers";
 import { localSupabase } from "../../tests/e2e/local-supabase";
 import { localSql, migrateLocal } from "../../tests/integration/local-db";
 import { compareDumps, readDump, ttfbReport } from "./compare";
-import { BASE_URL, DIST, OUT, PARITY_NOW, PARITY_PORT, ROOT, VIEWPORTS } from "./config";
+import {
+  API_BASE_URL,
+  BASE_URL,
+  DIST,
+  OUT,
+  PARITY_API_PORT,
+  PARITY_NOW,
+  PARITY_PORT,
+  ROOT,
+  VIEWPORTS,
+} from "./config";
 import { pages, pdfs, slug, workbooks } from "./manifest";
 import { aliasIds, maskGenerated, maskTimestamps } from "./normalize";
 import { refCopy } from "./ref-copy";
@@ -35,6 +53,16 @@ const SELF_FILES = [
   "../../package-lock.json",
 ];
 
+/** N-2.4: the api bundle and what it builds from (only the self target runs it). */
+const API_MAIN = join(ROOT, "apps/api/dist/main.js");
+const API_FILES = [
+  "apps/api/src",
+  "apps/api/webpack.config.mjs",
+  "apps/api/package.json",
+  "packages",
+  "package-lock.json",
+];
+
 function newest(path: string): number {
   if (!existsSync(path)) return 0;
   const stat = statSync(path);
@@ -52,7 +80,17 @@ function appEnv() {
     NEXT_PUBLIC_SUPABASE_URL: supabase.url,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: supabase.anonKey,
     CARD_SECRET_KEY: E2E_CARD_KEY,
+    API_URL: API_BASE_URL,
   };
+}
+
+function buildApi() {
+  const fresh =
+    existsSync(API_MAIN) &&
+    statSync(API_MAIN).mtimeMs > Math.max(...API_FILES.map((f) => newest(join(ROOT, f))));
+  if (fresh) return console.log("parity: reusing the api build");
+  console.log("parity: building the api");
+  execSync("npm run build -w @mbl/api", { cwd: ROOT, stdio: "inherit" });
 }
 
 function build(t: Target) {
@@ -65,6 +103,14 @@ function build(t: Target) {
   execSync("npx next build", { cwd: t.dir, env: appEnv(), stdio: "inherit" });
 }
 
+async function apiIsUp() {
+  try {
+    return (await fetch(`${API_BASE_URL}/health`)).ok;
+  } catch {
+    return false;
+  }
+}
+
 async function isUp() {
   try {
     await fetch(`${BASE_URL}/login`, { redirect: "manual" });
@@ -74,9 +120,37 @@ async function isUp() {
   }
 }
 
-async function serve(t: Target): Promise<ChildProcess> {
+/** N-2.4: starts the api (self target only) at the same fixed clock as web. */
+async function serveApi(clock: string): Promise<ChildProcess> {
+  if (await apiIsUp())
+    throw new Error(`Port ${PARITY_API_PORT} is in use: stop that server first.`);
+  const supabase = localSupabase();
+  const api = spawn("node apps/api/dist/main.js", {
+    cwd: ROOT,
+    env: {
+      ...process.env,
+      PARITY_NOW,
+      NODE_OPTIONS: `--require "${clock}"`,
+      DATABASE_URL: supabase.dbUrl,
+      SUPABASE_URL: supabase.url,
+      API_PORT: String(PARITY_API_PORT),
+      NODE_ENV: "production",
+    },
+    shell: true,
+    stdio: "ignore",
+  });
+  for (let i = 0; i < 120; i++) {
+    if (await apiIsUp()) return api;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  stop(api);
+  throw new Error("the api did not answer within 60 s");
+}
+
+async function serve(t: Target): Promise<ChildProcess[]> {
   if (await isUp()) throw new Error(`Port ${PARITY_PORT} is in use: stop that server first.`);
   const clock = resolve(ROOT, "scripts/parity/clock.cjs").replaceAll("\\", "/");
+  const api = t.name === "self" ? await serveApi(clock) : undefined;
   const server = spawn(`npx next start --hostname 127.0.0.1 --port ${PARITY_PORT}`, {
     cwd: t.dir,
     env: { ...appEnv(), PARITY_NOW, NODE_OPTIONS: `--require "${clock}"` },
@@ -84,15 +158,17 @@ async function serve(t: Target): Promise<ChildProcess> {
     stdio: "ignore",
   });
   for (let i = 0; i < 120; i++) {
-    if (await isUp()) return server;
+    if (await isUp()) return api ? [api, server] : [server];
     await new Promise((r) => setTimeout(r, 500));
   }
   stop(server);
+  if (api) stop(api);
   throw new Error("next start did not answer within 60 s");
 }
 
 function stop(server: ChildProcess) {
-  if (process.platform === "win32") execSync(`taskkill /pid ${server.pid} /T /F`, { stdio: "ignore" });
+  if (process.platform === "win32")
+    execSync(`taskkill /pid ${server.pid} /T /F`, { stdio: "ignore" });
   else server.kill();
 }
 
@@ -115,7 +191,12 @@ function save(dir: string, file: string, text: string) {
   writeFileSync(path, text.endsWith("\n") ? text : `${text}\n`);
 }
 
-async function dumpRoutes(context: BrowserContext, dir: string, vp: string, refs: Record<string, string>) {
+async function dumpRoutes(
+  context: BrowserContext,
+  dir: string,
+  vp: string,
+  refs: Record<string, string>,
+) {
   const ttfb: Record<string, number> = {};
   const page = await context.newPage();
   for (const route of pages(refs)) {
@@ -167,12 +248,13 @@ export async function dump(t: Target, outName: string) {
   const dir = join(OUT, outName);
   rmSync(dir, { recursive: true, force: true });
   build(t);
+  if (t.name === "self") buildApi();
   const sql = localSql();
   await migrateLocal(sql);
   const { refs } = await seedParity(sql);
   await sql.end();
 
-  const server = await serve(t);
+  const servers = await serve(t);
   const browser = await chromium.launch();
   try {
     const login = await newContext(browser, VIEWPORTS[1]);
@@ -197,7 +279,7 @@ export async function dump(t: Target, outName: string) {
     save(dir, "meta.json", JSON.stringify({ target: t.name, dir: t.dir, at: new Date() }, null, 2));
   } finally {
     await browser.close();
-    stop(server);
+    for (const server of servers) stop(server);
   }
   console.log(`parity: ${t.name} dumped to ${dir}`);
 }

@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @mbl/web",
+    "dev": "concurrently -k -n api,web \"npm run dev -w @mbl/api\" \"npm run dev -w @mbl/web\"",
     "build": "npm run build -w @mbl/web",
     "start": "npm run start -w @mbl/web",
     "typecheck": "tsc --noEmit",
@@ -19,7 +19,8 @@
     "db:generate": "drizzle-kit generate --config packages/db/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config packages/db/drizzle.config.ts",
     "parity": "tsx scripts/parity/run.ts self",
-    "parity:ref": "tsx scripts/parity/run.ts ref"
+    "parity:ref": "tsx scripts/parity/run.ts ref",
+    "build:api": "npm run build -w @mbl/api"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -29,6 +30,8 @@
     "@types/node": "^24.19.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/supertest": "^7.2.1",
+    "concurrently": "^10.0.6",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
@@ -36,10 +39,12 @@
     "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "supabase": "^2.120.0",
+    "supertest": "^7.3.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
     "unpdf": "^1.8.1",
+    "unplugin-swc": "^2.0.0",
     "vitest": "^5.0.3"
   }
 }

@@ -42,6 +42,7 @@ const eslintConfig = [
       ".parity/**",
       "out/**",
       "build/**",
+      "apps/api/dist/**",
       "**/next-env.d.ts",
       "apps/web/src/components/ui/**",
       "packages/db/migrations/**",

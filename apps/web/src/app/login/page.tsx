@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { BusinessLogo } from "@/components/shell/business-logo";
-import { businessName } from "@mbl/domain/business";
-import { getBusiness, logoSrc } from "@/server/business";
+import type { Branding } from "@mbl/api/shell/shell.controller";
+import { businessName, logoSrc } from "@mbl/domain/business";
+import { api } from "@/api/client";
 import { LoginForm } from "./login-form";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: `Log in · ${businessName(await getBusiness())}` };
+  return { title: `Log in · ${businessName(await api<Branding>("/branding"))}` };
 }
 
 // UIDD §4.1: no sign-up link; partner accounts are created by an admin. The business's logo and
 // name are shown (D-039).
 export default async function LoginPage() {
-  const business = await getBusiness();
+  const business = await api<Branding>("/branding");
   const logo = logoSrc(business);
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-4">

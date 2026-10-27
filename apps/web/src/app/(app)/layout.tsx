@@ -1,39 +1,21 @@
 import { Toaster } from "@/components/forms/toast";
 import { NavBar } from "@/components/shell/nav-bar";
 import { TopBar } from "@/components/shell/top-bar";
-import { appName } from "@mbl/domain/business";
-import { breakdown } from "@mbl/domain/dashboard";
-import { formatMonth } from "@mbl/domain/dates";
-import { nextToClose } from "@mbl/domain/engine/months";
-import { getUser } from "@/lib/supabase/server";
-import { loadBooks } from "@/server/books";
-import { getBusiness, logoSrc } from "@/server/business";
+import type { ShellView } from "@mbl/api/shell/shell.controller";
+import { api } from "@/api/client";
 
 // UIDD §3: the app shell around every signed-in screen. The toast (UIDD §5) lives here, so a
 // form's "Saved · Undo" outlives the form. The balance chip and "Closing: …" (task 4.1.4) come
-// from the books on every request (SRS §2).
+// from the books on every request (SRS §2), computed by the api (N-2.5).
 
 // Never prerendered: a build must not read the database (SRS §2.1, D-031).
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [user, { data, books, asOf }, business] = await Promise.all([
-    getUser(),
-    loadBooks(),
-    getBusiness(),
-  ]);
-  const month = nextToClose(data.closed, data.entries[0]?.date ?? null, asOf);
-  // "Closing: …" opens that month's close screen (D-032).
-  const closing = { label: `Closing: ${formatMonth(month)}`, href: `/months/${month}` };
+  const { name, logo, email, closing, balance } = await api<ShellView>("/views/shell");
   return (
     <Toaster>
-      <TopBar
-        name={appName(business)}
-        logo={logoSrc(business)}
-        email={user?.email ?? ""}
-        closing={closing}
-        balance={breakdown(books)}
-      />
+      <TopBar name={name} logo={logo} email={email} closing={closing} balance={balance} />
       <NavBar closing={closing} />
       <div className="lg:pl-56">
         <main className="mx-auto max-w-5xl p-4 pb-24 lg:pb-8">{children}</main>

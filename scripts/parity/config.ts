@@ -9,6 +9,9 @@ export const PARITY_TODAY = "2026-10-20";
 
 /** Never 3000 (dev) or 3001 (E2E): the harness must not reuse either server. */
 export const PARITY_PORT = Number(process.env.PARITY_PORT ?? 3011);
+/** N-2.4: the Nest API beside it (self target only); never 3003 (dev api) or 3002 (E2E). */
+export const PARITY_API_PORT = Number(process.env.PARITY_API_PORT ?? 3012);
+export const API_BASE_URL = `http://127.0.0.1:${PARITY_API_PORT}`;
 export const BASE_URL = `http://127.0.0.1:${PARITY_PORT}`;
 
 /** The read-only reference repo, and the copy the harness builds (never built in place). */

@@ -17,11 +17,14 @@ export function localSupabase() {
     process.env.E2E_SUPABASE_ANON_KEY = vars.ANON_KEY;
     process.env.E2E_SUPABASE_SERVICE_ROLE_KEY = vars.SERVICE_ROLE_KEY;
     process.env.E2E_DATABASE_URL = vars.DB_URL;
+    process.env.E2E_SUPABASE_JWT_SECRET = vars.JWT_SECRET;
   }
   return {
     url: process.env.E2E_SUPABASE_URL!,
     anonKey: process.env.E2E_SUPABASE_ANON_KEY!,
     serviceRoleKey: process.env.E2E_SUPABASE_SERVICE_ROLE_KEY!,
     dbUrl: process.env.E2E_DATABASE_URL!,
+    /** The legacy shared secret (HS256); local user tokens are signed with ES256 (N-2.3). */
+    jwtSecret: process.env.E2E_SUPABASE_JWT_SECRET!,
   };
 }

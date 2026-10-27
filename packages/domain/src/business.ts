@@ -74,6 +74,10 @@ export const appName = (p: Named) => p?.shortName?.trim() || p?.name?.trim() || 
 /** The full name (browser title, login page). */
 export const businessName = (p: Named) => p?.name?.trim() || FALLBACK_NAME;
 
+/** The `/logo` URL with a short hash of the logo, so a new logo isn't cached (null: no logo). */
+export const logoSrc = (b: { logoVersion: string | null } | null | undefined) =>
+  b?.logoVersion ? `/logo?v=${b.logoVersion}` : null;
+
 /** The first of "01700000001, 01800000001". */
 export const firstPhone = (phones: string | null | undefined) =>
   phones?.split(/[,;/]/)[0]?.trim() || null;

@@ -5,6 +5,8 @@ import postgres from "postgres";
 
 // The local Supabase DB (supabase/config.toml [db] port). Integration tests never touch the cloud.
 export const LOCAL_DB_URL = "postgresql://postgres:postgres@127.0.0.1:55322/postgres";
+// Its Auth API ([api] port): the api verifies sign-ins against its JWKS (N-2.3).
+export const LOCAL_SUPABASE_URL = "http://127.0.0.1:55321";
 
 export function localSql() {
   return postgres(LOCAL_DB_URL, { max: 1, onnotice: () => {} });
