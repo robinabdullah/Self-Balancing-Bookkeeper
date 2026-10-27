@@ -825,11 +825,36 @@ fixed.
 ### Session S7
 Screenshots: those screens, plus the parity report.
 
-- [ ] **N-4.1 Core read services and contract**
+- [x] **N-4.1 Core read services and contract**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/{books,setup,business,journal,entries,stock}.ts`
-  - [ ] Books (with the memo), setup, business, journal, entries, stock and calendar become
+  - [x] Books (with the memo), setup, business, journal, entries, stock and calendar become
     services; `contract.ts` holds the `Jsonify` types.
-  - **Tests:** [ ] the `books` and `queries` integration tests are green; the memo counter.
+  - **Tests:** [x] the `books` and `queries` integration tests are green; the memo counter.
+  - **Result (2026-10-27):**
+    - **api read services** (the Ref as classes: `db` → `this.db`, `cache()` → `memo()`;
+      `git diff --no-index -w` shows only that and the imports):
+      - `BooksService` gains `customerDues()` and `moneyFormBalances()`;
+      - `setup/setup-data.service.ts` `SetupDataService.loadSetup()` (`memo("setup")`; the
+        writes stay in `setup.service.ts`);
+      - `journal/journal.service.ts`: `loadJournal()`, `loadEntry(id)` (`memo("entry:<id>")`);
+      - `entries/entries.service.ts`: `editValues(table, id)`;
+      - `stock/stock.service.ts`: `lots(opts)` (the write path's `stockLots`, on `this.db`) and
+        `lastSaleCustomerId()`.
+      - The calendar is the runner's `loadCalendar(this.db)`; no extra service.
+    - **Deviation:** business's other reads (`loadBankAccounts`, `payAccounts`, `bankCounts`,
+      `getLogo`) move with their callers (S8's overlays, Saved and Setup; N-5's `/logo`). Nothing
+      in S7 reads them; `getBusiness` was already a service.
+    - **Web:** `src/api/contract.ts` holds the `Jsonify` types for client components
+      (`SetupData`, `JournalRow`, `JournalEntry`, `EditValues`, `LotInfo`). Web's own read
+      modules stay until their last caller moves (S8, N-5), so U-CR-013.9 is unchanged.
+    - **Tests:**
+      - `books.test` runs the api's `BooksService` (I4.1.1–2 unchanged, invariant kept).
+      - `queries.test` counts on the api's own pool through a test-only controller (so the memo
+        has its request context). The counts are unchanged: 12, 5, 1 + 3, 1 + 2 + 3, 0/6, the
+        calendar's 3 at once, and I-CR-013.2.
+      - New I-N-4.1.1: `loadSetup` + `loadEntry` asked twice in one request make 11 queries.
+        Mutation-checked: with the memo off it gets 22.
+      - 2 files, 10 passed.
 - [ ] **N-4.2 Home, Journal, EntryOverlay**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/app/(app)/page.tsx`, `journal/page.tsx`,
     `src/components/journal/entry-overlay.tsx`

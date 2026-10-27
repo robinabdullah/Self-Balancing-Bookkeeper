@@ -6,15 +6,16 @@ import { type BooksData, type StoredEntry, computeBooks, toPosted } from "@mbl/d
 import { type Allocation, computeClose, monthProfit } from "@mbl/domain/engine/months";
 import type { MoneyEntry, Partner, PurchaseEntry, ReturnEntry } from "@mbl/domain/engine/post";
 import { parse, toDecimal } from "@mbl/domain/money";
-import { loadBooksData } from "@/server/books";
+import { BooksService } from "../../apps/api/src/books/books.service";
 import { expectBalanced } from "../engine/invariant";
 import { localSql } from "./local-db";
 
 // Task 4.1 (SRS §2, §5): the loader is the only path from the DB to the engine. A synthetic
 // scenario (D-014) is written straight to the tables; the same facts, as engine entries, are the
-// expected loader output and the direct engine run.
+// expected loader output and the direct engine run. N-4.1: the api's loader (BooksService).
 
 const sql = localSql();
+const loadBooksData = () => new BooksService(db).loadBooksData();
 const today = dhakaToday();
 const m0 = addMonths(monthOf(today), -2); // closed
 const m1 = addMonths(monthOf(today), -1);

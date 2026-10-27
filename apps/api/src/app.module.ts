@@ -11,7 +11,9 @@ import { BillDatesController } from "./cards/bill-dates.controller";
 import { BillDatesService } from "./cards/bill-dates.service";
 import { ConfigModule } from "./config.module";
 import { DbModule } from "./db/db.module";
+import { EntriesService } from "./entries/entries.service";
 import { HealthController } from "./health.controller";
+import { JournalService } from "./journal/journal.service";
 import { MoneyController } from "./money/money.controller";
 import { MoneyService } from "./money/money.service";
 import { MonthsController } from "./months/months.controller";
@@ -29,8 +31,10 @@ import { SaleController } from "./sale/sale.controller";
 import { SaleService } from "./sale/sale.service";
 import { SettingsController } from "./settings/settings.controller";
 import { SetupController } from "./setup/setup.controller";
+import { SetupDataService } from "./setup/setup-data.service";
 import { SetupService } from "./setup/setup.service";
 import { ShellController } from "./shell/shell.controller";
+import { StockService } from "./stock/stock.service";
 
 @Module({
   imports: [ConfigModule, DbModule, AuthModule],
@@ -54,6 +58,10 @@ import { ShellController } from "./shell/shell.controller";
     Runner,
     BooksService,
     BusinessService,
+    SetupDataService,
+    JournalService,
+    EntriesService,
+    StockService,
     SetupService,
     MoneyService,
     PurchaseService,

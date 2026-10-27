@@ -16,7 +16,12 @@ import {
   sales,
 } from "@mbl/db/schema";
 import { dhakaToday } from "@mbl/domain/dates";
-import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import {
+  type Books,
+  type BooksData,
+  type StoredEntry,
+  computeBooks,
+} from "@mbl/domain/engine/index";
 import { parse } from "@mbl/domain/money";
 import { memo } from "../auth/memo";
 import { DB } from "../db/db.module";
@@ -39,6 +44,9 @@ function byEntry<T extends { of: string }>(rows: T[]): Map<string, Omit<T, "of">
   }
   return out;
 }
+
+const duesOf = (books: Books) =>
+  Object.fromEntries(Object.entries(books.customers).map(([id, s]) => [id, s.balance]));
 
 @Injectable()
 export class BooksService {
@@ -208,6 +216,17 @@ export class BooksService {
         actualDueDate: b.actualDueDate,
       })),
     };
+  }
+
+  /** Each customer's current due (task 4.1.5: the forms' customer pickers show it). */
+  async customerDues(): Promise<Record<string, number>> {
+    return duesOf((await this.loadBooks()).books);
+  }
+
+  /** The money form's: each customer's due (4.1.5) and each person's profit owed (5.5.1). */
+  async moneyFormBalances() {
+    const { data, books } = await this.loadBooks();
+    return { dues: duesOf(books), owed: books.profitOwed, billDates: data.billDates };
   }
 
   /**
