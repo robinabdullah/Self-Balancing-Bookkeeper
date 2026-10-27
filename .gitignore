@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+
+# next.js / build
+.next/
+.next-e2e/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# env (secrets): only the example is committed (D-069)
+.env*
+!.env.example
+
+# misc
+.DS_Store
+*.log
+coverage/
+.vercel
+
+# Excel lock files
+~$*.xlsx
+
+# playwright
+test-results/
+playwright-report/
+tests/e2e/.auth/
+blob-report/
+
+# real workbooks: never committed here (D-069)
+docs/source/
+
+# the real names/phones/domain the denylist check looks for (D-069); never committed
+.denylist

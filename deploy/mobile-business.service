@@ -1,0 +1,29 @@
+# Mobile Business Lite: the Next.js standalone build that scripts/deploy.sh copies to
+# /var/www/mobile-business (D-031). Install as /etc/systemd/system/mobile-business.service.
+# See deploy/README.md.
+[Unit]
+Description=Mobile Business Lite (Next.js)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/var/www/mobile-business
+Environment=NODE_ENV=production
+Environment=NEXT_TELEMETRY_DISABLED=1
+# Loopback only: nginx is the public side. The port must match deploy/nginx.conf.
+Environment=PORT=4005
+Environment=HOSTNAME=127.0.0.1
+# Node comes from nvm: after an nvm upgrade, update this path and run `systemctl daemon-reload`.
+ExecStart=/home/ubuntu/.nvm/versions/node/v20.19.6/bin/node /var/www/mobile-business/server.js
+Restart=on-failure
+RestartSec=5
+# Keep the shared VPS safe for the other apps.
+MemoryMax=1G
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

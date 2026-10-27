@@ -1,0 +1,13 @@
+node_modules
+.next
+package-lock.json
+docs
+src/components/ui
+src/db/migrations
+*.md
+.claude
+
+# local supabase / playwright
+supabase/.temp
+test-results
+playwright-report
