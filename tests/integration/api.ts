@@ -138,6 +138,9 @@ export function as(app: INestApplication, user: TestUser) {
     // N-3.3: purchases (apps/api/src/purchase).
     savePurchase: (input: unknown) => write("put", "/purchases", input),
     deletePurchase: (input: unknown) => write("delete", "/purchases", input),
+    // N-3.4: sales (apps/api/src/sale).
+    saveSale: (input: unknown) => write("put", "/sales", input),
+    deleteSale: (input: unknown) => write("delete", "/sales", input),
   };
 }
 

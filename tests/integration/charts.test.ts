@@ -8,7 +8,6 @@ import type { MonthProfit } from "@mbl/domain/engine/months";
 import { add, mul, parse } from "@mbl/domain/money";
 import { closeMonth } from "@/server/actions/months";
 import { reverseEntry } from "@/server/actions/reverse";
-import { saveSale } from "@/server/actions/sale";
 import { loadBooksData } from "@/server/books";
 import { entryKinds } from "@mbl/domain/charts/kinds";
 import {
@@ -38,6 +37,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
 const savePurchase = (input: unknown) => api.savePurchase(input);
+const saveSale = (input: unknown) => api.saveSale(input);
 let userId = "";
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 

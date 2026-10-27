@@ -702,9 +702,17 @@ Screenshots: each form saving, the duplicate warning, the Undo toast.
     - Switched: `purchase-actions` (ported), `card-page`; charts, journal-actions and lock-actions
       gain the names.
     - **Tests:** 5 files, 22 passed; E2E 5 passed.
-- [ ] **N-3.4 Sales (incl. "Received now", Undo)**
+- [x] **N-3.4 Sales (incl. "Received now", Undo)**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/sale.ts`
-  - **Tests:** [ ] `sale-actions.test`; `sale.spec`, `entry-flow.spec`.
+  - **Tests:** [x] `sale-actions.test`; `sale.spec`, `entry-flow.spec`.
+  - **Result (2026-10-27):**
+    - `apps/api/src/sale/*`; `PUT|DELETE /sales`.
+    - `apps/api/src/stock/lots.ts` is web's `stockLots` with `q` required (the write path's part;
+      `git diff -w` shows only that). Web's copy stays for its reads and `reverse.ts` until S6/S7.
+    - Web's `src/server/numbers.ts` is deleted: nothing in web uses it any more.
+    - Switched: `sale-actions` (ported); account-reports, charts, journal-actions, lock-actions,
+      messages, numbers, pdf and reports gain the names.
+    - **Tests:** 9 files, 37 passed; E2E 11 passed.
 - [ ] **N-3.5 Returns**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/return.ts`
   - **Tests:** [ ] `return-actions.test`; `return.spec`.

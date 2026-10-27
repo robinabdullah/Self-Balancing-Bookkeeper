@@ -13,7 +13,6 @@ import { add, format, toDecimal } from "@mbl/domain/money";
 import { receiptLabel } from "@mbl/domain/whatsapp";
 import { saveReturn } from "@/server/actions/return";
 import { reverseEntry } from "@/server/actions/reverse";
-import { saveSale } from "@/server/actions/sale";
 import { loadBooks } from "@/server/books";
 import { loadStatementExtras } from "@/server/account-reports";
 import { loadCashBook, loadSales } from "@/server/reports";
@@ -31,6 +30,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const saveSale = (input: unknown) => api.saveSale(input);
 let userId = "";
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 
