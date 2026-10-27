@@ -7,18 +7,20 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S6 done (2026-10-27), uncommitted, waiting for the user's review: N-3.6 … N-3.8.
-  Phase N-3 is complete: no `runAction` in `apps/web`.
-  - CI on the S5 push (run 40584256281) is green.
+- **Session:** S7 done (2026-10-28), uncommitted, waiting for the user's review: N-4.1 … N-4.4,
+  plus the `charts-money.spec` fix for CI run 40593721189 (S6's push; a separate `fix(...)`
+  commit).
   - **Phase gate:**
-    - typecheck and lint clean;
-    - unit 721; integration 155 (35 files);
-    - E2E 48 passed, 1 skipped by design (reversal, month-close, business, card-page,
-      card-secrets, settings; night_owl, 360 + 1280);
-    - parity MATCH (202 files), TTFB over 92 routes 9633 → 6389 ms (−34%).
+    - typecheck and lint clean; denylist empty;
+    - unit 721; integration 177 (38 files);
+    - E2E 89 passed, 3 skipped by design, 1 failed: E-CR-042.1 (desktop), the local-data case
+      noted under N-4.4. It passes on an empty DB, and CI starts empty. The specs: home,
+      journal, dashboard-totals, entry-sheet, sale, purchase, return, money, personal-spend,
+      entry-flow, stock, cards-tab, charts-money, setup, settings (night_owl, 360 + 1280);
+    - parity MATCH (202 files), TTFB over 92 routes 9633 → 6393 ms (−34%).
   - At N-7.2, update the VPS's installed unit file to run `apps/web/server.js` (N-1.2), and do the
     production key-type check (moved from N-2.3).
-- **Next:** S7 (`/next-phase S7`, in a new conversation), after S6 is pushed and CI is green.
+- **Next:** S8 (`/next-phase S8`, in a new conversation), after S7 is pushed and CI is green.
 - **Blocked on:** —
 
 ## How to use
@@ -919,9 +921,26 @@ Screenshots: those screens, plus the parity report.
       - I-N-4.3.2: an unknown or malformed edit id gets a 404;
       - I-N-4.3.3: 401 without a token;
       - the books balance.
-- [ ] **N-4.4 Lists: stock, cards, customers, suppliers, people**
+- [x] **N-4.4 Lists: stock, cards, customers, suppliers, people**
   - **Ref:** the list `page.tsx` files under `D:/Projects/Mobile-Business-Lite/src/app/(app)/`
-  - **Tests:** [ ] the `stock` and `cards-tab` E2E; parity.
+  - **Tests:** [x] the `stock` and `cards-tab` E2E; parity.
+  - **Result (2026-10-28):** (a Sonnet subagent wrote it; reviewed here)
+    - `apps/api/src/views/lists.controller.ts`: `GET /views/{stock,cards,customers,suppliers,people}`
+      with the finished rows (`cardRows`, `accountRows`, `peopleRows`), and stock with its
+      `names`.
+    - The 5 pages make one read each; `stock-list` takes `LotInfo` from the contract.
+    - **Tests:** `views-lists.test.ts` (6):
+      - I-N-4.4.1: each view equals web's loaders;
+      - I-N-4.4.2: 401 without a token;
+      - the books balance.
+- **Fix (CI run 40593721189, N-3.8's push):** `charts-money.spec` E-CR-046.1 failed on mobile.
+  - `lastRow` read the phone list while the page still showed its loading skeleton:
+    `evaluateAll` doesn't wait.
+  - `lastRow` now waits for the last row first. The test only; S6 didn't cause it. It is a
+    separate `fix(...)` change.
+  - **Found (not changed):** E-CR-042.1 needs that day's local cash at ≤ 0 ("the local books may
+    already be below 0"). After an integration run leaves the parity book in the local DB, it
+    fails locally. It passes on an empty DB, and CI's E2E job always starts empty.
 
 ### Session S8
 Screenshots: those screens, plus the parity report.

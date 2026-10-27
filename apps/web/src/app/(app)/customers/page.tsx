@@ -1,21 +1,12 @@
+import type { CustomersView } from "@mbl/api/views/lists.controller";
+import { api } from "@/api/client";
 import { AccountList } from "@/components/accounts/account-list";
 import { AccountTabs } from "@/components/shell/account-tabs";
-import { accountRows } from "@mbl/domain/accounts";
-import { loadBooks } from "@/server/books";
-import { loadSetup } from "@/server/setup";
 
 // UIDD §4.8 (task 4.3.1): every customer with what they owe (from the books) and their last entry.
+// N-4.4: one `/views/customers` read.
 export default async function CustomersPage() {
-  const [{ books }, setup] = await Promise.all([loadBooks(), loadSetup()]);
-  const rows = accountRows(
-    setup.customers.map((c) => ({
-      id: c.id,
-      name: c.display,
-      terms: [c.shopName, c.proprietorName, c.phone],
-      badge: c.active ? undefined : "Inactive",
-    })),
-    books.customers,
-  );
+  const { rows } = await api<CustomersView>("/views/customers");
   return (
     <>
       <h1 className="sr-only">Customers</h1>

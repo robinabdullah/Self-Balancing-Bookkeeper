@@ -38,6 +38,7 @@ import { ReturnOptionsService } from "./returns/return-options.service";
 import { StockService } from "./stock/stock.service";
 import { FormViewsController } from "./views/forms.controller";
 import { HomeViewsController } from "./views/home.controller";
+import { ListViewsController } from "./views/lists.controller";
 
 @Module({
   imports: [ConfigModule, DbModule, AuthModule],
@@ -57,6 +58,7 @@ import { HomeViewsController } from "./views/home.controller";
     CardSecretsController,
     PasskeysController,
     HomeViewsController,
+    ListViewsController,
     FormViewsController,
   ],
   providers: [

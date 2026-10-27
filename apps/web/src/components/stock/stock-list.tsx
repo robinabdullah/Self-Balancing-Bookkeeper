@@ -13,7 +13,7 @@ import type { StockLot } from "@mbl/domain/engine/stock";
 import { format } from "@mbl/domain/money";
 import { type ModelStock, stockByModel } from "@mbl/domain/stock-view";
 import { cn } from "@/lib/utils";
-import type { LotInfo } from "@/server/stock";
+import type { LotInfo } from "@/api/contract";
 
 // UIDD §4.7 (task 4.2, D-027): stock grouped by model; expanding a model shows its lots. Filter in
 // stock (default) or all; search by model or IMEI/note. A lot is a stacked card on a phone and a

@@ -1,13 +1,12 @@
+import type { CardsView } from "@mbl/api/views/lists.controller";
+import { api } from "@/api/client";
 import { CardList } from "@/components/cards/card-list";
 import { AccountTabs } from "@/components/shell/account-tabs";
-import { cardRows } from "@mbl/domain/card-view";
-import { loadBooks } from "@/server/books";
-import { loadSetup } from "@/server/setup";
 
 // UIDD §4.8 (task 4.4.1): every card with its balance, Available ≈, next due and status (SRS §6).
+// N-4.4: one `/views/cards` read.
 export default async function CardsPage() {
-  const [{ books }, setup] = await Promise.all([loadBooks(), loadSetup()]);
-  const rows = cardRows(setup.cards, books.cards);
+  const { rows } = await api<CardsView>("/views/cards");
   return (
     <>
       <h1 className="sr-only">Cards</h1>
