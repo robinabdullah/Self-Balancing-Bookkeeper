@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
 import { deleteBillDates, saveBillDates } from "@/server/actions/cards";
-import { reverseEntry } from "@/server/actions/reverse";
 import { loadBooks } from "@/server/books";
 import { CONFLICT, type Result } from "@/server/action";
 import { partnerApi } from "./api";
@@ -17,6 +16,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const reverseEntry = (input: unknown) => api.reverseEntry(input);
 let userId = "";
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 const deleteMoneyEntry = (input: unknown) => api.deleteMoneyEntry(input);

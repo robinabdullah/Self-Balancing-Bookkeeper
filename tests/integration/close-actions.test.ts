@@ -1,25 +1,20 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
-import { closeMonth } from "@/server/actions/months";
+import type { Result } from "@mbl/domain/result";
 import { loadBooksData } from "@/server/books";
 import { expectBalanced } from "../engine/invariant";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // Task 5.2 + CR-009 (SRS §4 month close tables, §7; D-023, D-028): closing a month through the
-// action. The session and `revalidatePath` are stood in for as in action.test.ts. Synthetic data
-// only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-
+// action. N-3.6: the close goes through the api (the facade), as a signed-in partner. Synthetic
+// data only (D-014).
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
+const closeMonth = (input: unknown) => api.closeMonth(input);
 let userId = "";
 
 const today = dhakaToday();
@@ -56,7 +51,7 @@ const s8Lines = (rate: string, amount: string) =>
     [ids.nila, "card", "", "", ""],
   ] as [string, "cash" | "card", string, string, string][];
 
-async function ok(result: Awaited<ReturnType<typeof closeMonth>>) {
+async function ok(result: Result) {
   if (result.status !== "ok") throw new Error(JSON.stringify(result));
   return result;
 }
@@ -76,14 +71,8 @@ const cashback = (date: string, amount: string) =>
     values ('cashback', ${date}, ${amount}, 'cash', ${userId})`;
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `close-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql, "Partner A");
+  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50)`;
   await sql`insert into people (id, name, kind) values
@@ -91,7 +80,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql`truncate money_entries, allocations, month_closes, audit_log`;
   const opening = `${M1}-01`;
   await sql`insert into money_entries (type, date, amount, opening_kind, person_id, created_by)
@@ -107,8 +95,7 @@ beforeEach(async () => {
 afterAll(async () => {
   await sql`truncate money_entries, allocations, month_closes, audit_log`;
   await sql`delete from people`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });

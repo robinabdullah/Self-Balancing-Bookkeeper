@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import ExcelJS from "exceljs";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { getTableName, is } from "drizzle-orm";
@@ -8,25 +7,25 @@ import * as schema from "@mbl/db/schema";
 import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { add, avgUnit, sub } from "@mbl/domain/money";
 import { type Books, computeBooks } from "@mbl/domain/engine/index";
-import type { Result } from "@/server/action";
-import { closeMonth } from "@/server/actions/months";
+import type { Result } from "@mbl/domain/result";
 import { loadBooksData } from "@/server/books";
 import { exportWorkbook, lastExport } from "@/server/export";
 import { expectBalanced } from "../engine/invariant";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // Task 6.4 (PRD §4.7, SRS §10, D-017): the export workbook has a sheet per table plus the summary
 // sheets; amounts are numbers; each summary total equals `computeBooks`; each export writes an
-// `export` audit row. The session and `revalidatePath` (for the close) are stood in for as in
-// action.test.ts. Synthetic data only (D-014). Amounts in SQL are taka, as the DB stores them.
+// `export` audit row. The export's session is stood in for as in action.test.ts; N-3.6: the
+// close goes through the api (the facade), as the same partner. Synthetic data only (D-014).
+// Amounts in SQL are taka, as the DB stores them.
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
+const closeMonth = (input: unknown) => api.closeMonth(input);
 let userId = "";
 
 const today = dhakaToday();
@@ -83,15 +82,9 @@ const total = (name: string) => rows(name).find((r) => Object.values(r)[0] === "
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `export-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
+  api = await partnerApi(sql, "Partner A");
+  userId = api.user.userId;
   getUser.mockResolvedValue({ id: userId });
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50),
     (${ids.ivy}, 'Ivy', 'investor', null)`;
@@ -148,6 +141,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await api.close();
   await sql.end();
 });
 

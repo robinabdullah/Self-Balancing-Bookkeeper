@@ -6,8 +6,6 @@ import { breakdown } from "@mbl/domain/dashboard";
 import { computeBooks } from "@mbl/domain/engine/index";
 import type { MonthProfit } from "@mbl/domain/engine/months";
 import { add, mul, parse } from "@mbl/domain/money";
-import { closeMonth } from "@/server/actions/months";
-import { reverseEntry } from "@/server/actions/reverse";
 import { loadBooksData } from "@/server/books";
 import { entryKinds } from "@mbl/domain/charts/kinds";
 import {
@@ -36,6 +34,8 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const closeMonth = (input: unknown) => api.closeMonth(input);
+const reverseEntry = (input: unknown) => api.reverseEntry(input);
 const savePurchase = (input: unknown) => api.savePurchase(input);
 const saveSale = (input: unknown) => api.saveSale(input);
 let userId = "";

@@ -724,11 +724,24 @@ Screenshots: each form saving, the duplicate warning, the Undo toast.
 ### Session S6
 Screenshots: a reversal, a month close, the logo upload, the card reveal.
 
-- [ ] **N-3.6 Reverse; month close and re-open**
+- [x] **N-3.6 Reverse; month close and re-open**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/reverse.ts`,
     `src/server/actions/months.ts`
-  - **Tests:** [ ] `journal-actions`, `close-actions`, `reopen-actions`, `lock-actions`;
+  - **Tests:** [x] `journal-actions`, `close-actions`, `reopen-actions`, `lock-actions`;
     `reversal.spec`, `month-close.spec`.
+  - **Result (2026-10-27):**
+    - `apps/api/src/reverse/*`: `PUT /reversals`.
+    - `apps/api/src/months/*`: `PUT /month-closes` (close) and `DELETE /month-closes` (re-open).
+      The close reads the books through `BooksService.loadBooksData(tx)`.
+    - The Zod schemas (`reverseSchema`, `closeSchema`) are exported for `@ZodBody`.
+      `git diff --no-index -w` against the Ref shows only that and the wrapper.
+    - Web's `actions/reverse.ts` keeps `export type EntryTable` (journal.ts and entries.ts use
+      it).
+    - Switched to the facade:
+      - `close-actions` and `export` (both made their own Auth user before);
+      - `journal-actions`, `reopen-actions` and `lock-actions`;
+      - charts, numbers, pdf, reports, profit-actions, money-actions and cards gain the names.
+    - **Tests:** 12 files, 57 passed; E2E 13 passed.
 - [ ] **N-3.7 Card bill dates; business details, logo (1 MB), templates, PDF terms, bank accounts**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/cards.ts`,
     `src/server/actions/business.ts`

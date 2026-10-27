@@ -6,7 +6,6 @@ import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { type Effect, type Entry, type Partner, postEntry } from "@mbl/domain/engine/post";
 import { parse } from "@mbl/domain/money";
 import type { Result } from "@/server/action";
-import { reverseEntry } from "@/server/actions/reverse";
 import { loadEntry, loadJournal } from "@/server/journal";
 import { stockLots } from "@/server/stock";
 import { expectBalanced, posted } from "../engine/invariant";
@@ -23,6 +22,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const reverseEntry = (input: unknown) => api.reverseEntry(input);
 const savePurchase = (input: unknown) => api.savePurchase(input);
 const deletePurchase = (input: unknown) => api.deletePurchase(input);
 const saveSale = (input: unknown) => api.saveSale(input);

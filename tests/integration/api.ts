@@ -144,6 +144,10 @@ export function as(app: INestApplication, user: TestUser) {
     // N-3.5: returns (apps/api/src/return).
     saveReturn: (input: unknown) => write("put", "/returns", input),
     deleteReturn: (input: unknown) => write("delete", "/returns", input),
+    // N-3.6: reverse (apps/api/src/reverse); month close and re-open (apps/api/src/months).
+    reverseEntry: (input: unknown) => write("put", "/reversals", input),
+    closeMonth: (input: unknown) => write("put", "/month-closes", input),
+    reopenMonth: (input: unknown) => write("delete", "/month-closes", input),
   };
 }
 

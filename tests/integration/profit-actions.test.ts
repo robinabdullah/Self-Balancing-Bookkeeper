@@ -4,7 +4,6 @@ import { db } from "@mbl/db";
 import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
 import type { Result } from "@mbl/domain/result";
-import { closeMonth } from "@/server/actions/months";
 import { loadBooksData, moneyFormBalances } from "@/server/books";
 import { expectBalanced } from "../engine/invariant";
 import { partnerApi } from "./api";
@@ -20,6 +19,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const closeMonth = (input: unknown) => api.closeMonth(input);
 let userId = "";
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 

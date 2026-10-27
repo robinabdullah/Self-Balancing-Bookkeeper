@@ -8,10 +8,14 @@ import { DbModule } from "./db/db.module";
 import { HealthController } from "./health.controller";
 import { MoneyController } from "./money/money.controller";
 import { MoneyService } from "./money/money.service";
+import { MonthsController } from "./months/months.controller";
+import { MonthsService } from "./months/months.service";
 import { PurchaseController } from "./purchase/purchase.controller";
 import { PurchaseService } from "./purchase/purchase.service";
 import { ReturnController } from "./return/return.controller";
 import { ReturnService } from "./return/return.service";
+import { ReverseController } from "./reverse/reverse.controller";
+import { ReverseService } from "./reverse/reverse.service";
 import { SaleController } from "./sale/sale.controller";
 import { SaleService } from "./sale/sale.service";
 import { SettingsController } from "./settings/settings.controller";
@@ -30,6 +34,8 @@ import { ShellController } from "./shell/shell.controller";
     PurchaseController,
     SaleController,
     ReturnController,
+    ReverseController,
+    MonthsController,
   ],
   providers: [
     Runner,
@@ -40,6 +46,8 @@ import { ShellController } from "./shell/shell.controller";
     PurchaseService,
     SaleService,
     ReturnService,
+    ReverseService,
+    MonthsService,
   ],
 })
 export class AppModule {}

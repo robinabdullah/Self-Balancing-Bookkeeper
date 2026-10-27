@@ -7,8 +7,6 @@ import { defaultReversal } from "@mbl/domain/guards";
 import { parse } from "@mbl/domain/money";
 import type { Result } from "@mbl/domain/result";
 import { loadCalendar } from "@/server/action";
-import { closeMonth } from "@/server/actions/months";
-import { reverseEntry } from "@/server/actions/reverse";
 import { loadBooksData } from "@/server/books";
 import { loadJournal } from "@/server/journal";
 import { expectBalanced } from "../engine/invariant";
@@ -25,6 +23,8 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const closeMonth = (input: unknown) => api.closeMonth(input);
+const reverseEntry = (input: unknown) => api.reverseEntry(input);
 const savePurchase = (input: unknown) => api.savePurchase(input);
 const deletePurchase = (input: unknown) => api.deletePurchase(input);
 const saveSale = (input: unknown) => api.saveSale(input);

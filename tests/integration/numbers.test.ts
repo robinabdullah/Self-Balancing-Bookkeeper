@@ -4,7 +4,6 @@ import { db } from "@mbl/db";
 import { dhakaToday } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
 import type { Result } from "@mbl/domain/result";
-import { reverseEntry } from "@/server/actions/reverse";
 import { loadBooksData } from "@/server/books";
 import { expectBalanced } from "../engine/invariant";
 import { partnerApi } from "./api";
@@ -21,6 +20,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const reverseEntry = (input: unknown) => api.reverseEntry(input);
 const saveSale = (input: unknown) => api.saveSale(input);
 const deleteSale = (input: unknown) => api.deleteSale(input);
 let userId = "";
