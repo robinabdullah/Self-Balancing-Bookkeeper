@@ -9,7 +9,7 @@ import { type Allocation, computeClose, monthProfit } from "@mbl/domain/engine/m
 import type { MoneyEntry, Partner, PurchaseEntry, ReturnEntry } from "@mbl/domain/engine/post";
 import { parse, toDecimal } from "@mbl/domain/money";
 import { E2E_CARD_KEY, PARTNER } from "../../tests/e2e/helpers";
-import { linkPartner } from "../../tests/e2e/global-setup";
+import { ensurePartner, linkPartner } from "../../tests/e2e/global-setup";
 import { truncateAll } from "../../tests/integration/local-db";
 import { PARITY_TODAY } from "./config";
 
@@ -59,6 +59,9 @@ export async function seedParity(sql: postgres.Sql): Promise<Seeded> {
     new Date(Date.parse(`${date}T04:00:00.000Z`) + ++seq * 1000).toISOString();
 
   await truncateAll(sql);
+  // The partner signs in to the dump and closes August, so they must exist even where no E2E
+  // run made them (CI's integration job).
+  await ensurePartner();
   await linkPartner(sql);
   await sql`update profiles set theme = 'night_owl'
     where user_id = (select id from auth.users where email = ${PARTNER.email})`;

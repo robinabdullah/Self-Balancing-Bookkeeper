@@ -7,11 +7,7 @@ import { localSupabase } from "./local-supabase";
 // Seeds the partner login in local Supabase Auth (sign-ups are off, so admin creates it) and
 // links it in `profiles` with role = partner (SRS §11).
 export default async function globalSetup() {
-  const { url, serviceRoleKey } = localSupabase();
-  const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
-  const { error } = await admin.auth.admin.createUser({ ...PARTNER, email_confirm: true });
-  if (error && error.code !== "email_exists") throw error;
-
+  await ensurePartner();
   const sql = localSql();
   try {
     await migrateLocal(sql);
@@ -19,6 +15,14 @@ export default async function globalSetup() {
   } finally {
     await sql.end();
   }
+}
+
+/** The partner's Auth user, if missing (also the parity seed's: its August close names them). */
+export async function ensurePartner() {
+  const { url, serviceRoleKey } = localSupabase();
+  const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+  const { error } = await admin.auth.admin.createUser({ ...PARTNER, email_confirm: true });
+  if (error && error.code !== "email_exists") throw error;
 }
 
 /** The partner's `profiles` row (also re-added by a spec that empties the tables). */
