@@ -22,8 +22,18 @@ import { writeSequence } from "./writes";
 
 type Target = { name: "ref" | "self"; dir: string; appFiles: string[] };
 
-/** This repo's app files: a build newer than all of them is reused (as playwright.config.ts). */
-const SELF_FILES = ["src", "next.config.ts", "postcss.config.mjs", "tsconfig.json", "package-lock.json"];
+/** This repo's app (apps/web, N-1.2) and the files it builds from, relative to it: a build newer
+ * than all of them is reused (as playwright.config.ts). */
+const SELF = join(ROOT, "apps/web");
+const SELF_FILES = [
+  "src",
+  "next.config.ts",
+  "postcss.config.mjs",
+  "tsconfig.json",
+  "../../tsconfig.json",
+  "../../packages",
+  "../../package-lock.json",
+];
 
 function newest(path: string): number {
   if (!existsSync(path)) return 0;
@@ -217,7 +227,7 @@ async function main() {
     const dir = refCopy();
     return dump({ name: "ref", dir, appFiles: [".parity-sha"] }, a ?? "baseline");
   }
-  await dump({ name: "self", dir: ROOT, appFiles: SELF_FILES }, a ?? "self");
+  await dump({ name: "self", dir: SELF, appFiles: SELF_FILES }, a ?? "self");
   process.exit(report(join(OUT, "baseline"), join(OUT, a ?? "self")) ? 0 : 1);
 }
 

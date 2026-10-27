@@ -12,7 +12,7 @@ import { LOCAL_DB_URL, localSql } from "./local-db";
 // holding synthetic rows: it numbers the existing sales and customer payments in (date,
 // created_at) order without the reversals, sets the sequences after them, seeds the business and
 // lets one owner's "EBL" be both a Visa and a Mastercard. A throwaway database on local Supabase.
-const MIGRATIONS = "src/db/migrations";
+const MIGRATIONS = "apps/web/src/db/migrations";
 const name = `mbl_migration_${randomUUID().replaceAll("-", "")}`;
 const admin = localSql();
 let sql: postgres.Sql;

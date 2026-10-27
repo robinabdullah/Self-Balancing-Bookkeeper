@@ -5,12 +5,14 @@ import { LOCAL_DB_URL } from "./tests/integration/local-db";
 export default defineConfig({
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@": fileURLToPath(new URL("./apps/web/src", import.meta.url)),
       // `server-only` throws outside Next's server bundle; tests import server modules directly.
       "server-only": fileURLToPath(new URL("./tests/stubs/server-only.ts", import.meta.url)),
     },
   },
   test: {
+    // N-1.2: tests run from the repo root; the PDF fonts are in the app (src/pdf/document.tsx).
+    env: { PDF_FONT_DIR: fileURLToPath(new URL("./apps/web/src/pdf/fonts", import.meta.url)) },
     projects: [
       {
         extends: true,

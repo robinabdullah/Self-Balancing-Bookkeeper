@@ -56,12 +56,14 @@ deploy() {
   log "Migrating the database"
   npx drizzle-kit migrate
 
+  # N-1.2: the app is apps/web of a workspace; its standalone tree keeps that layout, with
+  # server.js in apps/web next to its static files and `.env.local`.
   log "Copying the build to $NEW"
   sudo rm -rf "$NEW"
-  sudo cp -a .next/standalone "$NEW"
-  sudo cp -a .next/static "$NEW/.next/static"
-  if [[ -d public ]]; then sudo cp -a public "$NEW/public"; fi
-  sudo cp -a .env.local "$NEW/.env.local"
+  sudo cp -a apps/web/.next/standalone "$NEW"
+  sudo cp -a apps/web/.next/static "$NEW/apps/web/.next/static"
+  if [[ -d apps/web/public ]]; then sudo cp -a apps/web/public "$NEW/apps/web/public"; fi
+  sudo cp -a .env.local "$NEW/apps/web/.env.local"
 
   log "Switching to the new copy and restarting $SERVICE"
   sudo rm -rf "$OLD"

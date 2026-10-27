@@ -1,8 +1,8 @@
 ---
 paths:
-  - "src/db/**"
-  - "src/server/**"
-  - "src/app/**"
+  - "apps/web/src/db/**"
+  - "apps/web/src/server/**"
+  - "apps/web/src/app/**"
   - "scripts/**"
 ---
 
@@ -12,7 +12,7 @@ paths:
   - RLS is enabled on every table, with **no policies**;
   - DB access is server-only through Drizzle (`import 'server-only'`);
   - never expose `DATABASE_URL` or a service key to the client or to `NEXT_PUBLIC_*`.
-- **Every server action** goes through the one helper in `src/server/action.ts`:
+- **Every server action** goes through the one helper in `apps/web/src/server/action.ts`:
   1. `requirePartner()` (session + `role = partner`);
   2. Zod;
   3. duplicate check;

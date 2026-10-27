@@ -19,18 +19,18 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./apps/web/src/*"]
     }
   },
   "include": [
-    "next-env.d.ts",
+    "apps/web/next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next-e2e/types/**/*.ts",
-    ".next-e2e/dev/types/**/*.ts",
-    ".next-parity/types/**/*.ts",
-    ".next-parity/dev/types/**/*.ts"
+    "apps/web/.next/types/**/*.ts",
+    "apps/web/.next-e2e/types/**/*.ts",
+    "apps/web/.next-e2e/dev/types/**/*.ts",
+    "apps/web/.next-parity/types/**/*.ts",
+    "apps/web/.next-parity/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

@@ -1,7 +1,7 @@
 # Deploying to the partners' VPS (D-030, D-031)
 
 The app runs on the partners' Singapore VPS as a **systemd** service (a Next.js standalone build,
-`node server.js` on `127.0.0.1:4005`, as `ubuntu`, Node 20 from nvm) behind the VPS's **existing
+`node apps/web/server.js` on `127.0.0.1:4005`, as `ubuntu`, Node 20 from nvm) behind the VPS's **existing
 nginx**, which serves HTTPS on `business.example.com` (a placeholder: use your own domain). No Docker. Supabase stays for the database
 and login.
 
@@ -9,7 +9,8 @@ and login.
 /home/ubuntu/Mobile-Business-Lite/   the repo clone on `main`: pull and build here
   .env.local                         the production secrets (mode 600, git-ignored); on a
                                      dev laptop `.env.local` is local Supabase instead (D-066)
-/var/www/mobile-business/            the live copy (server.js, .next/, node_modules/, .env.local)
+/var/www/mobile-business/            the live copy (node_modules/, and apps/web/ with server.js,
+                                     .next/ and .env.local)
 /var/www/mobile-business-old/        the previous copy, for rollback
 ```
 

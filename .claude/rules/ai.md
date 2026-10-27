@@ -1,14 +1,14 @@
 ---
 paths:
-  - "src/server/ai/**"
-  - "src/app/(app)/ask/**"
-  - "src/lib/labels.ts"
+  - "apps/web/src/server/ai/**"
+  - "apps/web/src/app/(app)/ask/**"
+  - "apps/web/src/lib/labels.ts"
 ---
 
 # AI assistant rules (docs/AI.md, D-057)
 
 - **Read-only (§2):**
-  - nothing under `src/server/ai/**` imports `@/server/actions/*`, `@/server/action` or `@/db`
+  - nothing under `apps/web/src/server/ai/**` imports `@/server/actions/*`, `@/server/action` or `@/db`
     (only `read.ts` may);
   - all AI data loading runs inside `aiRead()`, a READ ONLY transaction on the shared pool (never a
     second pool, CR-030);

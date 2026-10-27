@@ -8,6 +8,8 @@ import { localSupabase } from "./tests/e2e/local-supabase";
 // overrides it if Windows/Hyper-V reserves the port (`netsh int ipv4 show excludedportrange`).
 const PORT = Number(process.env.E2E_PORT ?? 3001);
 const supabase = localSupabase();
+// N-1.2: the app is apps/web; its server runs there (cwd), so its paths are relative to it.
+const APP = "apps/web";
 const DIST = ".next-e2e";
 
 /** The newest change time of a file or of anything under a folder. */
@@ -21,16 +23,18 @@ function newest(path: string): number {
 // D-065: locally, a build no app file is newer than is reused (a re-run after a test-only fix
 // skips the ~2½-min build). CI always builds.
 const APP_FILES = [
-  "src",
-  "next.config.ts",
-  "postcss.config.mjs",
+  `${APP}/src`,
+  `${APP}/next.config.ts`,
+  `${APP}/postcss.config.mjs`,
+  `${APP}/tsconfig.json`,
   "tsconfig.json",
+  "packages",
   "package-lock.json",
 ];
 const buildIsFresh =
   !process.env.CI &&
-  existsSync(`${DIST}/BUILD_ID`) &&
-  statSync(`${DIST}/BUILD_ID`).mtimeMs > Math.max(...APP_FILES.map(newest));
+  existsSync(`${APP}/${DIST}/BUILD_ID`) &&
+  statSync(`${APP}/${DIST}/BUILD_ID`).mtimeMs > Math.max(...APP_FILES.map(newest));
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -75,6 +79,7 @@ export default defineConfig({
   // warns about `output: "standalone"` but serves the same build the VPS runs.
   webServer: {
     command: `${buildIsFresh ? "" : "npx next build && "}npx next start --hostname 127.0.0.1 --port ${PORT}`,
+    cwd: APP,
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,

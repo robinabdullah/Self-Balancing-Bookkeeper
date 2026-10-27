@@ -51,7 +51,7 @@ trading business. It uses BDT ৳ and the Asia/Dhaka time zone, and replaces the
     not carry over. The scripts refuse a non-local DB unless `CONFIRM_PROD=1` is set.
   - Production reads should be rare. Use local Supabase for tests, experiments and checks.
   - A production write always starts with a dry run shown to the user.
-- **The AI is read-only** (`docs/AI.md` §2): nothing in `src/server/ai/**` imports a server action
+- **The AI is read-only** (`docs/AI.md` §2): nothing in `apps/web/src/server/ai/**` imports a server action
   or writes; its figures are rendered from the screens' view-models, never typed by the model.
 - Domain detail lives in `.claude/rules/` (money/engine, DB/actions, AI); it loads when those files
   are touched.
@@ -77,7 +77,7 @@ npm run test:int                 # server actions vs local Supabase
 npm run test:e2e                 # Playwright, 360px + 1280px, all themes (CI, before a deploy)
 E2E_THEMES=night_owl npx playwright test <specs>   # a task's local E2E, one theme (D-065)
 npm run typecheck && npm run lint
-npx drizzle-kit generate         # migration from src/db/schema.ts
+npx drizzle-kit generate         # migration from apps/web/src/db/schema.ts
 npx drizzle-kit migrate          # apply to DATABASE_URL
 ```
 Env (never committed): `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`,

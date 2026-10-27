@@ -7,10 +7,10 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S3 in progress. N-1.1 (the parity harness) is done and waiting for review. S3 stops
-  for review after each step (the user chose this, because the moves can't be split later).
-  The first CI run on `dev` is green.
-- **Next:** N-1.2 (workspaces plus `apps/web`), after N-1.1 is committed.
+- **Session:** S3 in progress. N-1.1 is committed locally (`5f72103`, not pushed). N-1.2
+  (workspaces plus `apps/web`) is done and waiting for review: the `git mv` is staged and the
+  rewrite is unstaged. S3 stops for review after each step.
+- **Next:** N-1.3 (`packages/domain`), after N-1.2 is committed.
 - **Blocked on:** —
 
 ## How to use
@@ -240,14 +240,48 @@ Screenshots: the parity report; Home, Stock, a PDF (unchanged).
       - Every `next build` adds its dist's types to `tsconfig.json`; the `.next-parity` lines are
         kept.
       - One run takes ~4 min with a fresh build.
-- [ ] **N-1.2 Workspaces plus `apps/web`**
+- [x] **N-1.2 Workspaces plus `apps/web`** (2026-10-27)
   - **Ref:** `D:/Projects/Mobile-Business-Lite/next.config.ts`, `playwright.config.ts`,
     `vitest.config.ts`, `scripts/deploy.sh`
-  - [ ] A pure `git mv` commit, then a path-rewrite commit.
-  - [ ] Updated: tsconfig, eslint, the vitest projects, Playwright `APP_FILES`, `next.config.ts`
+  - [x] A pure `git mv` commit, then a path-rewrite commit.
+  - [x] Updated: tsconfig, eslint, the vitest projects, Playwright `APP_FILES`, `next.config.ts`
     (`transpilePackages`, `outputFileTracingRoot`, `turbopack.root`), CI, and the `deploy.sh` and
     unit paths.
+  - **Tests:** [x] typecheck, lint, unit, integration · [x] E2E smoke, home, stock, pdf, export
+    (night_owl, 360 + 1280) · [x] M-N-1.2.1 the standalone build runs like the VPS · [x] parity.
   - **Acceptance:** full suites green; parity.
+  - **Result (2026-10-27):**
+    - **The move:** `src`, `next.config.ts`, `postcss.config.mjs` and `components.json` →
+      `apps/web/` (294 staged renames).
+      - The root keeps `tests/`, `scripts/`, `supabase/`, `deploy/`, `docs/` and the
+        vitest/playwright/drizzle configs, since they will span web and api.
+      - The root `package.json` gets `workspaces`, and its `dependencies` move to
+        `apps/web/package.json` (`@mbl/web`). Root `dev`, `build` and `start` run `-w @mbl/web`.
+      - The root `tsconfig.json` still typechecks everything (`@/*` → `apps/web/src/*`).
+        `apps/web/tsconfig.json` extends it for Next. There is no separate base file.
+    - **`apps/web/next.config.ts`:**
+      - `outputFileTracingRoot` and `turbopack.root` point to the repo root;
+      - it loads the root `.env.local` with `process.loadEnvFile`, which never overrides set
+        variables. (`@next/env` caches its first load, so it can't load a second folder.)
+      - `transpilePackages` comes in N-1.3, when there is a package.
+    - **PDF fonts:** `src/pdf/document.tsx` reads `PDF_FONT_DIR` first, and vitest sets it. Next
+      and the standalone server still find the fonts from their cwd (`apps/web`).
+    - **Playwright** and the parity harness run the server with cwd `apps/web`.
+    - **Deploy:**
+      - `deploy.sh` copies `apps/web/.next/standalone` with static files and `.env.local` into
+        `apps/web/`;
+      - the unit file now runs `apps/web/server.js`.
+      - 👤 At N-7.2 the VPS's installed unit file must be updated too.
+    - **CI** is unchanged: it runs from the root.
+    - The `.claude/rules` globs, CLAUDE.md, `.prettierignore`, eslint and drizzle paths now point
+      to `apps/web/src`.
+    - **Results:**
+      - unit 718 and integration 140;
+      - E2E 23 passed, 2 skipped (the specs' viewport skips);
+      - the standalone server answers `/login` 200 and `/logo` 200 (DB, env next to
+        `server.js`), and `/` → 307 to login;
+      - `drizzle-kit generate` reports no change;
+      - parity MATCH (202 files, TTFB +3.3%).
 - [ ] **N-1.3 `packages/domain`**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/lib/**`, `src/components/journal/labels.ts`
   - [ ] Move the pure lib (engine, money, dates, guards, validation, view helpers, `labels.ts`,

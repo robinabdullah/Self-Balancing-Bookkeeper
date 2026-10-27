@@ -16,9 +16,10 @@ import type { PdfFrame } from "./layout";
 
 // D-041 (UIDD §4.16): the A4 page every PDF shares. Noto Sans, with Noto Sans Bengali as its
 // fallback for the ৳ glyph; the fonts ship with the standalone build (`outputFileTracingIncludes`
-// in next.config.ts), and `server.js` runs from that folder, so `cwd` finds them.
+// in next.config.ts), and `server.js` runs from that folder, so `cwd` finds them. Tests run from
+// the repo root and name the folder in PDF_FONT_DIR (vitest.config.ts, N-1.2).
 
-const fonts = path.join(process.cwd(), "src/pdf/fonts");
+const fonts = process.env.PDF_FONT_DIR ?? path.join(process.cwd(), "src/pdf/fonts");
 for (const family of ["NotoSans", "NotoSansBengali"]) {
   Font.register({
     family,

@@ -2,8 +2,8 @@ node_modules
 .next
 package-lock.json
 docs
-src/components/ui
-src/db/migrations
+apps/web/src/components/ui
+apps/web/src/db/migrations
 *.md
 .claude
 
