@@ -7,10 +7,12 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S3 in progress. Committed locally, not pushed: N-1.1 (`5f72103`), N-1.2
-  (`f60cd2c` the move, `e719669` the rewrite) and N-1.3 (`b144a48` the move, `0535088` the
-  rewrite). N-1.4 is done and awaits review (the move staged, the rewrite unstaged).
-- **Next:** the S3 phase gate and review, then S4.
+- **Session:** S3 done (2026-10-27), committed locally, not pushed: N-1.1 (`5f72103`), N-1.2
+  (`f60cd2c`, `e719669`), N-1.3 (`b144a48`, `0535088`) and N-1.4 (`6b00b50`, `ba0cd91`).
+  - Phase gate: typecheck and lint clean; unit 720; integration 141; E2E 25 passed, 2 skipped
+    (smoke, home, stock, pdf, export; night_owl); parity MATCH (202 files).
+  - At N-7.2, update the VPS's installed unit file to run `apps/web/server.js` (N-1.2).
+- **Next:** S4 (`/next-phase S4`, in a new conversation), after S3 is pushed and CI is green.
 - **Blocked on:** —
 
 ## How to use
