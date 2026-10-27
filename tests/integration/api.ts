@@ -135,6 +135,9 @@ export function as(app: INestApplication, user: TestUser) {
     // N-3.2: money entries (apps/api/src/money).
     saveMoneyEntry: (input: unknown) => write("put", "/money-entries", input),
     deleteMoneyEntry: (input: unknown) => write("delete", "/money-entries", input),
+    // N-3.3: purchases (apps/api/src/purchase).
+    savePurchase: (input: unknown) => write("put", "/purchases", input),
+    deletePurchase: (input: unknown) => write("delete", "/purchases", input),
   };
 }
 

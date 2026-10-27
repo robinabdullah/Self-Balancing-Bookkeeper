@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
 import { billToPay, cardDetail, visibleBills } from "@mbl/domain/card-view";
@@ -8,22 +7,22 @@ import { addMonths } from "@mbl/domain/dates";
 import { parse } from "@mbl/domain/money";
 import { cleanPrefill } from "@mbl/domain/prefill";
 import { emiPreview } from "@mbl/domain/preview";
-import { savePurchase } from "@/server/actions/purchase";
 import { loadBooks } from "@/server/books";
 import { loadSetup } from "@/server/setup";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
-// I-CR-013.4 / I-CR-013.5 (D-032): pre-fill against real Setup rows, and an EMI card purchase
-// saved through the action as the card page and Home read it. The session and `revalidatePath` are
-// stood in for as in action.test.ts. Synthetic data only (D-014).
+// I-CR-013.4 / I-CR-013.5 (D-032): pre-fill against real Setup rows, and an EMI card purchase saved
+// through the action as the card page and Home read it. The session and `revalidatePath` are stood
+// in for as in action.test.ts. N-3.3: the purchase goes through the api (the facade), as the same
+// partner. Synthetic data only (D-014).
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
+const savePurchase = (input: unknown) => api.savePurchase(input);
 let userId = "";
 const ids = {
   person: randomUUID(),
@@ -35,14 +34,8 @@ const ids = {
 };
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `card-page-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql, "Partner A");
+  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct)
     values (${ids.person}, 'Partner A', 'partner', 100)`;
   await sql`insert into cards (id, name, owner_person_id, statement_day, due_day, active) values
@@ -64,8 +57,7 @@ afterAll(async () => {
   await sql`delete from customers where id in (${ids.customer}, ${ids.oldCustomer})`;
   await sql`delete from models`;
   await sql`delete from people`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });

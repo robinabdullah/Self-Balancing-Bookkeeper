@@ -8,6 +8,8 @@ import { DbModule } from "./db/db.module";
 import { HealthController } from "./health.controller";
 import { MoneyController } from "./money/money.controller";
 import { MoneyService } from "./money/money.service";
+import { PurchaseController } from "./purchase/purchase.controller";
+import { PurchaseService } from "./purchase/purchase.service";
 import { SettingsController } from "./settings/settings.controller";
 import { SetupController } from "./setup/setup.controller";
 import { SetupService } from "./setup/setup.service";
@@ -21,6 +23,7 @@ import { ShellController } from "./shell/shell.controller";
     SettingsController,
     SetupController,
     MoneyController,
+    PurchaseController,
   ],
   providers: [
     Runner,
@@ -28,6 +31,7 @@ import { ShellController } from "./shell/shell.controller";
     BusinessService,
     SetupService,
     MoneyService,
+    PurchaseService,
   ],
 })
 export class AppModule {}

@@ -694,9 +694,14 @@ Screenshots: each form saving, the duplicate warning, the Undo toast.
       their data (account-reports, cards, charts, journal-actions, lock-actions, messages, numbers,
       pdf, profit-actions, reopen-actions, reports). Sonnet subagents edited them; reviewed here.
     - **Tests:** 12 files, 52 passed; E2E 17 passed.
-- [ ] **N-3.3 Purchases**
+- [x] **N-3.3 Purchases**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/purchase.ts`
-  - **Tests:** [ ] `purchase-actions.test`; `purchase.spec`.
+  - **Tests:** [x] `purchase-actions.test`; `purchase.spec`.
+  - **Result (2026-10-27):**
+    - `apps/api/src/purchase/*`; `PUT|DELETE /purchases`.
+    - Switched: `purchase-actions` (ported), `card-page`; charts, journal-actions and lock-actions
+      gain the names.
+    - **Tests:** 5 files, 22 passed; E2E 5 passed.
 - [ ] **N-3.4 Sales (incl. "Received now", Undo)**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/sale.ts`
   - **Tests:** [ ] `sale-actions.test`; `sale.spec`, `entry-flow.spec`.

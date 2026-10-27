@@ -8,7 +8,6 @@ import { parse } from "@mbl/domain/money";
 import type { Result } from "@mbl/domain/result";
 import { loadCalendar } from "@/server/action";
 import { closeMonth } from "@/server/actions/months";
-import { deletePurchase, savePurchase } from "@/server/actions/purchase";
 import { deleteReturn, saveReturn } from "@/server/actions/return";
 import { reverseEntry } from "@/server/actions/reverse";
 import { deleteSale, saveSale } from "@/server/actions/sale";
@@ -28,6 +27,8 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const savePurchase = (input: unknown) => api.savePurchase(input);
+const deletePurchase = (input: unknown) => api.deletePurchase(input);
 let userId = "";
 const deleteMoneyEntry = (input: unknown) => api.deleteMoneyEntry(input);
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
