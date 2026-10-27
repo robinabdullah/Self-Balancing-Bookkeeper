@@ -30,8 +30,7 @@ import { nest } from "@mbl/domain/validation/fields";
 import { sendHref } from "@mbl/domain/href";
 import { saleSchema } from "@mbl/domain/validation/trade";
 import { deleteSale, saveSale } from "@/server/actions/sale";
-import type { EditValues } from "@/server/entries";
-import type { SetupData } from "@/server/setup";
+import type { EditValues, SetupData } from "@/api/contract";
 
 // UIDD §4.4 (task 3.5): the sale bill page. Customer (defaults to the last one used; Walk-in is
 // in the list), repeatable lines (model "· N in stock", qty, unit price), the lots each line takes

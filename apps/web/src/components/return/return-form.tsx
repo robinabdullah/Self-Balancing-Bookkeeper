@@ -24,9 +24,7 @@ import { nest } from "@mbl/domain/validation/fields";
 import { returnSchema } from "@mbl/domain/validation/trade";
 import { sendHref } from "@mbl/domain/href";
 import { deleteReturn, saveReturn } from "@/server/actions/return";
-import type { EditValues } from "@/server/entries";
-import type { BillLine, ReturnLot } from "@/server/returns";
-import type { SetupData } from "@/server/setup";
+import type { BillLine, EditValues, ReturnLot, SetupData } from "@/api/contract";
 
 // UIDD §4.5 (task 3.6): the return modal. Customer return: customer → bill → line → qty → refund
 // per unit (starts at the sale price). Purchase return: reason (Returned to seller · Damaged /

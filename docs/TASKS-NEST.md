@@ -892,10 +892,33 @@ Screenshots: those screens, plus the parity report.
       - I-N-4.2.3: 401 without a token.
       - E2E home, journal, dashboard-totals: 22 passed, 1 skipped (viewport-only).
     - **Parity:** MATCH (202 files); TTFB over 92 routes 9633 → 6249 ms (−35%).
-- [ ] **N-4.3 Entry form pages: sales, purchases, returns, money (new and edit)**
+- [x] **N-4.3 Entry form pages: sales, purchases, returns, money (new and edit)**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/app/(app)/{sales,purchases,returns,money}/**`,
     `src/server/returns.ts`
-  - **Tests:** [ ] `entry-sheet` and the form specs; parity.
+  - **Tests:** [x] `entry-sheet` and the form specs; parity.
+  - **Result (2026-10-28):** (a Sonnet subagent wrote it; reviewed here)
+    - `apps/api/src/returns/return-options.service.ts`: `ReturnOptionsService.returnOptions()`
+      (`git diff -w` against the Ref shows only the wrapper).
+    - `apps/api/src/views/forms.controller.ts`: `GET /views/{sales,purchases,returns,money}/new`
+      and `…/:id/edit`.
+      - An edit route loads `editValues` first and answers 404 for an unknown or malformed id,
+        which web's `api()` turns into the not-found page.
+      - The sale views' lots are filtered to `remaining > 0` in the api.
+      - Money's `isFormType` check stays in the page.
+    - **Web:**
+      - the 8 pages make one read each; `?from` and the prefill stay in web;
+      - `sales/[id]/edit` drops its direct `@mbl/db` import;
+      - the four forms, `setup-forms` and `setup-section` take `SetupData`, `EditValues`,
+        `BillLine` and `ReturnLot` from the contract.
+    - **Temporary:** the Setup page (N-4.6) still passes web's `loadSetup()` (its rows'
+      `createdAt` is a `Date`) to `SetupSection`, so it casts to the contract's `SetupData` once,
+      with a comment. No component reads `createdAt`. The cast goes when the page reads
+      `/views/setup`.
+    - **Tests:** `views-forms.test.ts` (10):
+      - I-N-4.3.1: each view equals web's loaders on the parity book;
+      - I-N-4.3.2: an unknown or malformed edit id gets a 404;
+      - I-N-4.3.3: 401 without a token;
+      - the books balance.
 - [ ] **N-4.4 Lists: stock, cards, customers, suppliers, people**
   - **Ref:** the list `page.tsx` files under `D:/Projects/Mobile-Business-Lite/src/app/(app)/`
   - **Tests:** [ ] the `stock` and `cards-tab` E2E; parity.

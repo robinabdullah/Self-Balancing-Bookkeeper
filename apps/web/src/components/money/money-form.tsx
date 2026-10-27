@@ -27,8 +27,7 @@ import { sendHref } from "@mbl/domain/href";
 import { moneyEntrySchema } from "@mbl/domain/validation/money-entry";
 import { SEND_TYPES } from "@mbl/domain/whatsapp";
 import { deleteMoneyEntry, saveMoneyEntry } from "@/server/actions/money";
-import type { EditValues } from "@/server/entries";
-import type { SetupData } from "@/server/setup";
+import type { EditValues, SetupData } from "@/api/contract";
 
 // UIDD §4.6 (task 3.7): one modal for every single-amount type. The New sheet sets the type
 // (`?type=`); without one, a type picker comes first. Capital in/out and profit

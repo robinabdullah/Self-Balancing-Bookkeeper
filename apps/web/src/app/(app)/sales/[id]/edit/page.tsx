@@ -1,15 +1,11 @@
-import { notFound } from "next/navigation";
+import type { SaleEditView } from "@mbl/api/views/forms.controller";
+import { api } from "@/api/client";
 import { SaleForm } from "@/components/sale/sale-form";
-import { db } from "@mbl/db";
 import { safeFrom } from "@mbl/domain/href";
-import { editValues } from "@/server/entries";
-import { customerDues } from "@/server/books";
-import { loadSetup } from "@/server/setup";
-import { stockLots } from "@/server/stock";
 
 // UIDD §3, §4.10: Edit from the Journal opens the sale page with the stored bill. The lots count
 // this bill's own units as in stock, as the action does (D-004). `from`: where Save and Cancel go
-// back to (D-032).
+// back to (D-032). N-4.3: one `/views/sales/:id/edit` read (a missing bill is a 404).
 export default async function EditSalePage({
   params,
   searchParams,
@@ -18,18 +14,14 @@ export default async function EditSalePage({
   searchParams: Promise<{ from?: string }>;
 }) {
   const [{ id }, { from }] = await Promise.all([params, searchParams]);
-  const edit = await editValues("sale", id);
-  if (!edit) notFound();
-  const [data, dues, lots] = await Promise.all([
-    loadSetup(),
-    customerDues(),
-    stockLots(db, { exceptSaleId: id }),
-  ]);
+  const { edit, data, dues, lots } = await api<SaleEditView>(
+    `/views/sales/${encodeURIComponent(id)}/edit`,
+  );
   return (
     <SaleForm
       data={data}
       dues={dues}
-      lots={lots.filter((l) => l.remaining > 0)}
+      lots={lots}
       lastCustomerId={null}
       edit={edit}
       from={safeFrom(from)}

@@ -34,7 +34,9 @@ import { SetupController } from "./setup/setup.controller";
 import { SetupDataService } from "./setup/setup-data.service";
 import { SetupService } from "./setup/setup.service";
 import { ShellController } from "./shell/shell.controller";
+import { ReturnOptionsService } from "./returns/return-options.service";
 import { StockService } from "./stock/stock.service";
+import { FormViewsController } from "./views/forms.controller";
 import { HomeViewsController } from "./views/home.controller";
 
 @Module({
@@ -55,6 +57,7 @@ import { HomeViewsController } from "./views/home.controller";
     CardSecretsController,
     PasskeysController,
     HomeViewsController,
+    FormViewsController,
   ],
   providers: [
     Runner,
@@ -64,6 +67,7 @@ import { HomeViewsController } from "./views/home.controller";
     JournalService,
     EntriesService,
     StockService,
+    ReturnOptionsService,
     SetupService,
     MoneyService,
     PurchaseService,

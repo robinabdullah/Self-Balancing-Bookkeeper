@@ -31,8 +31,7 @@ import { type SetupKind, dueText, setupNames } from "@mbl/domain/setup";
 import { nest } from "@mbl/domain/validation/fields";
 import { purchaseSchema } from "@mbl/domain/validation/trade";
 import { deletePurchase, savePurchase } from "@/server/actions/purchase";
-import type { EditValues } from "@/server/entries";
-import type { SetupData } from "@/server/setup";
+import type { EditValues, SetupData } from "@/api/contract";
 
 // UIDD §4.3 (task 3.4): the purchase page. Paid by (Cash · Card · Supplier credit · Customer's
 // due; Advanced: Opening correction), with a card its bill month and EMI (with the EMI preview,

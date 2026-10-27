@@ -3,6 +3,10 @@ import type {
   JournalEntry as ApiJournalEntry,
   JournalRow as ApiJournalRow,
 } from "@mbl/api/journal/journal.service";
+import type {
+  BillLine as ApiBillLine,
+  ReturnLot as ApiReturnLot,
+} from "@mbl/api/returns/return-options.service";
 import type { SetupData as ApiSetupData } from "@mbl/api/setup/setup-data.service";
 import type { LotInfo as ApiLotInfo } from "@mbl/api/stock/lots";
 import type { Jsonify } from "./jsonify";
@@ -15,3 +19,5 @@ export type JournalRow = Jsonify<ApiJournalRow>;
 export type JournalEntry = Jsonify<ApiJournalEntry>;
 export type EditValues = Jsonify<ApiEditValues>;
 export type LotInfo = Jsonify<ApiLotInfo>;
+export type BillLine = Jsonify<ApiBillLine>;
+export type ReturnLot = Jsonify<ApiReturnLot>;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { SetupData } from "@/api/contract";
 import { SetupSection } from "@/components/setup/setup-section";
 import { type SetupKind, setupKinds } from "@mbl/domain/setup";
 import { safeFrom } from "@mbl/domain/href";
@@ -46,7 +47,9 @@ export default async function SetupPage({
       <SetupSection
         key={edit}
         kind={kind}
-        data={data}
+        // Until N-4.6 reads `/views/setup`: the RSC sends the rows' `createdAt` as a Date, which the
+        // Setup forms never read; their props now take the api's JSON shape (contract.ts).
+        data={data as unknown as SetupData}
         banks={banks}
         cardDetails={secrets.map((s) => s.cardId)}
         edit={edit}

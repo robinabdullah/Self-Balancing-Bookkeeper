@@ -1,15 +1,14 @@
 import { notFound } from "next/navigation";
+import type { MoneyEditView } from "@mbl/api/views/forms.controller";
+import { api } from "@/api/client";
 import { MoneyForm } from "@/components/money/money-form";
 import { isFormType } from "@mbl/domain/money/types";
 import { safeFrom } from "@mbl/domain/href";
-import { editValues } from "@/server/entries";
-import { loadCalendar } from "@/server/action";
-import { moneyFormBalances } from "@/server/books";
-import { loadSetup } from "@/server/setup";
 
 // UIDD §3, §4.10: Edit from the Journal opens the money modal with the stored entry; its type is
 // fixed (D-008). Opening items have no form (only the import writes them, SRS §9). `from`: the
-// page the entry was opened on, where Save and Cancel go back to (D-032).
+// page the entry was opened on, where Save and Cancel go back to (D-032). N-4.3: one
+// `/views/money/:id/edit` read (a missing entry is a 404).
 export default async function EditMoneyEntryPage({
   params,
   searchParams,
@@ -18,13 +17,10 @@ export default async function EditMoneyEntryPage({
   searchParams: Promise<{ from?: string }>;
 }) {
   const [{ id }, { from }] = await Promise.all([params, searchParams]);
-  const edit = await editValues("money", id);
-  if (!edit || !isFormType(edit.values.type)) notFound();
-  const [data, { dues, owed, billDates }, calendar] = await Promise.all([
-    loadSetup(),
-    moneyFormBalances(),
-    loadCalendar(),
-  ]);
+  const { edit, data, dues, owed, billDates, calendar } = await api<MoneyEditView>(
+    `/views/money/${encodeURIComponent(id)}/edit`,
+  );
+  if (!isFormType(edit.values.type)) notFound();
   return (
     <MoneyForm
       data={data}

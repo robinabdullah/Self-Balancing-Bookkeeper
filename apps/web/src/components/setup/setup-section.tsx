@@ -17,7 +17,7 @@ import { leaveSheet } from "@/components/ui/use-back-close";
 import { format, parse } from "@mbl/domain/money";
 import { type SetupKind, USED } from "@mbl/domain/setup";
 import { removeRow, setActive } from "@/server/actions/setup";
-import type { SetupData } from "@/server/setup";
+import type { SetupData } from "@/api/contract";
 import { SetupForm, type SetupRow } from "./setup-forms";
 
 // UIDD §4.11: one Setup list. Add/edit open the modal form; a used row is deactivated, not

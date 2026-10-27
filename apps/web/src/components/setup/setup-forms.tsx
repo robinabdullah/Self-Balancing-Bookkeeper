@@ -14,7 +14,7 @@ import {
   savePerson,
   saveSupplier,
 } from "@/server/actions/setup";
-import type { SetupData } from "@/server/setup";
+import type { SetupData } from "@/api/contract";
 
 // UIDD §4.11: the Setup add/edit forms, each in the modal shell (3.2.6). Fields follow SRS §4.
 
