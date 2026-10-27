@@ -3,7 +3,7 @@
 import { type SQL, and, eq, is, isNull, ne, sql } from "drizzle-orm";
 import { type PgColumn, PgTable, getTableConfig } from "drizzle-orm/pg-core";
 import type { z } from "zod";
-import * as schema from "@/db/schema";
+import * as schema from "@mbl/db/schema";
 import {
   bankAccounts,
   cardSecrets,
@@ -12,7 +12,7 @@ import {
   models,
   people,
   suppliers,
-} from "@/db/schema";
+} from "@mbl/db/schema";
 import type { Errors } from "@mbl/domain/guards";
 import { toDecimal } from "@mbl/domain/money";
 import { BUILT_IN, type SetupKind, USED, setupKinds } from "@mbl/domain/setup";

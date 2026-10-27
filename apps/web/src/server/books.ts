@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { and, asc, eq } from "drizzle-orm";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import {
   allocations,
   cardBillDates,
@@ -15,7 +15,7 @@ import {
   returns,
   saleLines,
   sales,
-} from "@/db/schema";
+} from "@mbl/db/schema";
 import { dhakaToday } from "@mbl/domain/dates";
 import {
   type Books,

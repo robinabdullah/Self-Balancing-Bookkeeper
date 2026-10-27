@@ -1,6 +1,6 @@
 import "server-only";
 import { sql } from "drizzle-orm";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 
 // UIDD §4.8 (task 4.4.2): what a card's detail needs besides the books: its `card_bill_dates`
 // rows (id + `updatedAt` for the edit modal) and each EMI purchase's models (the plan's item).

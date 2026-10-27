@@ -4,7 +4,7 @@ import ExcelJS from "exceljs";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { getTableName, is } from "drizzle-orm";
 import { PgTable } from "drizzle-orm/pg-core";
-import * as schema from "@/db/schema";
+import * as schema from "@mbl/db/schema";
 import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { add, avgUnit, sub } from "@mbl/domain/money";
 import { type Books, computeBooks } from "@mbl/domain/engine/index";

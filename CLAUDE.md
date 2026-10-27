@@ -77,8 +77,8 @@ npm run test:int                 # server actions vs local Supabase
 npm run test:e2e                 # Playwright, 360px + 1280px, all themes (CI, before a deploy)
 E2E_THEMES=night_owl npx playwright test <specs>   # a task's local E2E, one theme (D-065)
 npm run typecheck && npm run lint
-npx drizzle-kit generate         # migration from apps/web/src/db/schema.ts
-npx drizzle-kit migrate          # apply to DATABASE_URL
+npm run db:generate              # migration from packages/db/src/schema.ts
+npm run db:migrate               # apply to DATABASE_URL
 ```
 Env (never committed): `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`,
 `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `CARD_SECRET_KEY`. `.env.local` = local Supabase (from

@@ -7,11 +7,10 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S3 in progress. Committed locally, not pushed: N-1.1 (`5f72103`) and N-1.2
-  (`f60cd2c` the move, `e719669` the rewrite). N-1.3 (`packages/domain`) is done and waiting for
-  review: the `git mv` is staged and the rewrite is unstaged. S3 stops for review after each step.
-- **Next:** N-1.4 (`packages/db`), after N-1.3 is committed. Its enum lists are already done
-  (N-1.3).
+- **Session:** S3 in progress. Committed locally, not pushed: N-1.1 (`5f72103`), N-1.2
+  (`f60cd2c` the move, `e719669` the rewrite) and N-1.3 (`b144a48` the move, `0535088` the
+  rewrite). N-1.4 is done and awaits review (the move staged, the rewrite unstaged).
+- **Next:** the S3 phase gate and review, then S4.
 - **Blocked on:** —
 
 ## How to use
@@ -324,13 +323,39 @@ Screenshots: the parity report; Home, Stock, a PDF (unchanged).
       - parity MATCH (202 files).
       - TTFB +7% against the morning's baseline, but −8% against the reference measured at the
         same moment, so the difference is machine load.
-- [ ] **N-1.4 `packages/db`**
+- [x] **N-1.4 `packages/db`**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/db/**`,
     `src/lib/validation/{money-entry,trade,setup}.ts`
-  - [ ] Move the schema, migrations, drizzle.config and client factory. The enum value lists move
+  - [x] Move the schema, migrations, drizzle.config and client factory. The enum value lists move
     to domain (`pgEnum(name, X_VALUES)`), so drizzle leaves the browser bundle.
+  - **Tests:** [x] I-N-1.4.1 every migration in `packages/db/migrations` is applied (in
+    `migration.test.ts`) · [x] U-N-1.3.2 (the enum check, now against `@mbl/db/schema`) ·
+    [x] M-N-1.4.1 `db:generate` reports no change · [x] M-N-1.4.2 no drizzle in the client
+    chunks · [x] unit, integration · [x] E2E smoke, home, stock, pdf, export (night_owl) ·
+    [x] parity.
   - **Acceptance:** `drizzle-kit generate` reports no change; no `drizzle-orm` in
     `.next/static/chunks`; parity.
+  - **Result (2026-10-27):**
+    - **The move:** `schema.ts` and `index.ts` → `packages/db/src`, the migrations →
+      `packages/db/migrations`, `drizzle.config.ts` → `packages/db/`.
+      - The package is `@mbl/db`. It exports `"."` (the server-only client) and `"./schema"`,
+        and depends on `@mbl/domain`, `drizzle-orm`, `postgres` and `server-only`.
+      - A script rewrote `@/db` → `@mbl/db` in web, tests and scripts (75 files). Next compiles
+        the package via `transpilePackages`.
+    - **The enum lists** were already done in N-1.3.
+    - **Commands:** drizzle-kit no longer finds its config at the root, so the root has
+      `npm run db:generate` and `npm run db:migrate` (`--config packages/db/drizzle.config.ts`).
+      CI, `deploy.sh` and CLAUDE.md use them.
+    - **Paths updated:** the migrations folder in `local-db.ts`, `migration.test.ts`, eslint and
+      `.prettierignore`; the db-actions rule glob; the ai rule.
+    - **Results:**
+      - unit 720 and integration 141 (+1);
+      - E2E 25 passed, 2 skipped;
+      - `db:generate` reports "No schema changes".
+      - The client chunks hold no drizzle: 0 of 44 files match
+        `drizzle-orm|PgTable|pgEnum|PgColumn`. The same grep matches 87 server files, so the
+        check does detect drizzle.
+      - parity MATCH (202 files), TTFB +2.4%.
 
 ---
 

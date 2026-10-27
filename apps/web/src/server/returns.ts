@@ -1,7 +1,7 @@
 import "server-only";
 import { eq, inArray, sql } from "drizzle-orm";
-import { db } from "@/db";
-import { purchaseLines, purchases } from "@/db/schema";
+import { db } from "@mbl/db";
+import { purchaseLines, purchases } from "@mbl/db/schema";
 import type { StockLot } from "@mbl/domain/engine/stock";
 import { parse } from "@mbl/domain/money";
 import { stockLots } from "@/server/stock";

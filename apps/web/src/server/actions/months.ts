@@ -2,7 +2,7 @@
 
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { allocations, monthCloses, people } from "@/db/schema";
+import { allocations, monthCloses, people } from "@mbl/db/schema";
 import { dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
 import { toPosted } from "@mbl/domain/engine/index";
 import { computeClose, monthProfit, nextToClose } from "@mbl/domain/engine/months";

@@ -2,7 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { profiles } from "@/db/schema";
+import { profiles } from "@mbl/db/schema";
 import type { Errors } from "@mbl/domain/guards";
 import { themes } from "@mbl/domain/themes";
 import { rowId } from "@mbl/domain/validation/fields";

@@ -3,8 +3,8 @@ import { type SQL, and, asc, eq, getTableName, max, min, ne, sql } from "drizzle
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { db } from "@/db";
-import { auditLog, monthCloses, moneyEntries, profiles, purchases } from "@/db/schema";
+import { db } from "@mbl/db";
+import { auditLog, monthCloses, moneyEntries, profiles, purchases } from "@mbl/db/schema";
 import { dhakaToday, monthOf } from "@mbl/domain/dates";
 import {
   type Calendar,

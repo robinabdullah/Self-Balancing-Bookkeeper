@@ -1,6 +1,6 @@
 import "server-only";
 import { sql } from "drizzle-orm";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import { type BoughtLine, type SentBackLine, purchasesByModel } from "@mbl/domain/by-model";
 import { parse } from "@mbl/domain/money";
 import type { StockLine, StockMoveKind } from "@mbl/domain/stock-movement";

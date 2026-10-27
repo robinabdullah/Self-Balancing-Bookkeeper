@@ -1,7 +1,7 @@
 "use server";
 
 import { and, asc, eq, notInArray, sql } from "drizzle-orm";
-import { auditLog, moneyEntries, saleLines, sales } from "@/db/schema";
+import { auditLog, moneyEntries, saleLines, sales } from "@mbl/db/schema";
 import { nextInvoiceNo, nextReceiptNo } from "@/server/numbers";
 import { formatDate } from "@mbl/domain/dates";
 import { type Planned, planSale } from "@mbl/domain/engine/stock";

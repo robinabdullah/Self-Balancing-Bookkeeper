@@ -44,7 +44,7 @@ const eslintConfig = [
       "build/**",
       "**/next-env.d.ts",
       "apps/web/src/components/ui/**",
-      "apps/web/src/db/migrations/**",
+      "packages/db/migrations/**",
     ],
   },
 ];

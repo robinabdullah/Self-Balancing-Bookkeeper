@@ -1,7 +1,7 @@
 "use server";
 
 import { eq } from "drizzle-orm";
-import { bankAccounts, businessProfile } from "@/db/schema";
+import { bankAccounts, businessProfile } from "@mbl/db/schema";
 import {
   type BankAccountInput,
   bankAccountSchema,

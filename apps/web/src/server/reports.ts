@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, gte, lte } from "drizzle-orm";
-import { db } from "@/db";
-import { purchaseLines, returnLines, returns, saleLines, sales } from "@/db/schema";
+import { db } from "@mbl/db";
+import { purchaseLines, returnLines, returns, saleLines, sales } from "@mbl/db/schema";
 import { entryTitle, reversalLabel, whoOf } from "@mbl/domain/journal/labels";
 import { type CashBook, cashBook } from "@mbl/domain/cash-book";
 import type { DatedLines } from "@mbl/domain/charts/profit";

@@ -1,7 +1,7 @@
 import "server-only";
 import { type SQL, desc, sql } from "drizzle-orm";
-import { db } from "@/db";
-import { type purchaseSource, sales } from "@/db/schema";
+import { db } from "@mbl/db";
+import { type purchaseSource, sales } from "@mbl/db/schema";
 import { type LotMove, type StockLot, lotsRemaining } from "@mbl/domain/engine/stock";
 import { parse } from "@mbl/domain/money";
 import type { Tx } from "@/server/action";

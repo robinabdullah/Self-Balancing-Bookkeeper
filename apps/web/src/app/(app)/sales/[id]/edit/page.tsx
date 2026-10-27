@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { SaleForm } from "@/components/sale/sale-form";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import { safeFrom } from "@mbl/domain/href";
 import { editValues } from "@/server/entries";
 import { customerDues } from "@/server/books";

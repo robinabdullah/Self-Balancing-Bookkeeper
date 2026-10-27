@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq, sql } from "drizzle-orm";
-import { db } from "@/db";
-import { auditLog, cardSecrets, cards, people } from "@/db/schema";
+import { db } from "@mbl/db";
+import { auditLog, cardSecrets, cards, people } from "@mbl/db/schema";
 import {
   type CardDetails,
   FINGERPRINT_FAILED,

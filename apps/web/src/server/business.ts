@@ -1,9 +1,9 @@
 import "server-only";
 import { cache } from "react";
 import { asc, eq, getTableColumns, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import type { PayAccount } from "@mbl/domain/business";
-import { bankAccounts, businessProfile, customers, people, suppliers } from "@/db/schema";
+import { bankAccounts, businessProfile, customers, people, suppliers } from "@mbl/db/schema";
 import { customerName } from "@mbl/domain/setup";
 import type { OwnerKind } from "@mbl/domain/validation/business";
 

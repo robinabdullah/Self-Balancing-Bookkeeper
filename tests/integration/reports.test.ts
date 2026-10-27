@@ -4,7 +4,7 @@ import ExcelJS from "exceljs";
 import { NextRequest } from "next/server";
 import { extractText } from "unpdf";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import { GET as xlsxGet } from "@/app/(app)/reports/sales/xlsx/route";
 import { GET as pdfGet } from "@/app/pdf/sales/route";
 import { dhakaToday, monthOf } from "@mbl/domain/dates";

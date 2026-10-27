@@ -1,6 +1,6 @@
 import "server-only";
 import { asc, eq } from "drizzle-orm";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import {
   moneyEntries,
   purchaseLines,
@@ -9,7 +9,7 @@ import {
   returns,
   saleLines,
   sales,
-} from "@/db/schema";
+} from "@mbl/db/schema";
 import { MONEY, MONTH } from "@mbl/domain/audit";
 import { parse, plain } from "@mbl/domain/money";
 import { rowId } from "@mbl/domain/validation/fields";

@@ -16,6 +16,8 @@
     "test": "vitest run --project unit",
     "test:int": "vitest run --project integration",
     "test:e2e": "playwright test",
+    "db:generate": "drizzle-kit generate --config packages/db/drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config packages/db/drizzle.config.ts",
     "parity": "tsx scripts/parity/run.ts self",
     "parity:ref": "tsx scripts/parity/run.ts ref"
   },

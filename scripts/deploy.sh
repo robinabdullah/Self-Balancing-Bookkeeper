@@ -54,7 +54,7 @@ deploy() {
   NEXT_TELEMETRY_DISABLED=1 nice -n 19 npm run build
 
   log "Migrating the database"
-  npx drizzle-kit migrate
+  npm run db:migrate
 
   # N-1.2: the app is apps/web of a workspace; its standalone tree keeps that layout, with
   # server.js in apps/web next to its static files and `.env.local`.

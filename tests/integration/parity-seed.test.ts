@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import { computeBooks } from "@mbl/domain/engine/index";
 import { parse } from "@mbl/domain/money";
 import { loadBooksData } from "@/server/books";

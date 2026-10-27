@@ -3,10 +3,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import * as enums from "@mbl/domain/enums";
 import { themes } from "@mbl/domain/themes";
-import * as schema from "@/db/schema";
+import * as schema from "@mbl/db/schema";
 
 // N-1.3 (D-068): packages/domain is the pure core both apps share (the web app now, Nest from
 // N-2): no framework, DB or session import, and the schema's enums are built from its lists.
+// U-N-1.3.2 is also N-1.4's enum check, now against packages/db (`@mbl/db/schema`).
 
 const DOMAIN = "packages/domain/src";
 

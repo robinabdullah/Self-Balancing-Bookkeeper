@@ -1,8 +1,8 @@
 import "server-only";
 import { cache } from "react";
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db";
-import { profiles } from "@/db/schema";
+import { db } from "@mbl/db";
+import { profiles } from "@mbl/db/schema";
 import { getUser } from "@/lib/supabase/server";
 
 // SRS §11: every server action re-checks the session and role = partner.

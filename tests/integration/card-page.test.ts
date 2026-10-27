@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import { billToPay, cardDetail, visibleBills } from "@mbl/domain/card-view";
 import { cardAlerts } from "@mbl/domain/dashboard";
 import { addMonths } from "@mbl/domain/dates";

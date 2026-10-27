@@ -48,7 +48,7 @@ jobs:
           -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,storage-api,postgres-meta
 
       - name: Migrate
-        run: npx drizzle-kit migrate
+        run: npm run db:migrate
 
       - name: Integration tests
         run: npm run test:int
@@ -80,7 +80,7 @@ jobs:
 
       # Before Playwright: it starts the build (which reads the DB) before its global setup.
       - name: Migrate
-        run: npx drizzle-kit migrate
+        run: npm run db:migrate
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium

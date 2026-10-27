@@ -11,7 +11,7 @@ import {
   returns,
   saleLines,
   sales,
-} from "@/db/schema";
+} from "@mbl/db/schema";
 import { reversalDateErrors, reverseErrors } from "@mbl/domain/guards";
 import { date, month, optional, rowId } from "@mbl/domain/validation/fields";
 import { type AppTable, CONFLICT, type Row, type Tx, isReversed, runAction } from "@/server/action";

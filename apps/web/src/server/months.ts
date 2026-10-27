@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq, gt, inArray } from "drizzle-orm";
-import { db } from "@/db";
-import { moneyEntries, monthCloses, people, profiles } from "@/db/schema";
+import { db } from "@mbl/db";
+import { moneyEntries, monthCloses, people, profiles } from "@mbl/db/schema";
 import type { MonthProfit } from "@mbl/domain/engine/months";
 import { monthOf } from "@mbl/domain/dates";
 import { parse } from "@mbl/domain/money";

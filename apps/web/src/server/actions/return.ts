@@ -1,7 +1,7 @@
 "use server";
 
 import { type AnyColumn, and, eq, inArray, sql } from "drizzle-orm";
-import { purchaseLines, returnLines, returns } from "@/db/schema";
+import { purchaseLines, returnLines, returns } from "@mbl/db/schema";
 import { formatDate } from "@mbl/domain/dates";
 import { type Errors, deleteErrors } from "@mbl/domain/guards";
 import { add, mul, toDecimal } from "@mbl/domain/money";

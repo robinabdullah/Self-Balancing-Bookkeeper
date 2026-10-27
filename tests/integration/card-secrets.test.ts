@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { verifyAuthenticationResponse, verifyRegistrationResponse } from "@simplewebauthn/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import { POST } from "@/app/(app)/cards/[id]/reveal/route";
 import { rowId } from "@mbl/domain/validation/fields";
 import {

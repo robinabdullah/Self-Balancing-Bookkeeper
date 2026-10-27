@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: root,
   turbopack: { root },
   // The shared packages ship TypeScript source; Next compiles them with the app (N-1.3).
-  transpilePackages: ["@mbl/domain"],
+  transpilePackages: ["@mbl/domain", "@mbl/db"],
   // The PDF fonts are read from disk at run time, so the standalone build must ship them (D-041).
   outputFileTracingIncludes: { "/pdf/**": ["./src/pdf/fonts/**"] },
 };

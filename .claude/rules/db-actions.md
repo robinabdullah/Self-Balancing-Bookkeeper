@@ -1,6 +1,6 @@
 ---
 paths:
-  - "apps/web/src/db/**"
+  - "packages/db/**"
   - "apps/web/src/server/**"
   - "apps/web/src/app/**"
   - "scripts/**"

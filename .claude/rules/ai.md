@@ -8,7 +8,7 @@ paths:
 # AI assistant rules (docs/AI.md, D-057)
 
 - **Read-only (§2):**
-  - nothing under `apps/web/src/server/ai/**` imports `@/server/actions/*`, `@/server/action` or `@/db`
+  - nothing under `apps/web/src/server/ai/**` imports `@/server/actions/*`, `@/server/action` or `@mbl/db`
     (only `read.ts` may);
   - all AI data loading runs inside `aiRead()`, a READ ONLY transaction on the shared pool (never a
     second pool, CR-030);

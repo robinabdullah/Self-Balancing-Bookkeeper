@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { moreLinks } from "@/components/shell/nav";
-import { theme } from "@/db/schema";
+import { theme } from "@mbl/db/schema";
 import { themeLabels, themes } from "@mbl/domain/themes";
 
 // CR-017 (D-037; UIDD §3, §4.13): the More list and the three themes.

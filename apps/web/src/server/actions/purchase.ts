@@ -1,7 +1,7 @@
 "use server";
 
 import { type AnyColumn, and, asc, eq, notInArray, sql } from "drizzle-orm";
-import { customers, purchaseLines, purchases } from "@/db/schema";
+import { customers, purchaseLines, purchases } from "@mbl/db/schema";
 import { formatDate } from "@mbl/domain/dates";
 import { type Errors, deleteErrors, lotEditErrors, walkInErrors } from "@mbl/domain/guards";
 import { add, mul, parse, toDecimal } from "@mbl/domain/money";

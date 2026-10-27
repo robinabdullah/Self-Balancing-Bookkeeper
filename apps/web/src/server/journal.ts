@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { type SQL, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import { isLocked } from "@mbl/domain/guards";
 import { parse } from "@mbl/domain/money";
 import { rowId } from "@mbl/domain/validation/fields";

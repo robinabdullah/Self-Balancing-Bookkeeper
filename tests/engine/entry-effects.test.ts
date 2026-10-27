@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { moneyType, openingKind, purchaseSource, refundTo } from "@/db/schema";
+import { moneyType, openingKind, purchaseSource, refundTo } from "@mbl/db/schema";
 import { entryConfirm } from "@mbl/domain/confirms";
 import {
   type Posting,

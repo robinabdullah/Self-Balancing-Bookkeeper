@@ -2,7 +2,7 @@ import "server-only";
 import { desc, eq, getTableColumns, getTableName } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import ExcelJS from "exceljs";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import {
   allocations,
   auditLog,
@@ -23,7 +23,7 @@ import {
   saleLines,
   sales,
   suppliers,
-} from "@/db/schema";
+} from "@mbl/db/schema";
 import { businessName, slug } from "@mbl/domain/business";
 import { dhakaToday } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";

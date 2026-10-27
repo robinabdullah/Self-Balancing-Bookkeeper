@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { type BooksData, type StoredEntry, computeBooks, toPosted } from "@mbl/domain/engine/index";
 import { type Allocation, computeClose, monthProfit } from "@mbl/domain/engine/months";

@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
 import { extractText } from "unpdf";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import { GET as invoiceGet } from "@/app/pdf/invoice/route";
 import { GET as receiptGet } from "@/app/pdf/receipt/route";
 import { GET as salesGet } from "@/app/pdf/sales/route";

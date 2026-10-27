@@ -3,7 +3,7 @@ node_modules
 package-lock.json
 docs
 apps/web/src/components/ui
-apps/web/src/db/migrations
+packages/db/migrations
 *.md
 .claude
 

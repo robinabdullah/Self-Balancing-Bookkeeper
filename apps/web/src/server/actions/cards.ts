@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq, ne } from "drizzle-orm";
-import { cardBillDates } from "@/db/schema";
+import { cardBillDates } from "@mbl/db/schema";
 import type { Errors } from "@mbl/domain/guards";
 import { cardBillDateSchema } from "@mbl/domain/validation/setup";
 import { byId, runAction } from "@/server/action";

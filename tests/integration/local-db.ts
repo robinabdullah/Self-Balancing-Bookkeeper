@@ -10,7 +10,7 @@ export function localSql() {
   return postgres(LOCAL_DB_URL, { max: 1, onnotice: () => {} });
 }
 
-const MIGRATIONS = "apps/web/src/db/migrations";
+const MIGRATIONS = "packages/db/migrations";
 
 // Checks local Supabase is up, then applies the migrations (integration and E2E setup).
 export async function migrateLocal(sql: postgres.Sql) {

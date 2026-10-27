@@ -1,7 +1,7 @@
 "use server";
 
 import { type AnyColumn, and, eq, sql } from "drizzle-orm";
-import { customers, moneyEntries } from "@/db/schema";
+import { customers, moneyEntries } from "@mbl/db/schema";
 import { deleteErrors, walkInErrors } from "@mbl/domain/guards";
 import { toDecimal } from "@mbl/domain/money";
 import { type MoneyEntryValues, moneyEntrySchema } from "@mbl/domain/validation/money-entry";

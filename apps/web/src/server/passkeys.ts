@@ -10,8 +10,8 @@ import {
   verifyAuthenticationResponse,
   verifyRegistrationResponse,
 } from "@simplewebauthn/server";
-import { db } from "@/db";
-import { passkeyChallenges, passkeys } from "@/db/schema";
+import { db } from "@mbl/db";
+import { passkeyChallenges, passkeys } from "@mbl/db/schema";
 
 // D-046 (SRS §11): fingerprint unlock (passkeys, WebAuthn). Every challenge is one-time: saved for
 // 2 minutes, for this user, and deleted when it is answered. The site (rpID) and origin are the

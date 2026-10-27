@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 
-// U-CR-030.4: Next loads `src/db` more than once per server (the pages and the route handlers
+// U-CR-030.4: Next loads `@mbl/db` more than once per server (the pages and the route handlers
 // each). Every copy must share one postgres client, so the server holds one pool of 10, not one
 // per copy: production's session pooler allows 15 clients, and a second pool made the card PDF
 // fail. `postgres()` connects lazily, so no database is needed here.
@@ -10,9 +10,9 @@ describe("U-CR-030.4 one DB pool per server", () => {
   });
 
   it("a second load of the module reuses the first client", async () => {
-    const first = await import("@/db");
+    const first = await import("@mbl/db");
     vi.resetModules();
-    const second = await import("@/db");
+    const second = await import("@mbl/db");
     expect(second.db).not.toBe(first.db); // a fresh module copy…
     expect(second.db.$client).toBe(first.db.$client); // …on the same pool
   });

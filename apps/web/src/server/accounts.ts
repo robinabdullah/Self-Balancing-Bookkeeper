@@ -1,6 +1,6 @@
 import "server-only";
 import { sql } from "drizzle-orm";
-import { db } from "@/db";
+import { db } from "@mbl/db";
 import { parse } from "@mbl/domain/money";
 
 // UIDD §4.8 (task 4.3.1): a customer's Bills tab: each sale with its lines (model, qty, unit price

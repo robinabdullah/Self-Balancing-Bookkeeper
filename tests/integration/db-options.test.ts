@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { db } from "@/db";
-import { auditLog, moneyEntries, people } from "@/db/schema";
+import { db } from "@mbl/db";
+import { auditLog, moneyEntries, people } from "@mbl/db/schema";
 import { parse } from "@mbl/domain/money";
 import { localSql } from "./local-db";
 

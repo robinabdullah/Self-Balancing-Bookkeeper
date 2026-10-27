@@ -1,0 +1,15 @@
+{
+  "name": "@mbl/db",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "dependencies": {
+    "@mbl/domain": "*",
+    "drizzle-orm": "^0.45.3",
+    "postgres": "^3.4.9",
+    "server-only": "^0.0.1"
+  }
+}

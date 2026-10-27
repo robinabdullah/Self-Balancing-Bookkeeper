@@ -12,7 +12,7 @@ import { LOCAL_DB_URL, localSql } from "./local-db";
 // holding synthetic rows: it numbers the existing sales and customer payments in (date,
 // created_at) order without the reversals, sets the sequences after them, seeds the business and
 // lets one owner's "EBL" be both a Visa and a Mastercard. A throwaway database on local Supabase.
-const MIGRATIONS = "apps/web/src/db/migrations";
+const MIGRATIONS = "packages/db/migrations";
 const name = `mbl_migration_${randomUUID().replaceAll("-", "")}`;
 const admin = localSql();
 let sql: postgres.Sql;
@@ -100,5 +100,13 @@ describe("the v1.1 migration (CR-016.1, D-036)", () => {
       select array_agg(e.enumlabel::text order by e.enumsortorder) as actions
       from pg_enum e join pg_type t on t.oid = e.enumtypid where t.typname = 'audit_action'`;
     expect(actions).toContain("reveal");
+  });
+
+  // N-1.4 (D-068): the migrations moved to packages/db; the test above applied them from there.
+  it("I-N-1.4.1 every migration in packages/db/migrations is applied", async () => {
+    const journal = JSON.parse(readFileSync(join(MIGRATIONS, "meta/_journal.json"), "utf8"));
+    expect(journal.entries).toHaveLength(7);
+    const [{ n }] = await sql`select count(*)::int as n from drizzle.__drizzle_migrations`;
+    expect(n).toBe(journal.entries.length);
   });
 });

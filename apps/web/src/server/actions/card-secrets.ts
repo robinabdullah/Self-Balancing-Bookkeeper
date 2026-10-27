@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq, ne } from "drizzle-orm";
-import { cardSecrets, cards, people } from "@/db/schema";
+import { cardSecrets, cards, people } from "@mbl/db/schema";
 import type { Errors } from "@mbl/domain/guards";
 import {
   DUPLICATE_NUMBER,
