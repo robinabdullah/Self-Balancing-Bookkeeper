@@ -1,5 +1,5 @@
-import type { StoredEntry } from "@/lib/engine/index";
-import type { MoneyEntry } from "@/lib/engine/post";
+import type { StoredEntry } from "../engine/index";
+import type { MoneyEntry } from "../engine/post";
 
 // D-064: what each entry is, for the charts that group the posted effects by kind (Given vs
 // collected, Last paid, …). The keys are the Journal's types (`TYPE_LABEL`). A reversal is stored

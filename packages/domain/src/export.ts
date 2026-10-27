@@ -1,13 +1,13 @@
-import { accountRows } from "@/lib/accounts";
-import { STATUS, cardRows } from "@/lib/card-view";
-import { type Breakdown, breakdown, positionSections } from "@/lib/dashboard";
-import { monthOf } from "@/lib/dates";
-import type { Books } from "@/lib/engine/index";
-import type { StockLot } from "@/lib/engine/stock";
-import { add, mul, parse } from "@/lib/money";
-import { cardName, customerName } from "@/lib/setup";
-import type { CardNetwork } from "@/lib/banks";
-import { stockByModel } from "@/lib/stock-view";
+import { accountRows } from "./accounts";
+import { STATUS, cardRows } from "./card-view";
+import { type Breakdown, breakdown, positionSections } from "./dashboard";
+import { monthOf } from "./dates";
+import type { Books } from "./engine/index";
+import type { StockLot } from "./engine/stock";
+import { add, mul, parse } from "./money";
+import { cardName, customerName } from "./setup";
+import type { CardNetwork } from "./banks";
+import { stockByModel } from "./stock-view";
 
 // SRS §10 (task 6.4.1): the export's summary sheets, read off `computeBooks` through the same view
 // helpers as the screens. Pure: money stays integer poisha here; the workbook writer converts it.

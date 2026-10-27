@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import type { CustomerCharts, FlowPoint } from "@/lib/charts/customers";
-import type { ChartPeriod } from "@/lib/charts/period";
-import type { SalesGroup } from "@/lib/sales-report";
-import { OTHERS } from "@/lib/monthly-pack";
-import { format } from "@/lib/money";
+import type { CustomerCharts, FlowPoint } from "@mbl/domain/charts/customers";
+import type { ChartPeriod } from "@mbl/domain/charts/period";
+import type { SalesGroup } from "@mbl/domain/sales-report";
+import { OTHERS } from "@mbl/domain/monthly-pack";
+import { format } from "@mbl/domain/money";
 import { ChartCard } from "./chart-card";
 import { Bars, HBars, LineSeries, type Series } from "./charts";
 import { POSITION_SERIES, since } from "./money-cards";

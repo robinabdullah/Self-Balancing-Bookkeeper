@@ -1,9 +1,9 @@
-import type { CardNetwork } from "@/lib/banks";
-import { addMonths, formatMonth } from "@/lib/dates";
-import type { Bill, CardMove, CardStatus, CardSummary, EmiPlan } from "@/lib/engine/cards";
-import { add, parse, splitEven, sub } from "@/lib/money";
-import { installments } from "@/lib/preview";
-import { cardTitle } from "@/lib/setup";
+import type { CardNetwork } from "./banks";
+import { addMonths, formatMonth } from "./dates";
+import type { Bill, CardMove, CardStatus, CardSummary, EmiPlan } from "./engine/cards";
+import { add, parse, splitEven, sub } from "./money";
+import { installments } from "./preview";
+import { cardTitle } from "./setup";
 
 // UIDD §4.8 (task 4.4): the Cards summary table and a card's detail, read off the engine's
 // `cardSummaries` (SRS §6). Pure: nothing here computes a bill or a balance, only picks and orders.

@@ -1,11 +1,11 @@
 import "server-only";
-import type { StatementKind } from "@/lib/accounts";
-import { type ModelRow, salesByModel } from "@/lib/by-model";
-import { type EmiInstallment, billsIn, creditSplit, emiSchedule } from "@/lib/card-view";
-import { type Books, type BooksData, computeBooks } from "@/lib/engine/index";
-import type { Bill } from "@/lib/engine/cards";
-import { type InvestorReport, dayBefore, investorReport } from "@/lib/investor-report";
-import { setupNames } from "@/lib/setup";
+import type { StatementKind } from "@mbl/domain/accounts";
+import { type ModelRow, salesByModel } from "@mbl/domain/by-model";
+import { type EmiInstallment, billsIn, creditSplit, emiSchedule } from "@mbl/domain/card-view";
+import { type Books, type BooksData, computeBooks } from "@mbl/domain/engine/index";
+import type { Bill } from "@mbl/domain/engine/cards";
+import { type InvestorReport, dayBefore, investorReport } from "@mbl/domain/investor-report";
+import { setupNames } from "@mbl/domain/setup";
 import { loadBooks } from "@/server/books";
 import { cardDetailData } from "@/server/cards";
 import { loadJournal } from "@/server/journal";

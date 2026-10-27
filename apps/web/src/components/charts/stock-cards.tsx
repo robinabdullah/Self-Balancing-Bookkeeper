@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import type { StockCharts } from "@/lib/charts/stock";
-import type { SalesGroup } from "@/lib/sales-report";
-import { OTHERS } from "@/lib/monthly-pack";
-import { format } from "@/lib/money";
+import type { StockCharts } from "@mbl/domain/charts/stock";
+import type { SalesGroup } from "@mbl/domain/sales-report";
+import { OTHERS } from "@mbl/domain/monthly-pack";
+import { format } from "@mbl/domain/money";
 import { ChartCard } from "./chart-card";
 import { Bars, HBars, type Series } from "./charts";
 import { TOP_SERIES } from "./customer-cards";
@@ -72,11 +72,7 @@ export function StockCards({
         headline={`${format(ages[3].value)} over 90 days`}
         note="as of today"
       >
-        {mini(
-          noStock(ages),
-          NO_STOCK,
-          <Bars mini rows={ageRows(ages)} series={[AGE_SERIES]} />,
-        )}
+        {mini(noStock(ages), NO_STOCK, <Bars mini rows={ageRows(ages)} series={[AGE_SERIES]} />)}
       </ChartCard>
       <ChartCard
         href={href("top-models")}

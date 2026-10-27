@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entryHref, safeFrom, withQuery } from "@/lib/href";
+import { entryHref, safeFrom, withQuery } from "@mbl/domain/href";
 
 // CR-013 (D-032): entry details open over the page; forms return to `from`.
 describe("U-CR-013.1 in-app links", () => {

@@ -14,8 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { leaveSheet } from "@/components/ui/use-back-close";
-import { format, parse } from "@/lib/money";
-import { type SetupKind, USED } from "@/lib/setup";
+import { format, parse } from "@mbl/domain/money";
+import { type SetupKind, USED } from "@mbl/domain/setup";
 import { removeRow, setActive } from "@/server/actions/setup";
 import type { SetupData } from "@/server/setup";
 import { SetupForm, type SetupRow } from "./setup-forms";

@@ -1,7 +1,7 @@
 import { Amount } from "@/components/amount";
-import type { DueTrend } from "@/lib/charts/customers";
-import { formatDate, formatRange } from "@/lib/dates";
-import { format } from "@/lib/money";
+import type { DueTrend } from "@mbl/domain/charts/customers";
+import { formatDate, formatRange } from "@mbl/domain/dates";
+import { format } from "@mbl/domain/money";
 import { StepTrend } from "./charts";
 import { POSITION_SERIES } from "./money-cards";
 import { nothing } from "./profit-detail";

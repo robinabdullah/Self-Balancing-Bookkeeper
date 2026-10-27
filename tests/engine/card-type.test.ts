@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { bankOf, networkOf, typeWordIn } from "@/lib/banks";
-import { cardName, cardTitle } from "@/lib/setup";
+import { bankOf, networkOf, typeWordIn } from "@mbl/domain/banks";
+import { cardName, cardTitle } from "@mbl/domain/setup";
 
 // CR-016.5 (D-036): a card's Type is its own column. Text reads "Owner · Name Type". The badge
 // shows only the bank (D-053). Synthetic names.

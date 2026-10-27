@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@mbl/domain": "*",
     "@react-pdf/renderer": "^4.9.0",
     "@simplewebauthn/browser": "13.3.0",
     "@simplewebauthn/server": "13.3.3",

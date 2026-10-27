@@ -12,8 +12,8 @@ import {
   saleLines,
   sales,
 } from "@/db/schema";
-import { reversalDateErrors, reverseErrors } from "@/lib/guards";
-import { date, month, optional, rowId } from "@/lib/validation/fields";
+import { reversalDateErrors, reverseErrors } from "@mbl/domain/guards";
+import { date, month, optional, rowId } from "@mbl/domain/validation/fields";
 import { type AppTable, CONFLICT, type Row, type Tx, isReversed, runAction } from "@/server/action";
 import { stockLots } from "@/server/stock";
 

@@ -3,10 +3,10 @@ import { ReportSheet } from "@/components/report/report-sheet";
 import { ReportTitle } from "@/components/report/report-title";
 import { SalesView } from "@/components/report/sales-view";
 import { SendSheet } from "@/components/send/send-sheet";
-import { dhakaToday, formatRange, monthOf } from "@/lib/dates";
-import { salesPdfHref, salesXlsxHref, withQuery } from "@/lib/href";
-import { parseRange, periodRange } from "@/lib/journal-filter";
-import { salesText } from "@/lib/whatsapp";
+import { dhakaToday, formatRange, monthOf } from "@mbl/domain/dates";
+import { salesPdfHref, salesXlsxHref, withQuery } from "@mbl/domain/href";
+import { parseRange, periodRange } from "@mbl/domain/journal-filter";
+import { salesText } from "@mbl/domain/whatsapp";
 import { loadJournal } from "@/server/journal";
 import { loadSales } from "@/server/reports";
 

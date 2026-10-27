@@ -1,8 +1,8 @@
-import type { BoughtLine, SentBackLine } from "@/lib/by-model";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import { type Allocation, computeClose, monthProfit } from "@/lib/engine/months";
-import type { Entry, MoneyEntry } from "@/lib/engine/post";
-import type { StockLine, StockMoveKind } from "@/lib/stock-movement";
+import type { BoughtLine, SentBackLine } from "@mbl/domain/by-model";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import { type Allocation, computeClose, monthProfit } from "@mbl/domain/engine/months";
+import type { Entry, MoneyEntry } from "@mbl/domain/engine/post";
+import type { StockLine, StockMoveKind } from "@mbl/domain/stock-movement";
 import { PARTNERS } from "./invariant";
 
 // CR-025 (D-045): one synthetic business for the report tests, covering the edge cases of the

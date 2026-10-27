@@ -10,7 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { HelpField } from "@/lib/help-text";
+import type { HelpField } from "@mbl/domain/help-text";
 import { cn } from "@/lib/utils";
 import { Field, FormChanged, FormInitial, inputClass } from "./field";
 import { modalSheet } from "./form-modal";

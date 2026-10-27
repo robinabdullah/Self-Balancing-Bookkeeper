@@ -1,10 +1,10 @@
 import { Amount } from "@/components/amount";
 import { InfoNote } from "@/components/info-note";
 import { EmptyState } from "@/components/states";
-import { AVG, pcs, piecesAt } from "@/lib/by-model";
-import { viewHelp } from "@/lib/help-text";
-import { add } from "@/lib/money";
-import type { SalesGroup, SalesReport } from "@/lib/sales-report";
+import { AVG, pcs, piecesAt } from "@mbl/domain/by-model";
+import { viewHelp } from "@mbl/domain/help-text";
+import { add } from "@mbl/domain/money";
+import type { SalesGroup, SalesReport } from "@mbl/domain/sales-report";
 
 // D-043 (UIDD §4.17): the Sales report's totals, then By model and By customer (net of returns,
 // largest sales first; each table totals the net sales profit). At ≥ 1024px tables; on a phone

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardName, customerName, partnerWarning } from "@/lib/setup";
+import { cardName, customerName, partnerWarning } from "@mbl/domain/setup";
 
 // Task 3.2 display rules and the partners' total warning (SRS §4; D-022, D-023).
 const partner = (pct: string, active = true) => ({ kind: "partner", active, profitSharePct: pct });

@@ -12,7 +12,7 @@ import {
   splitShares,
   sub,
   toDecimal,
-} from "@/lib/money";
+} from "@mbl/domain/money";
 
 const sum = (xs: number[]) => xs.reduce(add, 0);
 

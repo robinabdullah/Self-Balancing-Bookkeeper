@@ -1,6 +1,6 @@
 import { PeopleList } from "@/components/people/people-list";
 import { AccountTabs } from "@/components/shell/account-tabs";
-import { peopleRows } from "@/lib/people-view";
+import { peopleRows } from "@mbl/domain/people-view";
 import { loadBooks } from "@/server/books";
 import { loadSetup } from "@/server/setup";
 

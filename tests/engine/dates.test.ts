@@ -11,7 +11,7 @@ import {
   monthDiff,
   monthOf,
   parseDmy,
-} from "@/lib/dates";
+} from "@mbl/domain/dates";
 
 describe("dates.ts (SRS §3, §6.1)", () => {
   it("U2.2.1 Dhaka today flips at 18:00Z (UTC+6)", () => {

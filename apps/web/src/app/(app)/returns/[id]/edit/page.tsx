@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { ReturnForm } from "@/components/return/return-form";
-import { safeFrom } from "@/lib/href";
+import { safeFrom } from "@mbl/domain/href";
 import { editValues } from "@/server/entries";
 import { returnOptions } from "@/server/returns";
 import { loadSetup } from "@/server/setup";

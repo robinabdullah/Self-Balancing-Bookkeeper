@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { type Locator, type Page, type TestInfo, expect, test } from "@playwright/test";
-import { formatMonth } from "@/lib/dates";
-import { type Card, billMonthOf } from "@/lib/engine/cards";
+import { formatMonth } from "@mbl/domain/dates";
+import { type Card, billMonthOf } from "@mbl/domain/engine/cards";
 import { effectValue, goHome, noSideScroll } from "./helpers";
 import { dhaka, fillDate, pick, seedAccounts, seedMoney, sql } from "./seed";
 

@@ -3,8 +3,13 @@
 // stray value (e.g. a card left picked after switching to Cash) is never stored.
 // `opening` entries come only from the opening import (SRS §9), not from this form.
 import { z } from "zod";
-import { moneyType, openingKind, paySource, settleMode } from "@/db/schema";
-import { monthOf } from "@/lib/dates";
+import {
+  MONEY_TYPE_VALUES,
+  OPENING_KIND_VALUES,
+  PAY_SOURCE_VALUES,
+  SETTLE_MODE_VALUES,
+} from "../enums";
+import { monthOf } from "../dates";
 import {
   CARD_FEE_CATEGORY,
   EXPENSE_CATEGORIES,
@@ -16,9 +21,9 @@ import {
   optionalPick,
   pick,
   rowId,
-} from "@/lib/validation/fields";
+} from "./fields";
 
-const types = z.enum(moneyType.enumValues);
+const types = z.enum(MONEY_TYPE_VALUES);
 const base = { id: rowId, date, note };
 const amount = money();
 const customerId = pick("a customer");
@@ -26,7 +31,7 @@ const cardId = pick("a card");
 
 /** Paid by (or received into) cash or a card; the card is needed only for a card. */
 const paidBy = {
-  source: z.enum(paySource.enumValues, { error: "Choose Cash or Card" }),
+  source: z.enum(PAY_SOURCE_VALUES, { error: "Choose Cash or Card" }),
   cardId: optionalPick,
 };
 
@@ -52,7 +57,7 @@ const profitShare = z.object({
   customerId,
   amount,
   forMonth: month,
-  settleMode: z.enum(settleMode.enumValues, { error: "Choose Received now or Add to his due" }),
+  settleMode: z.enum(SETTLE_MODE_VALUES, { error: "Choose Received now or Add to his due" }),
 });
 
 const supplierPayment = z
@@ -149,7 +154,7 @@ const openingCorrection = z
     ...base,
     type: z.literal("opening_correction"),
     openingKind: z
-      .enum(openingKind.enumValues, { error: "Pick what was wrong" })
+      .enum(OPENING_KIND_VALUES, { error: "Pick what was wrong" })
       .exclude(["opening_difference"], { error: "Pick what was wrong" }),
     customerId: optionalPick,
     supplierId: optionalPick,

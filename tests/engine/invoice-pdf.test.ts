@@ -1,9 +1,9 @@
 import { extractText } from "unpdf";
 import { describe, expect, it } from "vitest";
-import { billProfit, duesAround } from "@/lib/accounts";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import type { Entry, MoneyEntry } from "@/lib/engine/post";
-import { format } from "@/lib/money";
+import { billProfit, duesAround } from "@mbl/domain/accounts";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import type { Entry, MoneyEntry } from "@mbl/domain/engine/post";
+import { format } from "@mbl/domain/money";
 import { invoicePdf, receiptPdf } from "@/pdf/invoice";
 import { renderDocPdf } from "@/pdf/invoice-pdf";
 import { pdfFileName, pdfFrame } from "@/pdf/layout";
@@ -278,9 +278,7 @@ describe("U-CR-022.1 the invoice and the money receipt", () => {
     expect(pdfFileName(shop, "invoice", "INV-0042")).toBe(
       "demo-business-shop-invoice-inv-0042.pdf",
     );
-    expect(pdfFileName(shop, "receipt", "MR-0017")).toBe(
-      "demo-business-shop-receipt-mr-0017.pdf",
-    );
+    expect(pdfFileName(shop, "receipt", "MR-0017")).toBe("demo-business-shop-receipt-mr-0017.pdf");
   });
 
   it("renders PDFs whose text has the figures and no cost or profit", async () => {

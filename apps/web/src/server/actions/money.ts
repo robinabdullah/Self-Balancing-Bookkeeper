@@ -2,9 +2,9 @@
 
 import { type AnyColumn, and, eq, sql } from "drizzle-orm";
 import { customers, moneyEntries } from "@/db/schema";
-import { deleteErrors, walkInErrors } from "@/lib/guards";
-import { toDecimal } from "@/lib/money";
-import { type MoneyEntryValues, moneyEntrySchema } from "@/lib/validation/money-entry";
+import { deleteErrors, walkInErrors } from "@mbl/domain/guards";
+import { toDecimal } from "@mbl/domain/money";
+import { type MoneyEntryValues, moneyEntrySchema } from "@mbl/domain/validation/money-entry";
 import { type Row, type Tx, byId, isReversed, runAction } from "@/server/action";
 import { nextReceiptNo } from "@/server/numbers";
 

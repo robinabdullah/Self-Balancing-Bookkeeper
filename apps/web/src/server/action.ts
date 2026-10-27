@@ -5,9 +5,15 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
 import { auditLog, monthCloses, moneyEntries, profiles, purchases } from "@/db/schema";
-import { dhakaToday, monthOf } from "@/lib/dates";
-import { type Calendar, type Errors, dateErrors, editErrors, pairEditErrors } from "@/lib/guards";
-import { rowId } from "@/lib/validation/fields";
+import { dhakaToday, monthOf } from "@mbl/domain/dates";
+import {
+  type Calendar,
+  type Errors,
+  dateErrors,
+  editErrors,
+  pairEditErrors,
+} from "@mbl/domain/guards";
+import { rowId } from "@mbl/domain/validation/fields";
 import { requirePartner } from "@/server/auth";
 
 // The one write path (SRS §2.3, §3; D-010). Every server action calls `runAction`:

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { TextField } from "@/components/forms/field";
-import { expiredBefore, typedNumber } from "@/lib/card-secrets";
-import { autoSlash, dhakaToday, formatMonth } from "@/lib/dates";
+import { expiredBefore, typedNumber } from "@mbl/domain/card-secrets";
+import { autoSlash, dhakaToday, formatMonth } from "@mbl/domain/dates";
 
 // D-067 (UIDD §4.14): the card details form formats as you type: the number in groups of four
 // (saved as digits) and the expiry's "/" after MM (the numeric keypad has none). A past expiry

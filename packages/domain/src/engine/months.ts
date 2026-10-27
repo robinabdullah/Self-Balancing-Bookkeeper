@@ -2,21 +2,16 @@
 // profit, and the partner split at close. Each profit effect already carries its month (the date's
 // or the for_month, SRS §5); closed months use their stored `allocations`, never a recomputation.
 // Pure; integer poisha.
-import type { allocationKind } from "@/db/schema";
-import { addMonths, monthOf } from "@/lib/dates";
-import {
-  type Partner,
-  type Posted,
-  PROFIT_COMPONENTS,
-  type ProfitComponent,
-} from "@/lib/engine/post";
-import { add, splitShares, sub } from "@/lib/money";
+import type { ALLOCATION_KIND_VALUES } from "../enums";
+import { addMonths, monthOf } from "../dates";
+import { type Partner, type Posted, PROFIT_COMPONENTS, type ProfitComponent } from "./post";
+import { add, splitShares, sub } from "../money";
 
 /** A stored `allocations` row; `month` is "YYYY-MM" or the stored 1st. */
 export type Allocation = {
   month: string;
   personId: string;
-  kind: (typeof allocationKind.enumValues)[number];
+  kind: (typeof ALLOCATION_KIND_VALUES)[number];
   basis?: number | null;
   ratePct?: number | null;
   amount: number;

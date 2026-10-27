@@ -8,11 +8,11 @@ import { CashDayView, dayLabel } from "@/components/report/cash-book-view";
 import { ReportSheet } from "@/components/report/report-sheet";
 import { ReportTitle } from "@/components/report/report-title";
 import { SendSheet } from "@/components/send/send-sheet";
-import { addDays, dhakaToday, formatDate, monthOf } from "@/lib/dates";
-import { withQuery } from "@/lib/href";
-import { parseRange } from "@/lib/journal-filter";
+import { addDays, dhakaToday, formatDate, monthOf } from "@mbl/domain/dates";
+import { withQuery } from "@mbl/domain/href";
+import { parseRange } from "@mbl/domain/journal-filter";
 import { cn } from "@/lib/utils";
-import { cashBookText } from "@/lib/whatsapp";
+import { cashBookText } from "@mbl/domain/whatsapp";
 import { preloadEntry } from "@/server/journal";
 import { cashLabel, loadCashBook } from "@/server/reports";
 

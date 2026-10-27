@@ -1,5 +1,5 @@
 import { SaleForm } from "@/components/sale/sale-form";
-import { cleanPrefill } from "@/lib/prefill";
+import { cleanPrefill } from "@mbl/domain/prefill";
 import { customerDues } from "@/server/books";
 import { loadSetup } from "@/server/setup";
 import { lastSaleCustomerId, stockLots } from "@/server/stock";

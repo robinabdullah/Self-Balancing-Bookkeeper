@@ -1,12 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import type { BankAccountFields } from "@/lib/business";
+import type { PayAccount } from "@mbl/domain/business";
 
 // D-040, D-041: "Add How to pay" (off by default) and, when on, the business's accounts as chips.
 // The send preview and the Report sheet's Share PDF both use it.
-
-export type PayAccount = { id: string; label: string; fields: BankAccountFields };
 
 export function HowToPay({
   accounts,

@@ -2,9 +2,9 @@ import "server-only";
 import { and, asc, eq, gt, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { moneyEntries, monthCloses, people, profiles } from "@/db/schema";
-import type { MonthProfit } from "@/lib/engine/months";
-import { monthOf } from "@/lib/dates";
-import { parse } from "@/lib/money";
+import type { MonthProfit } from "@mbl/domain/engine/months";
+import { monthOf } from "@mbl/domain/dates";
+import { parse } from "@mbl/domain/money";
 
 /** The closed months with their close dates (UIDD §4.9 "Closed on dd Mon"). */
 export async function loadCloses() {
@@ -45,7 +45,12 @@ export async function loadSnapshots(months: string[]): Promise<Record<string, Mo
   const rows = await db
     .select({ month: monthCloses.month, snapshot: monthCloses.snapshot })
     .from(monthCloses)
-    .where(inArray(monthCloses.month, months.map((m) => `${m}-01`)));
+    .where(
+      inArray(
+        monthCloses.month,
+        months.map((m) => `${m}-01`),
+      ),
+    );
   return Object.fromEntries(rows.map((r) => [monthOf(r.month), r.snapshot as MonthProfit]));
 }
 

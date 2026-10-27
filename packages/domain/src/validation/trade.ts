@@ -3,7 +3,7 @@
 // the database (lot remaining, sold − returned, dates of the sale or purchase returned, Walk-in)
 // is checked by the action and the guards, not here.
 import { z } from "zod";
-import { purchaseSource, refundTo, returnReason } from "@/db/schema";
+import { PURCHASE_SOURCE_VALUES, REFUND_TO_VALUES, RETURN_REASON_VALUES } from "../enums";
 import {
   date,
   int,
@@ -15,7 +15,7 @@ import {
   optionalText,
   pick,
   rowId,
-} from "@/lib/validation/fields";
+} from "./fields";
 
 const lines = <T extends z.ZodType>(line: T) =>
   z.array(line, { error: "Add at least one line" }).min(1, { error: "Add at least one line" });
@@ -44,7 +44,7 @@ export const purchaseSchema = z
     id: rowId,
     date,
     source: z
-      .enum(purchaseSource.enumValues, { error: "Choose how it was paid" })
+      .enum(PURCHASE_SOURCE_VALUES, { error: "Choose how it was paid" })
       .exclude(["opening"], { error: "Choose how it was paid" }),
     supplierId: optionalPick,
     cardId: optionalPick,
@@ -137,8 +137,8 @@ const purchaseReturn = z
     id: rowId,
     kind: z.literal("purchase"),
     date,
-    reason: z.enum(returnReason.enumValues, { error: "Choose Returned or Damaged / lost" }),
-    refundTo: optional(z.enum(refundTo.enumValues, { error: "Choose where the refund goes" })),
+    reason: z.enum(RETURN_REASON_VALUES, { error: "Choose Returned or Damaged / lost" }),
+    refundTo: optional(z.enum(REFUND_TO_VALUES, { error: "Choose where the refund goes" })),
     cardId: optionalPick,
     supplierId: optionalPick,
     customerId: optionalPick,

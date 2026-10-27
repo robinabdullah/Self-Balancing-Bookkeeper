@@ -1,7 +1,7 @@
-import { type Statement, type StatementRow, dueStatements } from "@/lib/engine/customers";
-import type { Books } from "@/lib/engine/index";
-import type { Posted } from "@/lib/engine/post";
-import { add, format } from "@/lib/money";
+import { type Statement, type StatementRow, dueStatements } from "./engine/customers";
+import type { Books } from "./engine/index";
+import type { Posted } from "./engine/post";
+import { add, format } from "./money";
 
 // UIDD §4.8 (task 4.3): the Customers and Suppliers lists and statements, read off the engine's
 // `dueStatements`. Pure: nothing here computes a balance, only picks, filters and orders them.

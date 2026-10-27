@@ -3,14 +3,14 @@
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { allocations, monthCloses, people } from "@/db/schema";
-import { dhakaToday, formatMonth, monthOf } from "@/lib/dates";
-import { toPosted } from "@/lib/engine/index";
-import { computeClose, monthProfit, nextToClose } from "@/lib/engine/months";
-import { type Errors, closeErrors } from "@/lib/guards";
-import { toDecimal } from "@/lib/money";
-import { readLine } from "@/lib/months-view";
-import { partnerWarning } from "@/lib/setup";
-import { nest, pick, rowId } from "@/lib/validation/fields";
+import { dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
+import { toPosted } from "@mbl/domain/engine/index";
+import { computeClose, monthProfit, nextToClose } from "@mbl/domain/engine/months";
+import { type Errors, closeErrors } from "@mbl/domain/guards";
+import { toDecimal } from "@mbl/domain/money";
+import { readLine } from "@mbl/domain/months-view";
+import { partnerWarning } from "@mbl/domain/setup";
+import { nest, pick, rowId } from "@mbl/domain/validation/fields";
 import { byId, loadCalendar, runAction } from "@/server/action";
 import { loadBooksData } from "@/server/books";
 

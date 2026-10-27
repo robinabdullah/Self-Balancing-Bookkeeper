@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { aboutText, fieldHelp, viewHelp } from "@/lib/help-text";
+import { aboutText, fieldHelp, viewHelp } from "@mbl/domain/help-text";
 
 // The rows of a UIDD §3 table, found by its header: [name, text].
 function uiddRows(header: string) {

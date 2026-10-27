@@ -1,19 +1,13 @@
 // UIDD §3 "What this will do": one row per balance an entry changes, built from the entry's
 // `postEntry` effects (SRS §5) by the shared `effectRows` (D-061), so the preview can't drift
 // from the books. Pure.
-import { type Entry, type Partner, postEntry } from "@/lib/engine/post";
-import { formatMonth } from "@/lib/dates";
-import { type BillDates, type Card, billMonthOf } from "@/lib/engine/cards";
-import {
-  type EffectRow,
-  type RowsContext,
-  billOf,
-  effectRows,
-  overridesOf,
-} from "@/lib/effect-rows";
-import { format, splitEven } from "@/lib/money";
+import { type Entry, type Partner, postEntry } from "./engine/post";
+import { formatMonth } from "./dates";
+import { type BillDates, type Card, billMonthOf } from "./engine/cards";
+import { type EffectRow, type RowsContext, billOf, effectRows, overridesOf } from "./effect-rows";
+import { format, splitEven } from "./money";
 
-export type { Names } from "@/lib/effect-rows";
+export type { Names } from "./effect-rows";
 
 /** The preview of an unsaved entry, or null while it is incomplete (a needed pick is missing). */
 export function previewEntry(

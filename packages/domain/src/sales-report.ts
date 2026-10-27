@@ -1,6 +1,6 @@
-import { AVG } from "@/lib/by-model";
-import type { Sheet } from "@/lib/export";
-import { add, avgUnit, mul, sub } from "@/lib/money";
+import { AVG } from "./by-model";
+import type { Sheet } from "./export";
+import { add, avgUnit, mul, sub } from "./money";
 
 // D-043 (UIDD §4.17): the Sales report for a period, from the sale and customer-return lines
 // (one row per lot, as stored). A reversal counts on its own date with every figure negated, as in

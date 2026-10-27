@@ -2,8 +2,8 @@
 
 import { CheckIcon, XIcon } from "lucide-react";
 import { Amount } from "@/components/amount";
-import { type Breakdown, type PositionSection, positionSections } from "@/lib/dashboard";
-import { format } from "@/lib/money";
+import { type Breakdown, type PositionSection, positionSections } from "@mbl/domain/dashboard";
+import { format } from "@mbl/domain/money";
 import { cn } from "@/lib/utils";
 import { NavSheet } from "./nav-sheets";
 

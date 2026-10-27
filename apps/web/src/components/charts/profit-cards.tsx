@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import type { ChartPeriod } from "@/lib/charts/period";
-import type { MonthsWindow, Point, ProfitCharts, Total } from "@/lib/charts/profit";
-import { format, sub } from "@/lib/money";
+import type { ChartPeriod } from "@mbl/domain/charts/period";
+import type { MonthsWindow, Point, ProfitCharts, Total } from "@mbl/domain/charts/profit";
+import { format, sub } from "@mbl/domain/money";
 import { ChartCard, type Delta } from "./chart-card";
 import { Bars, type Series } from "./charts";
 

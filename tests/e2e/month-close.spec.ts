@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { type Page, expect, test } from "@playwright/test";
-import { addMonths, dhakaToday, formatDate, formatMonth, monthOf } from "@/lib/dates";
+import { addMonths, dhakaToday, formatDate, formatMonth, monthOf } from "@mbl/domain/dates";
 import { localSql, truncateAll } from "../integration/local-db";
 import { linkPartner } from "./global-setup";
 import { goHome } from "./helpers";

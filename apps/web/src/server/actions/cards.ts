@@ -2,8 +2,8 @@
 
 import { and, eq, ne } from "drizzle-orm";
 import { cardBillDates } from "@/db/schema";
-import type { Errors } from "@/lib/guards";
-import { cardBillDateSchema } from "@/lib/validation/setup";
+import type { Errors } from "@mbl/domain/guards";
+import { cardBillDateSchema } from "@mbl/domain/validation/setup";
 import { byId, runAction } from "@/server/action";
 
 // UIDD §4.8 (task 4.4.2; D-020): a card bill's real statement/due dates (`card_bill_dates`,

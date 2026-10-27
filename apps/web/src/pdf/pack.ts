@@ -1,9 +1,9 @@
-import { positionSections } from "@/lib/dashboard";
-import { formatDate, formatMonth } from "@/lib/dates";
-import { add, format } from "@/lib/money";
-import { type DueChange, type MonthlyPack, topGroups } from "@/lib/monthly-pack";
-import { NOT_ALLOCATED, OPEN_NOTE, allocationText } from "@/lib/report-text";
-import { stockColumns, stockTotal } from "@/lib/stock-movement";
+import { positionSections } from "@mbl/domain/dashboard";
+import { formatDate, formatMonth } from "@mbl/domain/dates";
+import { add, format } from "@mbl/domain/money";
+import { type DueChange, type MonthlyPack, topGroups } from "@mbl/domain/monthly-pack";
+import { NOT_ALLOCATED, OPEN_NOTE, allocationText } from "@mbl/domain/report-text";
+import { stockColumns, stockTotal } from "@mbl/domain/stock-movement";
 import type { ReportPdf, ReportSection } from "./report";
 import { groupsSection } from "./sales";
 
@@ -40,13 +40,11 @@ export function packPdf(p: MonthlyPack, name: (id: string) => string): ReportPdf
       },
     },
     { title: `2. Position on ${formatDate(p.end)}` },
-    ...positionSections(p.position).map(
-      (s): ReportSection => ({
-        title: s.title,
-        facts: [...s.lines, ...s.totals].map((l): [string, string] => [l.label, format(l.amount)]),
-        strongLast: true,
-      }),
-    ),
+    ...positionSections(p.position).map((s): ReportSection => ({
+      title: s.title,
+      facts: [...s.lines, ...s.totals].map((l): [string, string] => [l.label, format(l.amount)]),
+      strongLast: true,
+    })),
     {
       facts: [
         [

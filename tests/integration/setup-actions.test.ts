@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
-import { dhakaToday } from "@/lib/dates";
-import { BUILT_IN, USED } from "@/lib/setup";
+import { dhakaToday } from "@mbl/domain/dates";
+import { BUILT_IN, USED } from "@mbl/domain/setup";
 import {
   removeRow,
   saveCard,

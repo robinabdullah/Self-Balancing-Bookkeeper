@@ -1,10 +1,10 @@
 import { Toaster } from "@/components/forms/toast";
 import { NavBar } from "@/components/shell/nav-bar";
 import { TopBar } from "@/components/shell/top-bar";
-import { appName } from "@/lib/business";
-import { breakdown } from "@/lib/dashboard";
-import { formatMonth } from "@/lib/dates";
-import { nextToClose } from "@/lib/engine/months";
+import { appName } from "@mbl/domain/business";
+import { breakdown } from "@mbl/domain/dashboard";
+import { formatMonth } from "@mbl/domain/dates";
+import { nextToClose } from "@mbl/domain/engine/months";
 import { getUser } from "@/lib/supabase/server";
 import { loadBooks } from "@/server/books";
 import { getBusiness, logoSrc } from "@/server/business";

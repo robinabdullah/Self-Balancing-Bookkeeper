@@ -1,4 +1,4 @@
-import { withQuery } from "@/lib/href";
+import { withQuery } from "@mbl/domain/href";
 
 // UIDD §3: the app's navigation. The form routes are placeholders until each form's task.
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatMonth } from "@/lib/dates";
+import { formatDate, formatMonth } from "@mbl/domain/dates";
 import {
   type Calendar,
   closeErrors,
@@ -13,7 +13,7 @@ import {
   reversalDateErrors,
   reverseErrors,
   walkInErrors,
-} from "@/lib/guards";
+} from "@mbl/domain/guards";
 
 // Opened 1 Sep 2026; September is closed; today is 7 Nov 2026.
 const cal: Calendar = { today: "2026-11-07", openingDate: "2026-09-01", lastClosed: "2026-09" };

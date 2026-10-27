@@ -12,11 +12,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { ConfirmSheet } from "@/lib/confirms";
-import { formatStamp } from "@/lib/dates";
-import type { EffectRow } from "@/lib/effect-rows";
-import type { Errors } from "@/lib/guards";
-import type { AboutForm } from "@/lib/help-text";
+import type { ConfirmSheet } from "@mbl/domain/confirms";
+import { formatStamp } from "@mbl/domain/dates";
+import type { EffectRow } from "@mbl/domain/effect-rows";
+import type { Errors } from "@mbl/domain/guards";
+import type { AboutForm } from "@mbl/domain/help-text";
 import { cn } from "@/lib/utils";
 import type { Result } from "@/server/action";
 import { EffectRows } from "./effect-rows";

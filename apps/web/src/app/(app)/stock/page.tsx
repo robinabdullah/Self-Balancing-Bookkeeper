@@ -1,5 +1,5 @@
 import { StockList } from "@/components/stock/stock-list";
-import { setupNames } from "@/lib/setup";
+import { setupNames } from "@mbl/domain/setup";
 import { loadSetup } from "@/server/setup";
 import { stockLots } from "@/server/stock";
 

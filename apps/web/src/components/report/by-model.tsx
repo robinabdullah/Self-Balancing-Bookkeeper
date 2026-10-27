@@ -1,6 +1,6 @@
 import { Amount } from "@/components/amount";
 import { EmptyState } from "@/components/states";
-import { AVG, type ModelRow, modelTotal, piecesAt } from "@/lib/by-model";
+import { AVG, type ModelRow, modelTotal, piecesAt } from "@mbl/domain/by-model";
 import { loadStatementExtras } from "@/server/account-reports";
 
 // D-045 (UIDD §4.8): the By model tables under a customer's or supplier's statement for a period

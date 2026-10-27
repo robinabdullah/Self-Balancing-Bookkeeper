@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { RangeChip } from "@/components/accounts/range-chip";
-import { type ChartPeriod, PERIODS } from "@/lib/charts/period";
-import { withQuery } from "@/lib/href";
+import { type ChartPeriod, PERIODS } from "@mbl/domain/charts/period";
+import { withQuery } from "@mbl/domain/href";
 import { cn } from "@/lib/utils";
 
 // D-064 (UIDD §4.17): the Charts period row: 6M (default) · 12M · This year · Custom. Custom opens

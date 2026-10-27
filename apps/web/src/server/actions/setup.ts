@@ -13,9 +13,9 @@ import {
   people,
   suppliers,
 } from "@/db/schema";
-import type { Errors } from "@/lib/guards";
-import { toDecimal } from "@/lib/money";
-import { BUILT_IN, type SetupKind, USED, setupKinds } from "@/lib/setup";
+import type { Errors } from "@mbl/domain/guards";
+import { toDecimal } from "@mbl/domain/money";
+import { BUILT_IN, type SetupKind, USED, setupKinds } from "@mbl/domain/setup";
 import {
   activeSchema,
   cardSchema,
@@ -23,7 +23,7 @@ import {
   modelSchema,
   personSchema,
   supplierSchema,
-} from "@/lib/validation/setup";
+} from "@mbl/domain/validation/setup";
 import { type AppTable, type Row, type Tx, byId, runAction } from "@/server/action";
 
 // Setup add/edit, deactivate/activate and delete (PRD §4.1; SRS §4 Setup; UIDD §4.11; D-023).

@@ -1,7 +1,7 @@
-import { AVG } from "@/lib/by-model";
-import { formatRange } from "@/lib/dates";
-import { add, format } from "@/lib/money";
-import type { SalesGroup, SalesReport } from "@/lib/sales-report";
+import { AVG } from "@mbl/domain/by-model";
+import { formatRange } from "@mbl/domain/dates";
+import { add, format } from "@mbl/domain/money";
+import type { SalesGroup, SalesReport } from "@mbl/domain/sales-report";
 import type { ReportPdf, ReportSection } from "./report";
 
 // D-043 (UIDD §4.17): what the Sales report PDF says, as text: the totals, then By model (with the

@@ -2,11 +2,11 @@
 
 import { type AnyColumn, and, asc, eq, notInArray, sql } from "drizzle-orm";
 import { customers, purchaseLines, purchases } from "@/db/schema";
-import { formatDate } from "@/lib/dates";
-import { type Errors, deleteErrors, lotEditErrors, walkInErrors } from "@/lib/guards";
-import { add, mul, parse, toDecimal } from "@/lib/money";
-import { nest } from "@/lib/validation/fields";
-import { type PurchaseValues, purchaseSchema } from "@/lib/validation/trade";
+import { formatDate } from "@mbl/domain/dates";
+import { type Errors, deleteErrors, lotEditErrors, walkInErrors } from "@mbl/domain/guards";
+import { add, mul, parse, toDecimal } from "@mbl/domain/money";
+import { nest } from "@mbl/domain/validation/fields";
+import { type PurchaseValues, purchaseSchema } from "@mbl/domain/validation/trade";
 import { type Row, type Tx, byId, isReversed, runAction } from "@/server/action";
 
 // Purchase add/edit and Undo (PRD §4.2; SRS §4 purchases, §5, §8; UIDD §4.3; D-009). A purchase

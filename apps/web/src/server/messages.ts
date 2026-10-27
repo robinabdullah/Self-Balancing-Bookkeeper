@@ -1,16 +1,21 @@
 import "server-only";
-import { docLabel, entryLabels, entryTitle, otherSide } from "@/components/journal/labels";
-import { type StatementKind, duesAround, statementRange, statementRowsOf } from "@/lib/accounts";
-import type { MessageType } from "@/lib/business";
-import { dhakaToday, formatSaved } from "@/lib/dates";
+import { docLabel, entryLabels, entryTitle, otherSide } from "@mbl/domain/journal/labels";
+import {
+  type StatementKind,
+  duesAround,
+  statementRange,
+  statementRowsOf,
+} from "@mbl/domain/accounts";
+import type { MessageType } from "@mbl/domain/business";
+import { dhakaToday, formatSaved } from "@mbl/domain/dates";
 import {
   cardPdfHref,
   investorPdfHref,
   invoicePdfHref,
   receiptPdfHref,
   statementPdfHref,
-} from "@/lib/href";
-import { cardExtrasText, investorText, modelText } from "@/lib/report-text";
+} from "@mbl/domain/href";
+import { cardExtrasText, investorText, modelText } from "@mbl/domain/report-text";
 import {
   type ItemLine,
   SEND_TYPES,
@@ -23,13 +28,13 @@ import {
   returnText,
   saleText,
   statementText,
-} from "@/lib/whatsapp";
+} from "@mbl/domain/whatsapp";
 import {
   type StatementExtras,
   loadInvestorReport,
   loadStatementExtras,
 } from "@/server/account-reports";
-import { setupNames } from "@/lib/setup";
+import { setupNames } from "@mbl/domain/setup";
 import { loadBooks } from "@/server/books";
 import { getBusiness } from "@/server/business";
 import { loadEntry, loadJournal } from "@/server/journal";

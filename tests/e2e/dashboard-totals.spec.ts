@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { type Locator, type Page, expect, test } from "@playwright/test";
-import { addDays, dhakaToday, monthOf } from "@/lib/dates";
-import { parse } from "@/lib/money";
+import { addDays, dhakaToday, monthOf } from "@mbl/domain/dates";
+import { parse } from "@mbl/domain/money";
 import { localSql } from "../integration/local-db";
 import { goHome } from "./helpers";
 

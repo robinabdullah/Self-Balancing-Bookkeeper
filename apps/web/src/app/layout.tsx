@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { businessName } from "@/lib/business";
+import { businessName } from "@mbl/domain/business";
 import { getProfile } from "@/server/auth";
 import { getBusiness } from "@/server/business";
 import "./globals.css";

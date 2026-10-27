@@ -6,7 +6,7 @@ import {
   type Partner,
   type ProfitComponent,
   postEntry,
-} from "@/lib/engine/post";
+} from "@mbl/domain/engine/post";
 import { imbalance } from "./invariant";
 
 // Synthetic ids only (D-014).

@@ -3,9 +3,9 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { profiles } from "@/db/schema";
-import type { Errors } from "@/lib/guards";
-import { themes } from "@/lib/themes";
-import { rowId } from "@/lib/validation/fields";
+import type { Errors } from "@mbl/domain/guards";
+import { themes } from "@mbl/domain/themes";
+import { rowId } from "@mbl/domain/validation/fields";
 import { runAction } from "@/server/action";
 
 // UIDD §4.13 (D-037): Settings → Theme, saved on the user's own profile (all devices), audited

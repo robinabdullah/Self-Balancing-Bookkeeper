@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { TYPES } from "@/components/money/types";
+import { TYPES } from "@mbl/domain/money/types";
 import { quickActions } from "@/components/shell/nav";
-import { cleanPrefill } from "@/lib/prefill";
+import { cleanPrefill } from "@mbl/domain/prefill";
 import type { SetupData } from "@/server/setup";
 
 // U-CR-013.7 / U-CR-013.8 (D-032): forms opened from a page. Synthetic ids.

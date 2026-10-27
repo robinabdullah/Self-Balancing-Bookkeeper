@@ -5,9 +5,9 @@ import { ProfitCards } from "@/components/charts/profit-cards";
 import { ReportSheet } from "@/components/report/report-sheet";
 import { StockCards } from "@/components/charts/stock-cards";
 import { SegmentedNav } from "@/components/shell/segmented-nav";
-import { periodQuery } from "@/lib/charts/period";
-import { monthOf } from "@/lib/dates";
-import { withQuery } from "@/lib/href";
+import { periodQuery } from "@mbl/domain/charts/period";
+import { monthOf } from "@mbl/domain/dates";
+import { withQuery } from "@mbl/domain/href";
 import {
   loadChartPeriod,
   loadCustomerCharts,

@@ -6,9 +6,9 @@ import {
   cardRows,
   groupByOwner,
   searchCards,
-} from "@/lib/card-view";
-import { type BillDates, type Card, cardSummaries } from "@/lib/engine/cards";
-import type { MoneyEntry, PurchaseEntry } from "@/lib/engine/post";
+} from "@mbl/domain/card-view";
+import { type BillDates, type Card, cardSummaries } from "@mbl/domain/engine/cards";
+import type { MoneyEntry, PurchaseEntry } from "@mbl/domain/engine/post";
 import { expectBalanced, posted } from "./invariant";
 
 // Task 4.4 (UIDD §4.8): the Cards summary table and a card's detail, off `cardSummaries`.

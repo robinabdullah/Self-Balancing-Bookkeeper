@@ -1,10 +1,10 @@
-import { cashBook } from "@/lib/cash-book";
-import { type CardAlert, cardAlerts } from "@/lib/dashboard";
-import { addDays, formatDate, formatMonth, monthOf } from "@/lib/dates";
-import type { Books } from "@/lib/engine/index";
-import type { Allocation } from "@/lib/engine/months";
-import type { Account, Posted } from "@/lib/engine/post";
-import { add, sub } from "@/lib/money";
+import { cashBook } from "../cash-book";
+import { type CardAlert, cardAlerts } from "../dashboard";
+import { addDays, formatDate, formatMonth, monthOf } from "../dates";
+import type { Books } from "../engine/index";
+import type { Allocation } from "../engine/months";
+import type { Account, Posted } from "../engine/post";
+import { add, sub } from "../money";
 import type { ChartPeriod } from "./period";
 import type { MonthsWindow, Point, Total } from "./profit";
 

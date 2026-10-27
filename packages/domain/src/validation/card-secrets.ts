@@ -1,8 +1,8 @@
 // D-046 (UIDD §4.14): a card's saved details (D-054: one of its numbers). Only the number is required; it must pass the card
 // check digit. The card is picked (pick, don't type); `id` is the details row's own id.
 import { z } from "zod";
-import { CARD_TAGS, luhn, normaliseNumber } from "@/lib/card-secrets";
-import { optional, pick, rowId } from "@/lib/validation/fields";
+import { CARD_TAGS, luhn, normaliseNumber } from "../card-secrets";
+import { optional, pick, rowId } from "./fields";
 
 export const cardDetailsSchema = z.object({
   id: rowId,

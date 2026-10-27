@@ -1,7 +1,7 @@
 import { Amount } from "@/components/amount";
-import type { Allocation } from "@/lib/engine/months";
-import { add } from "@/lib/money";
-import type { BreakdownLine } from "@/lib/months-view";
+import type { Allocation } from "@mbl/domain/engine/months";
+import { add } from "@mbl/domain/money";
+import type { BreakdownLine } from "@mbl/domain/months-view";
 
 // UIDD §4.9 (tasks 5.1, 5.2): the profit breakdown (the close screen and a closed month), and a
 // closed month's stored allocations, read-only: investors (basis × rate % = amount), then the

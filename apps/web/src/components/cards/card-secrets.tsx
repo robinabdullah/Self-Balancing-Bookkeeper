@@ -22,7 +22,7 @@ import {
   cardDetailsText,
   maskedLine,
   tagOf,
-} from "@/lib/card-secrets";
+} from "@mbl/domain/card-secrets";
 import { removeCardDetails, saveCardDetails } from "@/server/actions/card-secrets";
 import { revealOptions } from "@/server/actions/passkeys";
 import type { CardSecret } from "@/server/card-secrets";

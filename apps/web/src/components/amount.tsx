@@ -1,4 +1,4 @@
-import { format } from "@/lib/money";
+import { format } from "@mbl/domain/money";
 import { cn } from "@/lib/utils";
 
 // UIDD §2: money as ৳ with Indian grouping; a negative amount is red with a minus sign.

@@ -2,11 +2,11 @@
 
 import { type AnyColumn, and, eq, inArray, sql } from "drizzle-orm";
 import { purchaseLines, returnLines, returns } from "@/db/schema";
-import { formatDate } from "@/lib/dates";
-import { type Errors, deleteErrors } from "@/lib/guards";
-import { add, mul, toDecimal } from "@/lib/money";
-import { nest } from "@/lib/validation/fields";
-import { type ReturnValues, returnSchema } from "@/lib/validation/trade";
+import { formatDate } from "@mbl/domain/dates";
+import { type Errors, deleteErrors } from "@mbl/domain/guards";
+import { add, mul, toDecimal } from "@mbl/domain/money";
+import { nest } from "@mbl/domain/validation/fields";
+import { type ReturnValues, returnSchema } from "@mbl/domain/validation/trade";
 import { type Row, type Tx, byId, isReversed, runAction } from "@/server/action";
 import { stockLots } from "@/server/stock";
 

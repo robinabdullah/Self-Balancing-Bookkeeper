@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Amount } from "@/components/amount";
 import { EmptyState } from "@/components/states";
-import { formatDate } from "@/lib/dates";
-import { entryHref, withQuery } from "@/lib/href";
-import { add, format, mul } from "@/lib/money";
-import { invoiceLabel } from "@/lib/whatsapp";
+import { formatDate } from "@mbl/domain/dates";
+import { entryHref, withQuery } from "@mbl/domain/href";
+import { add, format, mul } from "@mbl/domain/money";
+import { invoiceLabel } from "@mbl/domain/whatsapp";
 import type { Bill } from "@/server/accounts";
 
 // UIDD §4.8 (task 4.3.1): a customer's Bills tab: each sale, newest first, with its lines, total

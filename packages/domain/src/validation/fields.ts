@@ -2,7 +2,7 @@
 // (text for money, "" for an empty picker); the output is what the action stores: integer poisha,
 // "YYYY-MM-DD" dates, "YYYY-MM" months and null for an empty optional field.
 import { z } from "zod";
-import { parse } from "@/lib/money";
+import { parse } from "../money";
 
 const blankToNull = (v: unknown) => (v === "" || v === undefined ? null : v);
 

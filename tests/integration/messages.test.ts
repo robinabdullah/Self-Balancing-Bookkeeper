@@ -2,9 +2,9 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
-import { addDays, addMonths, dhakaToday, monthOf } from "@/lib/dates";
-import { format } from "@/lib/money";
-import { invoiceLabel, receiptLabel } from "@/lib/whatsapp";
+import { addDays, addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
+import { format } from "@mbl/domain/money";
+import { invoiceLabel, receiptLabel } from "@mbl/domain/whatsapp";
 import { saveMoneyEntry } from "@/server/actions/money";
 import { saveReturn } from "@/server/actions/return";
 import { saveSale } from "@/server/actions/sale";
@@ -129,8 +129,13 @@ describe("CR-020 message drafts", () => {
     );
     expect(await balance()).toBe(4_400_000);
 
-    const pay = await money({ type: "customer_payment", customerId: ids.customer, amount: "5,000" });
-    const [{ receipt_no: mr }] = await sql`select receipt_no from money_entries where id = ${pay.id}`;
+    const pay = await money({
+      type: "customer_payment",
+      customerId: ids.customer,
+      amount: "5,000",
+    });
+    const [{ receipt_no: mr }] =
+      await sql`select receipt_no from money_entries where id = ${pay.id}`;
     const payment = await draft(pay.id);
     expect(payment.body).toContain(`✅ *Payment received — ${receiptLabel(mr)}*`);
     expect(payment.body).toContain("_Taka Five Thousand Only_");
@@ -154,7 +159,11 @@ describe("CR-020 message drafts", () => {
     expect(back.body).toContain("- Model V × 1 @ ৳18,000\nRefund to your due: -৳18,000");
     expect(back.body).toContain("*Due now: ৳21,000*");
 
-    const disc = await money({ type: "customer_discount", customerId: ids.customer, amount: "500" });
+    const disc = await money({
+      type: "customer_discount",
+      customerId: ids.customer,
+      amount: "500",
+    });
     expect((await draft(disc.id)).body).toContain("Discount: ৳500\n*Due now: ৳20,500*");
 
     const share = await money({
@@ -231,15 +240,30 @@ describe("CR-020 message drafts", () => {
     const from = `${monthOf(today)}-01`;
     const range = { from, to: today };
 
-    const customer = await loadDraft({ kind: "statement", account: "customer", id: ids.customer, ...range });
+    const customer = await loadDraft({
+      kind: "statement",
+      account: "customer",
+      id: ids.customer,
+      ...range,
+    });
     expect(customer?.body).toContain(`Sale ${invoiceLabel(inv)}: +৳36,000`);
     expect(customer?.body).toContain(`*Closing due: ${format(await balance())}*`);
 
-    const person = await loadDraft({ kind: "statement", account: "person", id: ids.arif, ...range });
+    const person = await loadDraft({
+      kind: "statement",
+      account: "person",
+      id: ids.arif,
+      ...range,
+    });
     expect(person).toMatchObject({ recipient: "Arif", number: "8801711000001", name: "Arif" });
     expect(person?.body).toContain("*Closing capital: ৳1,00,000*");
 
-    const supplier = await loadDraft({ kind: "statement", account: "supplier", id: ids.supplier, ...range });
+    const supplier = await loadDraft({
+      kind: "statement",
+      account: "supplier",
+      id: ids.supplier,
+      ...range,
+    });
     expect(supplier).toMatchObject({ number: null });
     expect(supplier?.body).toContain("No entries in this period.");
 

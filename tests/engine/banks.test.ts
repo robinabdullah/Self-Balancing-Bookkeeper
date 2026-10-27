@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DARK, NEUTRAL, WHITE, allBadges, bankOf, contrast, middle } from "@/lib/banks";
+import { DARK, NEUTRAL, WHITE, allBadges, bankOf, contrast, middle } from "@mbl/domain/banks";
 
 // CR-013 (D-032): the bank badge comes from the card name. Synthetic names; the bank names are
 // the ones the partners use (SRS §6 fixture table).

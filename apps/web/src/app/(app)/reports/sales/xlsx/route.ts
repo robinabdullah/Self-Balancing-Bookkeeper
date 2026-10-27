@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
-import { parseRange } from "@/lib/journal-filter";
-import { salesSheets } from "@/lib/sales-report";
+import { parseRange } from "@mbl/domain/journal-filter";
+import { salesSheets } from "@mbl/domain/sales-report";
 import { xlsxReport } from "@/server/export";
 import { loadSales } from "@/server/reports";
 

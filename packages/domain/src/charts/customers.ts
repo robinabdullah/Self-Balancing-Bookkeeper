@@ -1,9 +1,9 @@
-import { addDays, daysBetween, formatDate } from "@/lib/dates";
-import type { Statement, StatementRow } from "@/lib/engine/customers";
-import type { Posted } from "@/lib/engine/post";
-import { topGroups } from "@/lib/monthly-pack";
-import { add, avgTaka, sub } from "@/lib/money";
-import type { SalesGroup } from "@/lib/sales-report";
+import { addDays, daysBetween, formatDate } from "../dates";
+import type { Statement, StatementRow } from "../engine/customers";
+import type { Posted } from "../engine/post";
+import { topGroups } from "../monthly-pack";
+import { add, avgTaka, sub } from "../money";
+import type { SalesGroup } from "../sales-report";
 import type { Kind } from "./kinds";
 import type { ChartPeriod } from "./period";
 import { positionAt } from "./position";

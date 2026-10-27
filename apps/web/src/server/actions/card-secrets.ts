@@ -2,16 +2,16 @@
 
 import { and, eq, ne } from "drizzle-orm";
 import { cardSecrets, cards, people } from "@/db/schema";
-import type { Errors } from "@/lib/guards";
+import type { Errors } from "@mbl/domain/guards";
 import {
   DUPLICATE_NUMBER,
   EDIT_AFTER_REVEAL_MINUTES,
   NO_KEY,
   ONE_PRIMARY,
   REVEAL_FIRST,
-} from "@/lib/card-secrets";
-import { cardName } from "@/lib/setup";
-import { cardDetailsSchema } from "@/lib/validation/card-secrets";
+} from "@mbl/domain/card-secrets";
+import { cardName } from "@mbl/domain/setup";
+import { cardDetailsSchema } from "@mbl/domain/validation/card-secrets";
 import { type Row, type Tx, byId, runAction } from "@/server/action";
 import { decryptField, encryptField, hasCardKey } from "@/server/card-crypto";
 import { recentReveal } from "@/server/card-secrets";

@@ -1,6 +1,6 @@
 import { AccountList } from "@/components/accounts/account-list";
 import { AccountTabs } from "@/components/shell/account-tabs";
-import { accountRows } from "@/lib/accounts";
+import { accountRows } from "@mbl/domain/accounts";
 import { loadBooks } from "@/server/books";
 import { loadSetup } from "@/server/setup";
 

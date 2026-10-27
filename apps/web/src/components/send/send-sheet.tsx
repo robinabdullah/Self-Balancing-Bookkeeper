@@ -17,12 +17,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { withQuery } from "@/lib/href";
+import { withQuery } from "@mbl/domain/href";
 import { cn } from "@/lib/utils";
-import { LONG_TEXT, compose, howToPayText, waLink } from "@/lib/whatsapp";
+import { LONG_TEXT, compose, howToPayText, waLink } from "@mbl/domain/whatsapp";
 import { saveTemplate } from "@/server/actions/business";
 import type { Draft } from "@/server/messages";
-import { HowToPay, type PayAccount, firstPick } from "./how-to-pay";
+import type { PayAccount } from "@mbl/domain/business";
+import { HowToPay, firstPick } from "./how-to-pay";
 
 // UIDD §4.15 (D-040): the send preview over an account page (`?send=`). The greeting comes from
 // the saved template (editable; "Save greeting as default" saves it back with `{name}` in place of

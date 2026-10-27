@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { billToPay, emiLabel, ordinal, visibleBills } from "@/lib/card-view";
+import { billToPay, emiLabel, ordinal, visibleBills } from "@mbl/domain/card-view";
 
 // U-CR-013.4 (D-032): the card page's statements, Pay button, EMI label and bill days.
 // Synthetic bills (poisha), newest first as the page shows them.

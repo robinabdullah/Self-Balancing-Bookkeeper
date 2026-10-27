@@ -1,6 +1,6 @@
 import { type Page, expect, test } from "@playwright/test";
-import { addMonths, formatMonth, monthOf } from "@/lib/dates";
-import { billMonthOf } from "@/lib/engine/cards";
+import { addMonths, formatMonth, monthOf } from "@mbl/domain/dates";
+import { billMonthOf } from "@mbl/domain/engine/cards";
 import { goHome } from "./helpers";
 import { dhaka, dmy, fillDate, phone, pick, seedAccounts, seedMoney, sql } from "./seed";
 

@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { db } from "@/db";
-import { computeBooks } from "@/lib/engine/index";
-import { parse } from "@/lib/money";
+import { computeBooks } from "@mbl/domain/engine/index";
+import { parse } from "@mbl/domain/money";
 import { loadBooksData } from "@/server/books";
 import { PARITY_TODAY } from "../../scripts/parity/config";
 import { ids, seedParity } from "../../scripts/parity/seed";

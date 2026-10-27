@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { XIcon } from "lucide-react";
-import { formatRange } from "@/lib/dates";
+import { formatRange } from "@mbl/domain/dates";
 
 // D-040: the period an account page's statement shows ("01 Oct – 31 Oct 2026 ✕"); ✕ clears it.
 // It appears only while a period is set (UI rule 3).

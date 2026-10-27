@@ -3,9 +3,9 @@
 // effects (SRS §5): + = a charge, − = a credit. A reversed entry and its reversal both drop out of
 // the bills once the reversal is dated on or before `asOf` (D-058); the balance still sums both.
 // Pure; integer poisha.
-import { addDays, addMonths, clampDay, monthOf } from "@/lib/dates";
-import type { Posted } from "@/lib/engine/post";
-import { add, splitEven, sub } from "@/lib/money";
+import { addDays, addMonths, clampDay, monthOf } from "../dates";
+import type { Posted } from "./post";
+import { add, splitEven, sub } from "../money";
 
 export type Card = { id: string; statementDay: number; dueDay: number };
 

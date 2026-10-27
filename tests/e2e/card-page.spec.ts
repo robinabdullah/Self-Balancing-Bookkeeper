@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import { type Locator, type Page, expect, test } from "@playwright/test";
-import { addMonths, formatMonth } from "@/lib/dates";
-import { type Card, billDates, billMonthOf } from "@/lib/engine/cards";
+import { addMonths, formatMonth } from "@mbl/domain/dates";
+import { type Card, billDates, billMonthOf } from "@mbl/domain/engine/cards";
 import { goHome } from "./helpers";
 import { THEMES, dhaka, fillDate, seedAccounts, seedMoney, setTheme, sql } from "./seed";
 

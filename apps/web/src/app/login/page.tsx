@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { BusinessLogo } from "@/components/shell/business-logo";
-import { businessName } from "@/lib/business";
+import { businessName } from "@mbl/domain/business";
 import { getBusiness, logoSrc } from "@/server/business";
 import { LoginForm } from "./login-form";
 

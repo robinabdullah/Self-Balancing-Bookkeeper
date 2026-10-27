@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Breakdown } from "@/lib/dashboard";
+import type { Breakdown } from "@mbl/domain/dashboard";
 import { signOut } from "@/server/actions/auth";
 import { BalanceChip } from "./balance-chip";
 import { BusinessLogo } from "./business-logo";

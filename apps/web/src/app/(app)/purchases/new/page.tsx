@@ -1,5 +1,5 @@
 import { PurchaseForm } from "@/components/purchase/purchase-form";
-import { cleanPrefill } from "@/lib/prefill";
+import { cleanPrefill } from "@mbl/domain/prefill";
 import { customerDues, loadBooks } from "@/server/books";
 import { loadSetup } from "@/server/setup";
 

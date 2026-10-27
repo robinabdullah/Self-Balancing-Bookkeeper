@@ -1,9 +1,9 @@
 // Balance (SRS §5): the books' totals, the books-balance invariant, the opening difference and the
 // cash warning (D-018). Every amount comes from `postEntry` effects; profit owed and undistributed
 // profit come from `profitBooks` (closed months use their stored allocations). Pure; integer poisha.
-import type { ProfitBooks } from "@/lib/engine/months";
-import type { Account, Posted } from "@/lib/engine/post";
-import { add, sub } from "@/lib/money";
+import type { ProfitBooks } from "./months";
+import type { Account, Posted } from "./post";
+import { add, sub } from "../money";
 
 /** Opening difference (capital booked by the import or by corrections), shown until resolved. */
 export type OpeningDifference = {

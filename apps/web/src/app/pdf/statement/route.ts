@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
-import { parseRange } from "@/lib/journal-filter";
-import { rowId } from "@/lib/validation/fields";
+import { parseRange } from "@mbl/domain/journal-filter";
+import { rowId } from "@mbl/domain/validation/fields";
 import { pdfFileName } from "@/pdf/layout";
 import { modelSection } from "@/pdf/account-reports";
 import type { ReportSection } from "@/pdf/report";

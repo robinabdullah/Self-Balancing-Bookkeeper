@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { addMonths } from "@/lib/dates";
-import { type Calendar, dateErrors, reversalDateErrors } from "@/lib/guards";
-import { billMonthChoices, forMonthChoices } from "@/lib/month-choices";
+import { addMonths } from "@mbl/domain/dates";
+import { type Calendar, dateErrors, reversalDateErrors } from "@mbl/domain/guards";
+import { billMonthChoices, forMonthChoices } from "@mbl/domain/month-choices";
 
 // Opened 1 Sep 2026; September is closed; today is 7 Nov 2026 (as guards.test.ts).
 const cal: Calendar = { today: "2026-11-07", openingDate: "2026-09-01", lastClosed: "2026-09" };

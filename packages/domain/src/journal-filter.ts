@@ -1,5 +1,5 @@
-import { addMonths, clampDay, formatMonth, monthOf } from "@/lib/dates";
-import { add } from "@/lib/money";
+import { addMonths, clampDay, formatMonth, monthOf } from "./dates";
+import { add } from "./money";
 
 // UIDD §4.10 (D-032): the Journal's filters, kept in the URL (`?type=&who=&period=&from=&to=&q=`)
 // so a page can link to a filtered Journal and a reload keeps them. Pure.

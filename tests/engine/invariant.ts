@@ -1,9 +1,9 @@
 import { expect } from "vitest";
-import { balance } from "@/lib/engine/balance";
-import { toPosted } from "@/lib/engine/index";
-import { type Allocation, profitBooks } from "@/lib/engine/months";
-import type { Effect, Entry, Partner, Posted } from "@/lib/engine/post";
-import { SIDE } from "@/lib/engine/post";
+import { balance } from "@mbl/domain/engine/balance";
+import { toPosted } from "@mbl/domain/engine/index";
+import { type Allocation, profitBooks } from "@mbl/domain/engine/months";
+import type { Effect, Entry, Partner, Posted } from "@mbl/domain/engine/post";
+import { SIDE } from "@mbl/domain/engine/post";
 
 // Synthetic ids only (D-014).
 export const PARTNERS: Partner[] = [

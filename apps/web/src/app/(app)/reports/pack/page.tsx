@@ -4,9 +4,9 @@ import { ReportSheet } from "@/components/report/report-sheet";
 import { ReportTitle } from "@/components/report/report-title";
 import { SendSheet } from "@/components/send/send-sheet";
 import { EmptyState } from "@/components/states";
-import { dhakaToday, formatDate, formatMonth } from "@/lib/dates";
-import { packPdfHref, packXlsxHref, withQuery } from "@/lib/href";
-import { packText } from "@/lib/report-text";
+import { dhakaToday, formatDate, formatMonth } from "@mbl/domain/dates";
+import { packPdfHref, packXlsxHref, withQuery } from "@mbl/domain/href";
+import { packText } from "@mbl/domain/report-text";
 import { defaultPackMonth, loadPack, packMonth, packMonths } from "@/server/pack";
 
 // D-045 (UIDD §4.17): the Monthly partner pack, one month (`?month=`; the latest closed month by

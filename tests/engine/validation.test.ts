@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
-import { postEntry } from "@/lib/engine/post";
-import { moneyEntrySchema } from "@/lib/validation/money-entry";
+import { postEntry } from "@mbl/domain/engine/post";
+import { moneyEntrySchema } from "@mbl/domain/validation/money-entry";
 import {
   cardBillDateSchema,
   cardSchema,
@@ -9,8 +9,8 @@ import {
   modelSchema,
   personSchema,
   supplierSchema,
-} from "@/lib/validation/setup";
-import { purchaseSchema, returnSchema, saleSchema } from "@/lib/validation/trade";
+} from "@mbl/domain/validation/setup";
+import { purchaseSchema, returnSchema, saleSchema } from "@mbl/domain/validation/trade";
 
 const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const ID = uuid(1);

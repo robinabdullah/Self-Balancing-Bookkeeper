@@ -1,9 +1,9 @@
 import { Amount } from "@/components/amount";
 import { EmptyState } from "@/components/states";
-import { formatDate, formatMonth } from "@/lib/dates";
-import { sub } from "@/lib/money";
-import { type DueChange, type MonthlyPack, sumOf } from "@/lib/monthly-pack";
-import { type StockMoveRow, stockColumns, stockTotal } from "@/lib/stock-movement";
+import { formatDate, formatMonth } from "@mbl/domain/dates";
+import { sub } from "@mbl/domain/money";
+import { type DueChange, type MonthlyPack, sumOf } from "@mbl/domain/monthly-pack";
+import { type StockMoveRow, stockColumns, stockTotal } from "@mbl/domain/stock-movement";
 import { Section } from "./investor-view";
 
 // D-045 (UIDD §4.17): the Monthly pack's sections 5–8: stock movement, dues and their change,

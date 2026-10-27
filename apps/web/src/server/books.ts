@@ -16,9 +16,14 @@ import {
   saleLines,
   sales,
 } from "@/db/schema";
-import { dhakaToday } from "@/lib/dates";
-import { type Books, type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import { parse } from "@/lib/money";
+import { dhakaToday } from "@mbl/domain/dates";
+import {
+  type Books,
+  type BooksData,
+  type StoredEntry,
+  computeBooks,
+} from "@mbl/domain/engine/index";
+import { parse } from "@mbl/domain/money";
 import type { Tx } from "@/server/action";
 
 // SRS §2 (task 4.1.1): the only path from the DB to the engine. Every fact row is loaded and mapped

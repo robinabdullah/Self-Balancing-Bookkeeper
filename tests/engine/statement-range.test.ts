@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { duesAround, statementRange, statementRowsOf } from "@/lib/accounts";
-import { dueStatements } from "@/lib/engine/customers";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import type { Entry, MoneyEntry } from "@/lib/engine/post";
-import { periodRange, parseRange } from "@/lib/journal-filter";
-import { formatRange, formatSaved } from "@/lib/dates";
+import { duesAround, statementRange, statementRowsOf } from "@mbl/domain/accounts";
+import { dueStatements } from "@mbl/domain/engine/customers";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import type { Entry, MoneyEntry } from "@mbl/domain/engine/post";
+import { periodRange, parseRange } from "@mbl/domain/journal-filter";
+import { formatRange, formatSaved } from "@mbl/domain/dates";
 import { expectBalanced, PARTNERS } from "./invariant";
 
 // D-040: statements for a period, read off the books. Synthetic ids only (D-014).
@@ -24,7 +24,12 @@ const stored = (entry: Entry, time = "10:00:00"): StoredEntry => {
 };
 const money = (m: Omit<MoneyEntry, "table">) => stored({ table: "money", ...m });
 const sale = (date: string, qty: number, unitPrice: number) =>
-  stored({ table: "sale", date, customerId: CUST, lines: [{ qty, unitPrice, unitCost: 1_000_000 }] });
+  stored({
+    table: "sale",
+    date,
+    customerId: CUST,
+    lines: [{ qty, unitPrice, unitCost: 1_000_000 }],
+  });
 
 const entries: StoredEntry[] = [
   money({ type: "capital_in", date: "2026-09-01", amount: 90_000_000, personId: ARIF }),
@@ -47,7 +52,13 @@ const entries: StoredEntry[] = [
   money({ type: "customer_payment", date: "2026-09-20", amount: 1_000_000, customerId: CUST }),
   sale("2026-10-02", 3, 1_100_000),
   money({ type: "customer_payment", date: "2026-10-05", amount: 2_000_000, customerId: CUST }),
-  money({ type: "supplier_payment", date: "2026-10-06", amount: 5_000_000, supplierId: SUPP, source: "cash" }),
+  money({
+    type: "supplier_payment",
+    date: "2026-10-06",
+    amount: 5_000_000,
+    supplierId: SUPP,
+    source: "cash",
+  }),
   money({ type: "card_payment", date: "2026-10-07", amount: 1_000_000, cardId: CARD }),
   money({ type: "capital_out", date: "2026-10-08", amount: 2_000_000, personId: ARIF }),
   sale("2026-11-01", 1, 1_300_000),
@@ -98,13 +109,26 @@ describe("U-CR-020.1 statementRange ties out to the books", () => {
   }
 
   it("the customer's numbers", () => {
-    const r = statementRange(statementRowsOf("customer", CUST, books, asOf), "2026-10-01", "2026-10-31");
-    expect(r).toMatchObject({ opening: 1_400_000, up: 3_300_000, down: 2_000_000, closing: 2_700_000 });
+    const r = statementRange(
+      statementRowsOf("customer", CUST, books, asOf),
+      "2026-10-01",
+      "2026-10-31",
+    );
+    expect(r).toMatchObject({
+      opening: 1_400_000,
+      up: 3_300_000,
+      down: 2_000_000,
+      closing: 2_700_000,
+    });
     expect(r.lines.map((l) => l.date)).toEqual(["2026-10-02", "2026-10-05"]);
   });
 
   it("an empty period keeps the balance", () => {
-    const r = statementRange(statementRowsOf("customer", CUST, books, asOf), "2026-10-20", "2026-10-25");
+    const r = statementRange(
+      statementRowsOf("customer", CUST, books, asOf),
+      "2026-10-20",
+      "2026-10-25",
+    );
     expect(r).toMatchObject({ opening: 2_700_000, lines: [], closing: 2_700_000 });
   });
 });
@@ -149,7 +173,9 @@ describe("U-CR-020.3 periods, ranges and saved times", () => {
       from: "2026-10-03",
       to: "2026-10-09",
     });
-    expect(periodRange("custom", "2026-10-10", { from: "2026-10-09", to: "2026-10-03" })).toBeNull();
+    expect(
+      periodRange("custom", "2026-10-10", { from: "2026-10-09", to: "2026-10-03" }),
+    ).toBeNull();
     expect(periodRange("", "2026-10-10")).toBeNull();
   });
 

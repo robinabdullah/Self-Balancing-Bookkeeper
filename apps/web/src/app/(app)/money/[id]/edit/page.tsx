@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { MoneyForm } from "@/components/money/money-form";
-import { isFormType } from "@/components/money/types";
-import { safeFrom } from "@/lib/href";
+import { isFormType } from "@mbl/domain/money/types";
+import { safeFrom } from "@mbl/domain/href";
 import { editValues } from "@/server/entries";
 import { loadCalendar } from "@/server/action";
 import { moneyFormBalances } from "@/server/books";

@@ -1,6 +1,6 @@
 import "server-only";
 import type { NextRequest } from "next/server";
-import { rowId } from "@/lib/validation/fields";
+import { rowId } from "@mbl/domain/validation/fields";
 import { invoicePdf, receiptPdf } from "@/pdf/invoice";
 import { renderDocPdf } from "@/pdf/invoice-pdf";
 import { pdfFileName } from "@/pdf/layout";

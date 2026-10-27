@@ -1,10 +1,10 @@
 import { EntryOverlay } from "@/components/journal/entry-overlay";
 import { JournalList } from "@/components/journal/journal-list";
-import { TYPE_LABEL } from "@/components/journal/labels";
-import { dhakaToday, monthOf } from "@/lib/dates";
-import { withQuery } from "@/lib/href";
-import { parseFilter, toQuery } from "@/lib/journal-filter";
-import { setupNames } from "@/lib/setup";
+import { TYPE_LABEL } from "@mbl/domain/journal/labels";
+import { dhakaToday, monthOf } from "@mbl/domain/dates";
+import { withQuery } from "@mbl/domain/href";
+import { parseFilter, toQuery } from "@mbl/domain/journal-filter";
+import { setupNames } from "@mbl/domain/setup";
 import { loadJournal, preloadEntry } from "@/server/journal";
 import { loadSetup } from "@/server/setup";
 

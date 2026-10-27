@@ -3,12 +3,12 @@ import { Amount } from "@/components/amount";
 import { BankBadge } from "@/components/cards/bank-badge";
 import { StatusBadge } from "@/components/cards/card-list";
 import { EmptyState } from "@/components/states";
-import type { StatementLine } from "@/lib/accounts";
-import type { CardRow } from "@/lib/card-view";
-import { formatDate, formatMonth } from "@/lib/dates";
-import type { Allocation } from "@/lib/engine/months";
-import { entryHref } from "@/lib/href";
-import { format } from "@/lib/money";
+import type { StatementLine } from "@mbl/domain/accounts";
+import type { CardRow } from "@mbl/domain/card-view";
+import { formatDate, formatMonth } from "@mbl/domain/dates";
+import type { Allocation } from "@mbl/domain/engine/months";
+import { entryHref } from "@mbl/domain/href";
+import { format } from "@mbl/domain/money";
 
 // UIDD §4.8 (task 4.5): a person's cards ("Owner · Card", D-022) with their business balances,
 // profit allocated per closed month, and the entries that moved their profit owed (paid,

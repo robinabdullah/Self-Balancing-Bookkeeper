@@ -9,7 +9,7 @@ import {
   logoSchema,
   pdfTermsSchema,
   templateSchema,
-} from "@/lib/validation/business";
+} from "@mbl/domain/validation/business";
 import { type Row, type Tx, byId, runAction } from "@/server/action";
 
 // D-039 (UIDD §4.13, §4.14): Settings → Business (Details · Logo · Messages · PDF terms, D-049)

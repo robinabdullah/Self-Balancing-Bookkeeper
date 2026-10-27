@@ -1,9 +1,9 @@
 import "server-only";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
-import { type BoughtLine, type SentBackLine, purchasesByModel } from "@/lib/by-model";
-import { parse } from "@/lib/money";
-import type { StockLine, StockMoveKind } from "@/lib/stock-movement";
+import { type BoughtLine, type SentBackLine, purchasesByModel } from "@mbl/domain/by-model";
+import { parse } from "@mbl/domain/money";
+import type { StockLine, StockMoveKind } from "@mbl/domain/stock-movement";
 
 // D-045: the dated lot lines the new reports read. Every line carries its lot's model and cost; a
 // reversal's lines are stored copies (reverse.ts) and count the other way.

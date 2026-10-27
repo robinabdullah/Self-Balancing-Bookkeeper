@@ -1,7 +1,7 @@
 // The Journal's History tab (UIDD §4.10): which fields an edit changed, old → new, from an audit
 // row's before/after (the stored rows, lines included). Pure; names come from the Setup lists.
-import { formatDate, formatMonth } from "@/lib/dates";
-import { format, parse } from "@/lib/money";
+import { formatDate, formatMonth } from "./dates";
+import { format, parse } from "./money";
 
 export type Change = { field: string; from: string; to: string };
 

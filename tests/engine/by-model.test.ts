@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { statementRange } from "@/lib/accounts";
-import { modelTotal, piecesAt, purchasesByModel, salesByModel } from "@/lib/by-model";
-import { add, sub } from "@/lib/money";
-import { type ReturnedLine, type SoldLine, salesReport } from "@/lib/sales-report";
+import { statementRange } from "@mbl/domain/accounts";
+import { modelTotal, piecesAt, purchasesByModel, salesByModel } from "@mbl/domain/by-model";
+import { add, sub } from "@mbl/domain/money";
+import { type ReturnedLine, type SoldLine, salesReport } from "@mbl/domain/sales-report";
 import { CUST, MA, MB, MC, SUPP, books, bought, entries, sentBack, typeOf } from "./report-fixture";
 
 // CR-025 (D-045; UIDD §4.8): the By model tables under a statement. A customer's are the Sales

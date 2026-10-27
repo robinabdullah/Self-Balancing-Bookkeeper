@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SetupSection } from "@/components/setup/setup-section";
-import { type SetupKind, setupKinds } from "@/lib/setup";
-import { safeFrom } from "@/lib/href";
+import { type SetupKind, setupKinds } from "@mbl/domain/setup";
+import { safeFrom } from "@mbl/domain/href";
 import { cn } from "@/lib/utils";
 import { bankCounts } from "@/server/business";
 import { loadCardSecrets } from "@/server/card-secrets";

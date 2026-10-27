@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useEffect, useId, useState } from "react";
 import { InfoIcon } from "lucide-react";
-import { type HelpField, fieldHelp } from "@/lib/help-text";
-import type { Errors } from "@/lib/guards";
+import { type HelpField, fieldHelp } from "@mbl/domain/help-text";
+import type { Errors } from "@mbl/domain/guards";
 import { cn } from "@/lib/utils";
 
 // UIDD §3, §5, §6: a labelled field with its inline error and, for non-obvious fields, an ⓘ that

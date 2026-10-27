@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { PurchaseForm } from "@/components/purchase/purchase-form";
-import { safeFrom } from "@/lib/href";
+import { safeFrom } from "@mbl/domain/href";
 import { editValues } from "@/server/entries";
 import { customerDues, loadBooks } from "@/server/books";
 import { loadSetup } from "@/server/setup";

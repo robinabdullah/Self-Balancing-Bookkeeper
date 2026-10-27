@@ -1,6 +1,6 @@
 import { CardList } from "@/components/cards/card-list";
 import { AccountTabs } from "@/components/shell/account-tabs";
-import { cardRows } from "@/lib/card-view";
+import { cardRows } from "@mbl/domain/card-view";
 import { loadBooks } from "@/server/books";
 import { loadSetup } from "@/server/setup";
 

@@ -1,9 +1,9 @@
-import { addMonths, clampDay, formatDate, monthDiff, monthOf } from "@/lib/dates";
-import { type Books, type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import { type MonthProfit, type MonthRow, monthProfit } from "@/lib/engine/months";
-import type { ProfitComponent } from "@/lib/engine/post";
-import { parse, pct } from "@/lib/money";
-import { EXPENSE_LABELS } from "@/lib/validation/fields";
+import { addMonths, clampDay, formatDate, monthDiff, monthOf } from "./dates";
+import { type Books, type BooksData, type StoredEntry, computeBooks } from "./engine/index";
+import { type MonthProfit, type MonthRow, monthProfit } from "./engine/months";
+import type { ProfitComponent } from "./engine/post";
+import { parse, pct } from "./money";
+import { EXPENSE_LABELS } from "./validation/fields";
 
 // UIDD §4.9 (task 5.1, CR-024): the Months list and the close screen's defaults (SRS §7), read off
 // `computeBooks` and the stored allocations. Pure: integer poisha; `asOf` is passed in.

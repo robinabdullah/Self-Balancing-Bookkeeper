@@ -2,18 +2,18 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
-import { addDays, addMonths, clampDay, dhakaToday, monthOf } from "@/lib/dates";
-import { breakdown } from "@/lib/dashboard";
-import { computeBooks } from "@/lib/engine/index";
-import type { MonthProfit } from "@/lib/engine/months";
-import { add, mul, parse } from "@/lib/money";
+import { addDays, addMonths, clampDay, dhakaToday, monthOf } from "@mbl/domain/dates";
+import { breakdown } from "@mbl/domain/dashboard";
+import { computeBooks } from "@mbl/domain/engine/index";
+import type { MonthProfit } from "@mbl/domain/engine/months";
+import { add, mul, parse } from "@mbl/domain/money";
 import { saveMoneyEntry } from "@/server/actions/money";
 import { closeMonth } from "@/server/actions/months";
 import { savePurchase } from "@/server/actions/purchase";
 import { reverseEntry } from "@/server/actions/reverse";
 import { saveSale } from "@/server/actions/sale";
 import { loadBooksData } from "@/server/books";
-import { entryKinds } from "@/lib/charts/kinds";
+import { entryKinds } from "@mbl/domain/charts/kinds";
 import {
   loadChartPeriod,
   loadCustomerCharts,
@@ -316,7 +316,14 @@ describe("CR-044 Stock tab loader", () => {
     ok(await sale(addDays(today, -2), "3", "13,000")); // the 2 opening units, then 1 of the oldest
     const [{ id: purchaseId }] = await sql`select purchase_id as id from purchase_lines
       where unit_cost = '12000'`;
-    ok(await reverseEntry({ id: randomUUID(), table: "purchase", reversesId: purchaseId, date: today }));
+    ok(
+      await reverseEntry({
+        id: randomUUID(),
+        table: "purchase",
+        reversesId: purchaseId,
+        date: today,
+      }),
+    );
 
     const base = await loadChartPeriod({ from: opening, to: today });
     const { charts, names } = await loadStockCharts(base);

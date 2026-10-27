@@ -1,6 +1,6 @@
-import type { Sheet } from "@/lib/export";
-import { monthOf } from "@/lib/dates";
-import { add, mul } from "@/lib/money";
+import type { Sheet } from "./export";
+import { monthOf } from "./dates";
+import { add, mul } from "./money";
 
 // D-045 (UIDD §4.17): the Monthly pack's stock movement by model, from the dated lot lines
 // (purchase, sale and return lines with their lot's cost). Opening is always the stock before the

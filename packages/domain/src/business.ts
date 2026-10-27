@@ -98,6 +98,9 @@ export type BankAccountFields = {
   routingNumber: string | null;
 };
 
+/** One of the business's accounts as the How to pay chips offer it (D-040, D-041). */
+export type PayAccount = { id: string; label: string; fields: BankAccountFields };
+
 /** The fields a bank account shows, each with its own copy button (the note is not shared). */
 export function bankFields(a: BankAccountFields): [label: string, value: string][] {
   const rows: [string, string | null][] = [

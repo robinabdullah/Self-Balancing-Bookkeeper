@@ -2,10 +2,10 @@ import "server-only";
 import { cache } from "react";
 import { asc, eq, getTableColumns, sql } from "drizzle-orm";
 import { db } from "@/db";
-import type { PayAccount } from "@/components/send/how-to-pay";
+import type { PayAccount } from "@mbl/domain/business";
 import { bankAccounts, businessProfile, customers, people, suppliers } from "@/db/schema";
-import { customerName } from "@/lib/setup";
-import type { OwnerKind } from "@/lib/validation/business";
+import { customerName } from "@mbl/domain/setup";
+import type { OwnerKind } from "@mbl/domain/validation/business";
 
 // D-039: the business profile (Settings → Business, the app name) and the saved bank accounts
 // (More → Saved details, an owner's ⋯ → Bank accounts). The logo itself is read only by `/logo`.

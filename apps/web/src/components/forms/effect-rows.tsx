@@ -1,4 +1,4 @@
-import type { EffectRow } from "@/lib/effect-rows";
+import type { EffectRow } from "@mbl/domain/effect-rows";
 import { cn } from "@/lib/utils";
 
 // D-061 (UIDD §3, §4.10, §5): label · amount rows, with a muted sub-line under the label. The

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { appName } from "@/lib/business";
+import { appName } from "@mbl/domain/business";
 import { goHome } from "./helpers";
 import { sql } from "./seed";
 

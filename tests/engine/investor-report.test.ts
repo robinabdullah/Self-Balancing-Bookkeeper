@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { creditSplit } from "@/lib/card-view";
-import { type BooksData, computeBooks } from "@/lib/engine/index";
-import { type Allocation, computeClose, monthProfit } from "@/lib/engine/months";
-import { dayBefore, investorReport, owedBySum } from "@/lib/investor-report";
-import { add } from "@/lib/money";
+import { creditSplit } from "@mbl/domain/card-view";
+import { type BooksData, computeBooks } from "@mbl/domain/engine/index";
+import { type Allocation, computeClose, monthProfit } from "@mbl/domain/engine/months";
+import { dayBefore, investorReport, owedBySum } from "@mbl/domain/investor-report";
+import { add } from "@mbl/domain/money";
 import {
   CARD,
   SUMON,

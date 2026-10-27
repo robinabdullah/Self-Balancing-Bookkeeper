@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auditChanges } from "@/lib/audit";
+import { auditChanges } from "@mbl/domain/audit";
 
 // Task 3.8.2 (UIDD §4.10): the History tab shows which fields an edit changed, old → new.
 describe("auditChanges (task 3.8)", () => {
@@ -31,9 +31,9 @@ describe("auditChanges (task 3.8)", () => {
 
   it("summarises lines; an add or a delete has no field changes", () => {
     const line = { id: "l1", modelId: "model-v", qty: 2, unitPrice: "18000.00" };
-    expect(
-      auditChanges({ lines: [line] }, { lines: [{ ...line, qty: 3 }] }, names),
-    ).toEqual([{ field: "Lines", from: "2 × Model V @ ৳18,000", to: "3 × Model V @ ৳18,000" }]);
+    expect(auditChanges({ lines: [line] }, { lines: [{ ...line, qty: 3 }] }, names)).toEqual([
+      { field: "Lines", from: "2 × Model V @ ৳18,000", to: "3 × Model V @ ৳18,000" },
+    ]);
     expect(auditChanges(null, { amount: "1.00" })).toEqual([]);
     expect(auditChanges({ amount: "1.00" }, null)).toEqual([]);
   });

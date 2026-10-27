@@ -6,12 +6,12 @@ import { Amount } from "@/components/amount";
 import { inputClass } from "@/components/forms/field";
 import { FormModal } from "@/components/forms/form-modal";
 import { Button } from "@/components/ui/button";
-import { formatMonth } from "@/lib/dates";
-import { computeClose } from "@/lib/engine/months";
-import type { Partner } from "@/lib/engine/post";
-import type { Errors } from "@/lib/guards";
-import { add, parse, pct, plain, sub } from "@/lib/money";
-import { type InvestorLine, parseRate, readLine } from "@/lib/months-view";
+import { formatMonth } from "@mbl/domain/dates";
+import { computeClose } from "@mbl/domain/engine/months";
+import type { Partner } from "@mbl/domain/engine/post";
+import type { Errors } from "@mbl/domain/guards";
+import { add, parse, pct, plain, sub } from "@mbl/domain/money";
+import { type InvestorLine, parseRate, readLine } from "@mbl/domain/months-view";
 import type { Result } from "@/server/action";
 import { closeMonth } from "@/server/actions/months";
 

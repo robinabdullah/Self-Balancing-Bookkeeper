@@ -1,4 +1,4 @@
-import { WHITE, bankOf } from "@/lib/banks";
+import { WHITE, bankOf } from "@mbl/domain/banks";
 import { cn } from "@/lib/utils";
 
 // D-032, D-033: a card's bank as a small badge in its logo's colours. It doesn't repeat the Type

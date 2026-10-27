@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { inputClass } from "@/components/forms/field";
 import { Button } from "@/components/ui/button";
-import { format, parse, sub } from "@/lib/money";
+import { format, parse, sub } from "@mbl/domain/money";
 import { cn } from "@/lib/utils";
 
 // D-043 (UIDD §4.17): Count cash, on today's Cash book only. A link opens a small box (UI rule 3);

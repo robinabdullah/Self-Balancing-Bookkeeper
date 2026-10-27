@@ -3,8 +3,8 @@
 import { useContext, useState } from "react";
 import { FormInitial, MoneyField, Reread, inputClass } from "@/components/forms/field";
 import { FormValues } from "@/components/forms/form-body";
-import { feePct, receivedAt } from "@/lib/cash-out";
-import { format, parse, plain, sub } from "@/lib/money";
+import { feePct, receivedAt } from "@mbl/domain/cash-out";
+import { format, parse, plain, sub } from "@mbl/domain/money";
 
 // UIDD §4.6, D-056: Charged to card, an optional Fee % that fills Cash received (never saved),
 // Cash received (typing in it clears the %), and the fee between them (a business expense).

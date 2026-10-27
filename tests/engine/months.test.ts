@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { type Allocation, computeClose, monthProfit, profitBooks } from "@/lib/engine/months";
-import { type Account, type MoneyEntry, type Posted } from "@/lib/engine/post";
-import { pct } from "@/lib/money";
+import { type Allocation, computeClose, monthProfit, profitBooks } from "@mbl/domain/engine/months";
+import { type Account, type MoneyEntry, type Posted } from "@mbl/domain/engine/post";
+import { pct } from "@mbl/domain/money";
 import { PARTNERS, expectBalanced, posted } from "./invariant";
 
 // Synthetic ids only (D-014).
@@ -127,9 +127,7 @@ describe("2.7.1 Profit(M) by date or for_month, with a breakdown", () => {
 
   it("U2.7.7 an expense dated 2 Nov for October counts in October", () => {
     const entries = [
-      posted(
-        money({ type: "capital_in", date: "2026-10-01", amount: 10_000_000, personId: ARIF }),
-      ),
+      posted(money({ type: "capital_in", date: "2026-10-01", amount: 10_000_000, personId: ARIF })),
       posted(
         money({
           type: "expense",

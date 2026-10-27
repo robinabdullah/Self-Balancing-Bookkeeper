@@ -5,9 +5,9 @@ import {
   searchRows,
   statementLines,
   supplierDueText,
-} from "@/lib/accounts";
-import { dueStatements } from "@/lib/engine/customers";
-import type { MoneyEntry } from "@/lib/engine/post";
+} from "@mbl/domain/accounts";
+import { dueStatements } from "@mbl/domain/engine/customers";
+import type { MoneyEntry } from "@mbl/domain/engine/post";
 import { expectBalanced, posted } from "./invariant";
 
 // Task 4.3 (UIDD §4.8): the Customers / Suppliers lists and statements. Synthetic ids (D-014).

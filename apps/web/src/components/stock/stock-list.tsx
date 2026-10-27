@@ -5,13 +5,13 @@ import Link from "next/link";
 import { ChevronDownIcon } from "lucide-react";
 import { Amount } from "@/components/amount";
 import { inputClass } from "@/components/forms/field";
-import { DETAIL } from "@/components/journal/labels";
+import { DETAIL } from "@mbl/domain/journal/labels";
 import { EmptyState } from "@/components/states";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/dates";
-import type { StockLot } from "@/lib/engine/stock";
-import { format } from "@/lib/money";
-import { type ModelStock, stockByModel } from "@/lib/stock-view";
+import { formatDate } from "@mbl/domain/dates";
+import type { StockLot } from "@mbl/domain/engine/stock";
+import { format } from "@mbl/domain/money";
+import { type ModelStock, stockByModel } from "@mbl/domain/stock-view";
 import { cn } from "@/lib/utils";
 import type { LotInfo } from "@/server/stock";
 

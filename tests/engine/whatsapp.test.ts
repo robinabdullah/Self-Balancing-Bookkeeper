@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { statementRange } from "@/lib/accounts";
+import { statementRange } from "@mbl/domain/accounts";
 import {
   compose,
   discountText,
@@ -13,7 +13,7 @@ import {
   statementText,
   waLink,
   waNumber,
-} from "@/lib/whatsapp";
+} from "@mbl/domain/whatsapp";
 
 // D-040: every message, laid out like the v1.1 plan's samples (sample data, not the partners').
 const SHOP = "Demo Business Shop";
@@ -209,9 +209,7 @@ describe("U-CR-020.2 messages", () => {
         "Last payment: ৳50,000 on 10 Oct 2026.",
       ].join("\n"),
     );
-    expect(reminderText({ due: 100, asOf: "2026-10-20", lastPayment: null })).not.toContain(
-      "Last",
-    );
+    expect(reminderText({ due: 100, asOf: "2026-10-20", lastPayment: null })).not.toContain("Last");
   });
 
   it("Statement for a period, each kind", () => {

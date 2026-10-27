@@ -1,5 +1,5 @@
-import { parse, pct, sub } from "@/lib/money";
-import { parseRate } from "@/lib/months-view";
+import { parse, pct, sub } from "./money";
+import { parseRate } from "./months-view";
 
 // D-056 (UIDD §4.6): the Cash-out form's Fee %. It only fills Cash received (charged − the %,
 // exact to the paisa) and is never saved; the fee line also says the fee as a % of the charge.

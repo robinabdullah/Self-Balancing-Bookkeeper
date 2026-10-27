@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import { type Locator, type Page, type TestInfo, expect, test } from "@playwright/test";
 
-import { addMonths, daysInMonth, formatMonth, monthOf } from "@/lib/dates";
-import { type Card, billMonthOf } from "@/lib/engine/cards";
+import { addMonths, daysInMonth, formatMonth, monthOf } from "@mbl/domain/dates";
+import { type Card, billMonthOf } from "@mbl/domain/engine/cards";
 import { goHome } from "./helpers";
 import { catchShares, excelText, messageText, openStatementSheet, pdfText } from "./report-files";
 import { dhaka, fillDate, phone, seedAccounts, seedMoney, sql } from "./seed";

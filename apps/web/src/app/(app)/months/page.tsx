@@ -1,10 +1,10 @@
 import { MonthList } from "@/components/months/month-list";
 import { ReportSheet } from "@/components/report/report-sheet";
 import { ReportTitle } from "@/components/report/report-title";
-import { dhakaToday, monthOf } from "@/lib/dates";
-import { nextToClose } from "@/lib/engine/months";
-import { packPdfHref, packXlsxHref } from "@/lib/href";
-import { monthList } from "@/lib/months-view";
+import { dhakaToday, monthOf } from "@mbl/domain/dates";
+import { nextToClose } from "@mbl/domain/engine/months";
+import { packPdfHref, packXlsxHref } from "@mbl/domain/href";
+import { monthList } from "@mbl/domain/months-view";
 import { loadBooks } from "@/server/books";
 import { loadCloses } from "@/server/months";
 

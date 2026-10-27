@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { entryKinds, standing } from "@/lib/charts/kinds";
-import { computeBooks, type StoredEntry } from "@/lib/engine/index";
-import type { Entry } from "@/lib/engine/post";
+import { entryKinds, standing } from "@mbl/domain/charts/kinds";
+import { computeBooks, type StoredEntry } from "@mbl/domain/engine/index";
+import type { Entry } from "@mbl/domain/engine/post";
 import { expectBalanced, PARTNERS } from "./invariant";
 
 // CR-040.5 (D-064). Synthetic ids and figures only (D-014).

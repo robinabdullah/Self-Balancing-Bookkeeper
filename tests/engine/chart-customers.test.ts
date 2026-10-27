@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { customerCharts, dueFlows, dueTrend, lowestDues } from "@/lib/charts/customers";
-import { entryKinds, standing } from "@/lib/charts/kinds";
-import { chartPeriod } from "@/lib/charts/period";
-import { positionAt } from "@/lib/charts/position";
-import { salesIn } from "@/lib/charts/profit";
-import { addDays } from "@/lib/dates";
-import type { Statement, StatementRow } from "@/lib/engine/customers";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import type { Entry } from "@/lib/engine/post";
-import { sumOf, topGroups } from "@/lib/monthly-pack";
-import { add, sub } from "@/lib/money";
+import { customerCharts, dueFlows, dueTrend, lowestDues } from "@mbl/domain/charts/customers";
+import { entryKinds, standing } from "@mbl/domain/charts/kinds";
+import { chartPeriod } from "@mbl/domain/charts/period";
+import { positionAt } from "@mbl/domain/charts/position";
+import { salesIn } from "@mbl/domain/charts/profit";
+import { addDays } from "@mbl/domain/dates";
+import type { Statement, StatementRow } from "@mbl/domain/engine/customers";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import type { Entry } from "@mbl/domain/engine/post";
+import { sumOf, topGroups } from "@mbl/domain/monthly-pack";
+import { add, sub } from "@mbl/domain/money";
 import { PARTNERS, expectBalanced } from "./invariant";
 
 // CR-043 (D-064, clarified 2026-10-24): the Customers tab and the Due trend. Given = sales + cash

@@ -5,8 +5,13 @@ import {
   billDates,
   billMonthOf,
   cardSummaries,
-} from "@/lib/engine/cards";
-import { type Account, type MoneyEntry, type Posted, type PurchaseEntry } from "@/lib/engine/post";
+} from "@mbl/domain/engine/cards";
+import {
+  type Account,
+  type MoneyEntry,
+  type Posted,
+  type PurchaseEntry,
+} from "@mbl/domain/engine/post";
 import { expectBalanced, posted } from "./invariant";
 import { INVESTOR, INVESTOR_CARDS, investorRows } from "../fixtures/investor-cards";
 

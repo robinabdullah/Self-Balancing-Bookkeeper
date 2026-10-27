@@ -1,9 +1,9 @@
 import { Amount } from "@/components/amount";
 import { EmptyState } from "@/components/states";
-import { positionSections } from "@/lib/dashboard";
-import { formatDate, formatMonth } from "@/lib/dates";
-import { type MonthlyPack, topGroups } from "@/lib/monthly-pack";
-import { NOT_ALLOCATED, OPEN_NOTE, allocationText } from "@/lib/report-text";
+import { positionSections } from "@mbl/domain/dashboard";
+import { formatDate, formatMonth } from "@mbl/domain/dates";
+import { type MonthlyPack, topGroups } from "@mbl/domain/monthly-pack";
+import { NOT_ALLOCATED, OPEN_NOTE, allocationText } from "@mbl/domain/report-text";
 import { Lines, Section } from "./investor-view";
 import { CardBillsPart, CashFlowPart, DuesPart, StockPart } from "./pack-parts";
 import { SalesView } from "./sales-view";

@@ -1,21 +1,21 @@
 import "server-only";
-import { type CustomerCharts, customerCharts } from "@/lib/charts/customers";
-import { entryKinds } from "@/lib/charts/kinds";
-import { type ChartPeriod, chartPeriod } from "@/lib/charts/period";
-import { type MoneyCharts, moneyCharts } from "@/lib/charts/position";
-import { type StockCharts, stockCharts } from "@/lib/charts/stock";
+import { type CustomerCharts, customerCharts } from "@mbl/domain/charts/customers";
+import { entryKinds } from "@mbl/domain/charts/kinds";
+import { type ChartPeriod, chartPeriod } from "@mbl/domain/charts/period";
+import { type MoneyCharts, moneyCharts } from "@mbl/domain/charts/position";
+import { type StockCharts, stockCharts } from "@mbl/domain/charts/stock";
 import {
   type ProfitCharts,
   type MonthsWindow,
   profitCharts,
   salesIn,
   wholeMonths,
-} from "@/lib/charts/profit";
-import { monthOf } from "@/lib/dates";
-import { nextToClose } from "@/lib/engine/months";
-import { OTHERS } from "@/lib/monthly-pack";
-import { monthList } from "@/lib/months-view";
-import { setupNames } from "@/lib/setup";
+} from "@mbl/domain/charts/profit";
+import { monthOf } from "@mbl/domain/dates";
+import { nextToClose } from "@mbl/domain/engine/months";
+import { OTHERS } from "@mbl/domain/monthly-pack";
+import { monthList } from "@mbl/domain/months-view";
+import { setupNames } from "@mbl/domain/setup";
 import { loadBooks } from "@/server/books";
 import { loadCloses, loadSnapshots } from "@/server/months";
 import { loadSalesLines } from "@/server/reports";

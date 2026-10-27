@@ -1,10 +1,10 @@
 import { extractText } from "unpdf";
 import { describe, expect, it } from "vitest";
-import { statementRange, statementRowsOf } from "@/lib/accounts";
-import { billProfit } from "@/lib/accounts";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import type { Entry, MoneyEntry } from "@/lib/engine/post";
-import { add, format } from "@/lib/money";
+import { statementRange, statementRowsOf } from "@mbl/domain/accounts";
+import { billProfit } from "@mbl/domain/accounts";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import type { Entry, MoneyEntry } from "@mbl/domain/engine/post";
+import { add, format } from "@mbl/domain/money";
 import { pdfFileName, pdfFrame } from "@/pdf/layout";
 import { closingLine, statementPdf } from "@/pdf/statement";
 import { renderStatementPdf } from "@/pdf/statement-pdf";

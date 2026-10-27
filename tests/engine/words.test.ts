@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toWords } from "@/lib/words";
+import { toWords } from "@mbl/domain/words";
 
 // D-040: the amount in words (lakh / crore), for the Payment in message and the money receipt.
 describe("U-CR-020.4 toWords", () => {

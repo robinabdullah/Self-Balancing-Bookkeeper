@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Amount } from "@/components/amount";
 import { rowClass, rowLinkClass } from "@/components/tables/row-link";
-import type { CashDay } from "@/lib/cash-book";
-import { formatDate } from "@/lib/dates";
-import { entryHref } from "@/lib/href";
+import type { CashDay } from "@mbl/domain/cash-book";
+import { formatDate } from "@mbl/domain/dates";
+import { entryHref } from "@mbl/domain/href";
 import { cn } from "@/lib/utils";
 import type { CashLabel } from "@/server/reports";
 

@@ -1,6 +1,6 @@
 ---
 paths:
-  - "apps/web/src/lib/**"
+  - "packages/domain/src/**"
   - "tests/**"
 ---
 
@@ -8,14 +8,14 @@ paths:
 
 - **Money = integer poisha** (`number`) in TS; `numeric(14,2)` in the DB.
   - Never use float arithmetic on money.
-  - Convert only in `apps/web/src/lib/money.ts` (`parse`/`format`) and at the DB boundary.
+  - Convert only in `packages/domain/src/money.ts` (`parse`/`format`) and at the DB boundary.
 - **Rounding** is half-up and only inside `pct()`, `splitShares()`, `splitEven()` and `avgUnit()`
   (a display-only average to whole taka, D-056), plus the display-only `compact()` (chart axes)
   and `avgTaka()` (the Due trend's average), which round half away from zero (D-064).
   - `parse` rejects more than 2 decimals; it never rounds.
 - **Lot cost** = `unit_cost × qty`. The user always types the unit cost.
 - **The engine is pure:**
-  - `apps/web/src/lib/engine/*` has no I/O, no DB, no `Date.now()`; `asOf` is passed in;
+  - `packages/domain/src/engine/*` has no I/O, no DB, no `Date.now()`; `asOf` is passed in;
   - plain arrays in, plain objects out.
 - **Posting rules exist once:**
   - `postEntry(entry)` implements SRS §5 exactly; the engine and the form preview both call it;

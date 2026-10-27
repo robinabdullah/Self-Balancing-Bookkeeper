@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import { monthProfit } from "@/lib/engine/months";
-import type { Entry } from "@/lib/engine/post";
-import { add } from "@/lib/money";
-import { type ReturnedLine, type SoldLine, margin, salesReport } from "@/lib/sales-report";
-import { salesText } from "@/lib/whatsapp";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import { monthProfit } from "@mbl/domain/engine/months";
+import type { Entry } from "@mbl/domain/engine/post";
+import { add } from "@mbl/domain/money";
+import { type ReturnedLine, type SoldLine, margin, salesReport } from "@mbl/domain/sales-report";
+import { salesText } from "@mbl/domain/whatsapp";
 import { expectBalanced, PARTNERS } from "./invariant";
 
 // CR-023 (D-043; UIDD §4.17): the Sales report. Synthetic ids and figures only (D-014). Each

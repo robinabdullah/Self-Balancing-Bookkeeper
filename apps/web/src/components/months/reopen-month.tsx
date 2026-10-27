@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Amount } from "@/components/amount";
 import { FormModal } from "@/components/forms/form-modal";
-import { LABEL } from "@/components/money/types";
+import { LABEL } from "@mbl/domain/money/types";
 import { Button } from "@/components/ui/button";
-import { formatDate, formatMonth } from "@/lib/dates";
+import { formatDate, formatMonth } from "@mbl/domain/dates";
 import { reopenMonth } from "@/server/actions/months";
 import type { profitSinceClose } from "@/server/months";
 

@@ -8,9 +8,9 @@ import {
   NO_KEY,
   REVEAL_SECONDS,
   USE_FINGERPRINT,
-} from "@/lib/card-secrets";
-import { cardName } from "@/lib/setup";
-import { rowId } from "@/lib/validation/fields";
+} from "@mbl/domain/card-secrets";
+import { cardName } from "@mbl/domain/setup";
+import { rowId } from "@mbl/domain/validation/fields";
 import {
   decryptField,
   hasCardKey,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { type Lot, type LotMove, lotsRemaining } from "@/lib/engine/stock";
-import { stockByModel } from "@/lib/stock-view";
+import { type Lot, type LotMove, lotsRemaining } from "@mbl/domain/engine/stock";
+import { stockByModel } from "@mbl/domain/stock-view";
 
 // Task 4.2 (UIDD §4.7, D-027): the Stock view's groups. Synthetic ids (D-014).
 const NAMES = { "m-vivo": "Vivo Y05 4/64", "m-oppo": "Oppo A3" };

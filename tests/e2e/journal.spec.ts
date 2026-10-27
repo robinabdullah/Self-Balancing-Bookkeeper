@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { type Page, expect, test } from "@playwright/test";
 import { localSql } from "../integration/local-db";
-import { addMonths, monthOf } from "@/lib/dates";
+import { addMonths, monthOf } from "@mbl/domain/dates";
 import { effectValue, goHome } from "./helpers";
 import { dmy, fillDate } from "./seed";
 

@@ -1,7 +1,6 @@
-import { safeFrom } from "@/lib/href";
-import { parse, plain } from "@/lib/money";
-import { rowId } from "@/lib/validation/fields";
-import type { SetupData } from "@/server/setup";
+import { safeFrom } from "./href";
+import { parse, plain } from "./money";
+import { rowId } from "./validation/fields";
 
 // D-032: a new-entry form opened from a page (a quick action, "Pay ৳remaining") starts with that
 // customer / supplier / card / person picked and, for a card payment, the amount filled in; it
@@ -36,8 +35,17 @@ const NO_WALK_IN = new Set(["customer_cash_given", "customer_profit_share"]);
 
 type Params = Record<string, string | string[] | undefined>;
 
+type Row = { id: string; active: boolean };
+/** What it reads of the Setup data (the web's `loadSetup`): ids, active, and the Walk-in flag. */
+type SetupRows = {
+  customers: (Row & { isSystem: boolean })[];
+  suppliers: Row[];
+  cards: Row[];
+  people: Row[];
+};
+
 /** The form's starting values and its return path, from the page's URL params. */
-export function cleanPrefill(form: string | null | undefined, params: Params, setup: SetupData) {
+export function cleanPrefill(form: string | null | undefined, params: Params, setup: SetupRows) {
   const one = (key: string) => {
     const v = params[key];
     return typeof v === "string" ? v : undefined;

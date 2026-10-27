@@ -3,7 +3,7 @@ import { cache } from "react";
 import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { cards, customers, models, people, suppliers } from "@/db/schema";
-import { cardName, customerName, partnerWarning } from "@/lib/setup";
+import { cardName, customerName, partnerWarning } from "@mbl/domain/setup";
 
 // The Setup screen's lists (UIDD §4.11). `updatedAt` goes to the client as ISO text: edit,
 // deactivate and delete send it back (D-010).

@@ -1,6 +1,6 @@
-import type { Sheet } from "@/lib/export";
-import { add, avgUnit, format, mul, sub } from "@/lib/money";
-import type { SalesReport } from "@/lib/sales-report";
+import type { Sheet } from "./export";
+import { add, avgUnit, format, mul, sub } from "./money";
+import type { SalesReport } from "./sales-report";
 
 // D-045 (UIDD §4.8): the By model tables under a customer's or supplier's statement for a period:
 // pieces and amount, no profit (a customer document never shows it). A customer's sales come from

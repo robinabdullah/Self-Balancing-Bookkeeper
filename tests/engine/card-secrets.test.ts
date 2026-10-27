@@ -12,8 +12,8 @@ import {
   maskedLine,
   tagOf,
   typedNumber,
-} from "@/lib/card-secrets";
-import { cardDetailsSchema } from "@/lib/validation/card-secrets";
+} from "@mbl/domain/card-secrets";
+import { cardDetailsSchema } from "@mbl/domain/validation/card-secrets";
 import {
   cardKey,
   decryptField,

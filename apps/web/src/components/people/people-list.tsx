@@ -3,7 +3,7 @@ import { Amount } from "@/components/amount";
 import { EmptyState } from "@/components/states";
 import { rowClass, rowLinkClass } from "@/components/tables/row-link";
 import { Button } from "@/components/ui/button";
-import type { PersonRow } from "@/lib/people-view";
+import type { PersonRow } from "@mbl/domain/people-view";
 import { cn } from "@/lib/utils";
 
 // UIDD §4.8 (task 4.5): the People list: name, kind, capital, profit owed (and the opening

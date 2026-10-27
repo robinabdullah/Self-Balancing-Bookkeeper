@@ -18,7 +18,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { compact, format } from "@/lib/money";
+import { compact, format } from "@mbl/domain/money";
 import { type DetailLine, HOVER_ONLY, ReadoutLine, useReadout } from "./readout";
 
 // D-064 (UIDD §4.17, §6): the chart shapes. Only `src/components/charts/**` imports Recharts, so

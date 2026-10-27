@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { withQuery } from "@/lib/href";
+import { withQuery } from "@mbl/domain/href";
 import {
   NO_FILTER,
   type JournalFilter,
@@ -11,7 +11,7 @@ import {
   periodOptions,
   rangeError,
   toQuery,
-} from "@/lib/journal-filter";
+} from "@mbl/domain/journal-filter";
 
 // U-CR-013.3 (D-032): the Journal's filters. Synthetic rows and ids.
 const TODAY = "2026-10-09";

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Share2Icon } from "lucide-react";
-import { withQuery } from "@/lib/href";
+import { withQuery } from "@mbl/domain/href";
 
 // UI rule 1 (D-040, D-043): a report page's title row and its one ⤴ Share icon, which opens the
 // Report sheet over the page (`?report=1`).

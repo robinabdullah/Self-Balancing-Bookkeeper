@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { AGES, stockAge, stockCharts } from "@/lib/charts/stock";
-import { addDays } from "@/lib/dates";
-import { type Lot, type LotMove, lotsRemaining } from "@/lib/engine/stock";
-import { OTHERS, topGroups } from "@/lib/monthly-pack";
-import { add, mul } from "@/lib/money";
-import type { SalesGroup } from "@/lib/sales-report";
+import { AGES, stockAge, stockCharts } from "@mbl/domain/charts/stock";
+import { addDays } from "@mbl/domain/dates";
+import { type Lot, type LotMove, lotsRemaining } from "@mbl/domain/engine/stock";
+import { OTHERS, topGroups } from "@mbl/domain/monthly-pack";
+import { add, mul } from "@mbl/domain/money";
+import type { SalesGroup } from "@mbl/domain/sales-report";
 
 // CR-044 (D-064; UIDD §4.17, clarified 2026-10-24): the Stock tab's stock age and top models.
 // Synthetic ids and amounts (D-014).
@@ -91,9 +91,9 @@ describe("CR-044 stockAge", () => {
     expect(charts.total).toBe(charts.ages.reduce((s, a) => add(s, a.value), 0));
     expect(charts.top.map((g) => g.id)).toEqual(["m-b", "m-a"]);
     const sold = lotsRemaining([opening], [{ lotId: "o", qty: 2, kind: "sale" }]);
-    expect(stockCharts({ lots: sold, names: NAMES, today: TODAY, byModel, by: "pieces" }).opening).toBe(
-      false,
-    );
+    expect(
+      stockCharts({ lots: sold, names: NAMES, today: TODAY, byModel, by: "pieces" }).opening,
+    ).toBe(false);
   });
 
   it("topGroups by pieces: the most pieces first, the rest as Other", () => {

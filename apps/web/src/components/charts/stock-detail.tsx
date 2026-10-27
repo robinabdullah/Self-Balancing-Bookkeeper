@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Amount } from "@/components/amount";
 import { SegmentedNav } from "@/components/shell/segmented-nav";
-import { type ChartPeriod, periodQuery } from "@/lib/charts/period";
-import type { AgeKey, StockCharts } from "@/lib/charts/stock";
-import { formatDate, formatRange } from "@/lib/dates";
-import { withQuery } from "@/lib/href";
-import { format } from "@/lib/money";
+import { type ChartPeriod, periodQuery } from "@mbl/domain/charts/period";
+import type { AgeKey, StockCharts } from "@mbl/domain/charts/stock";
+import { formatDate, formatRange } from "@mbl/domain/dates";
+import { withQuery } from "@mbl/domain/href";
+import { format } from "@mbl/domain/money";
 import { ChartTable } from "./chart-table";
 import { Bars, HBars } from "./charts";
 import { Section } from "./money-detail";

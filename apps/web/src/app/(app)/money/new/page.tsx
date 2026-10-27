@@ -1,6 +1,6 @@
 import { MoneyForm } from "@/components/money/money-form";
-import { isFormType } from "@/components/money/types";
-import { cleanPrefill } from "@/lib/prefill";
+import { isFormType } from "@mbl/domain/money/types";
+import { cleanPrefill } from "@mbl/domain/prefill";
 import { loadCalendar } from "@/server/action";
 import { moneyFormBalances } from "@/server/books";
 import { loadSetup } from "@/server/setup";

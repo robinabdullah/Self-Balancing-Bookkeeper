@@ -12,8 +12,8 @@ import {
   fillTemplate,
   firstPhone,
   template,
-} from "@/lib/business";
-import { bankAccountSchema, logoSchema, templateSchema } from "@/lib/validation/business";
+} from "@mbl/domain/business";
+import { bankAccountSchema, logoSchema, templateSchema } from "@mbl/domain/validation/business";
 
 // CR-019 (D-039; UIDD §4.13, §4.14): message templates, the business name and saved bank accounts.
 
@@ -64,9 +64,7 @@ describe("U-CR-019.1 templates, app name, export file name", () => {
 
   it("the top bar uses the short name, else the name, else the app's own", () => {
     expect(appName({ name: "Demo Business Shop", shortName: "Demo" })).toBe("Demo");
-    expect(appName({ name: "Demo Business Shop", shortName: " " })).toBe(
-      "Demo Business Shop",
-    );
+    expect(appName({ name: "Demo Business Shop", shortName: " " })).toBe("Demo Business Shop");
     expect(appName(null)).toBe(FALLBACK_NAME);
     expect(businessName({ name: "Demo Business Shop", shortName: "Demo" })).toBe(
       "Demo Business Shop",

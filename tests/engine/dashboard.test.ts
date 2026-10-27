@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { breakdown, cardAlerts, cardDues, positionSections, topDues } from "@/lib/dashboard";
-import { daysBetween } from "@/lib/dates";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import { nextToClose } from "@/lib/engine/months";
-import type { Entry } from "@/lib/engine/post";
-import { add } from "@/lib/money";
+import { breakdown, cardAlerts, cardDues, positionSections, topDues } from "@mbl/domain/dashboard";
+import { daysBetween } from "@mbl/domain/dates";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import { nextToClose } from "@mbl/domain/engine/months";
+import type { Entry } from "@mbl/domain/engine/post";
+import { add } from "@mbl/domain/money";
 import { PARTNERS } from "./invariant";
 
 // Task 4.1 (UIDD §3, §4.2): the Home lists and the balance chip's breakdown. Synthetic ids (D-014).

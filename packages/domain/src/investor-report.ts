@@ -1,11 +1,11 @@
-import { type StatementLine, statementRange, statementRowsOf } from "@/lib/accounts";
-import { type CardRow, cardRows, creditSplit } from "@/lib/card-view";
-import { addDays, addMonths, clampDay, monthDiff, monthOf } from "@/lib/dates";
-import type { Books } from "@/lib/engine/index";
-import { dueStatements } from "@/lib/engine/customers";
-import type { Allocation } from "@/lib/engine/months";
-import { add, sub } from "@/lib/money";
-import { openingDifferenceOf } from "@/lib/people-view";
+import { type StatementLine, statementRange, statementRowsOf } from "./accounts";
+import { type CardRow, cardRows, creditSplit } from "./card-view";
+import { addDays, addMonths, clampDay, monthDiff, monthOf } from "./dates";
+import type { Books } from "./engine/index";
+import { dueStatements } from "./engine/customers";
+import type { Allocation } from "./engine/months";
+import { add, sub } from "./money";
+import { openingDifferenceOf } from "./people-view";
 
 // D-045 (UIDD §4.17): the Investor / Partner report for whole months, read off the books as on
 // the period's last day (`atEnd`), except the profit paid / reinvested since the period start and

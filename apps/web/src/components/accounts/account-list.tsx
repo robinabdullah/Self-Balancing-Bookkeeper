@@ -5,9 +5,9 @@ import Link from "next/link";
 import { inputClass } from "@/components/forms/field";
 import { EmptyState } from "@/components/states";
 import { Button } from "@/components/ui/button";
-import { type AccountRow, searchRows, supplierDueText } from "@/lib/accounts";
-import { formatDate } from "@/lib/dates";
-import { dueText } from "@/lib/setup";
+import { type AccountRow, searchRows, supplierDueText } from "@mbl/domain/accounts";
+import { formatDate } from "@mbl/domain/dates";
+import { dueText } from "@mbl/domain/setup";
 
 // UIDD §4.8 (task 4.3): the Customers / Suppliers list: name, due, last activity; a row opens the
 // detail. Search by name or phone (customers: shop name, proprietor name or phone).

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chartPeriod } from "@/lib/charts/period";
+import { chartPeriod } from "@mbl/domain/charts/period";
 
 const OPENING = "2026-10-01";
 

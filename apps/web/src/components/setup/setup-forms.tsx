@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Choice, Field, MoneyField, TextField } from "@/components/forms/field";
 import { FormModal } from "@/components/forms/form-modal";
 import { PickerField } from "@/components/forms/picker";
-import { CARD_NETWORKS, type CardNetwork, NETWORK_LABEL, typeWordIn } from "@/lib/banks";
-import { format, parse } from "@/lib/money";
-import type { SetupKind } from "@/lib/setup";
+import { CARD_NETWORKS, type CardNetwork, NETWORK_LABEL, typeWordIn } from "@mbl/domain/banks";
+import { format, parse } from "@mbl/domain/money";
+import type { SetupKind } from "@mbl/domain/setup";
 import {
   saveCard,
   saveCustomer,

@@ -1,5 +1,5 @@
-import type { StockLot } from "@/lib/engine/stock";
-import { add, avgUnit, mul } from "@/lib/money";
+import type { StockLot } from "./engine/stock";
+import { add, avgUnit, mul } from "./money";
 
 // UIDD §4.7 (task 4.2): the Stock view's lots grouped by model. Pure. A reversed purchase's lots
 // are left out (D-027); "in stock" keeps lots with units left (≠ 0, so an error below 0 shows).

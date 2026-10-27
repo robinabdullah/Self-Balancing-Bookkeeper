@@ -18,6 +18,22 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { authUsers } from "drizzle-orm/supabase";
+import {
+  ALLOCATION_KIND_VALUES,
+  AUDIT_ACTION_VALUES,
+  CARD_NETWORK_VALUES,
+  MONEY_TYPE_VALUES,
+  OPENING_KIND_VALUES,
+  PAY_SOURCE_VALUES,
+  PERSON_KIND_VALUES,
+  PROFILE_ROLE_VALUES,
+  PURCHASE_SOURCE_VALUES,
+  REFUND_TO_VALUES,
+  RETURN_KIND_VALUES,
+  RETURN_REASON_VALUES,
+  SETTLE_MODE_VALUES,
+} from "@mbl/domain/enums";
+import { themes } from "@mbl/domain/themes";
 
 // SRS §4. Only facts are stored: no balance columns, ever. Every table has RLS enabled with no
 // policies (SRS §2.4), so the anon key reaches nothing; the app uses DATABASE_URL server-side.
@@ -51,62 +67,22 @@ const notSelf = (table: string) => check(`${table}_not_self`, sql`reverses_id <>
 
 // ---- Enums ----
 
-export const profileRole = pgEnum("profile_role", ["partner", "investor", "employee"]);
-export const theme = pgEnum("theme", ["light", "dark", "night_owl"]);
-// A card's Type (D-036); "none" until it is set, and the badge then reads the name.
-export const cardNetwork = pgEnum("card_network", ["visa", "mastercard", "amex", "none"]);
-export const personKind = pgEnum("person_kind", ["partner", "investor"]);
-export const purchaseSource = pgEnum("purchase_source", [
-  "cash",
-  "card",
-  "supplier_credit",
-  "customer_offset",
-  "opening",
-  "opening_correction",
-]);
-export const returnKind = pgEnum("return_kind", ["customer", "purchase"]);
-export const refundTo = pgEnum("refund_to", ["cash", "card", "supplier", "customer"]);
-export const returnReason = pgEnum("return_reason", ["returned", "damaged_lost"]);
-export const moneyType = pgEnum("money_type", [
-  "customer_payment",
-  "customer_cash_given",
-  "customer_discount",
-  "customer_profit_share",
-  "supplier_payment",
-  "card_payment",
-  "card_cash_out",
-  "card_fee",
-  "cashback",
-  "expense",
-  "capital_in",
-  "capital_out",
-  "profit_paid",
-  "profit_reinvested",
-  "opening",
-  "opening_correction",
-]);
-export const paySource = pgEnum("pay_source", ["cash", "card"]);
-export const settleMode = pgEnum("settle_mode", ["received", "added_to_due"]);
-export const openingKind = pgEnum("opening_kind", [
-  "cash",
-  "customer_due",
-  "supplier_due",
-  "card_balance",
-  "capital",
-  "profit_owed",
-  "opening_difference",
-]);
-export const allocationKind = pgEnum("allocation_kind", ["cash", "card", "partner"]);
-export const auditAction = pgEnum("audit_action", [
-  "insert",
-  "update",
-  "delete",
-  "reverse",
-  "close",
-  "reopen",
-  "export",
-  "reveal", // a card's details shown (CR-026), never the values
-]);
+// The values are the domain's lists (packages/domain/src/enums.ts, N-1.3).
+
+export const profileRole = pgEnum("profile_role", PROFILE_ROLE_VALUES);
+export const theme = pgEnum("theme", themes);
+export const cardNetwork = pgEnum("card_network", CARD_NETWORK_VALUES);
+export const personKind = pgEnum("person_kind", PERSON_KIND_VALUES);
+export const purchaseSource = pgEnum("purchase_source", PURCHASE_SOURCE_VALUES);
+export const returnKind = pgEnum("return_kind", RETURN_KIND_VALUES);
+export const refundTo = pgEnum("refund_to", REFUND_TO_VALUES);
+export const returnReason = pgEnum("return_reason", RETURN_REASON_VALUES);
+export const moneyType = pgEnum("money_type", MONEY_TYPE_VALUES);
+export const paySource = pgEnum("pay_source", PAY_SOURCE_VALUES);
+export const settleMode = pgEnum("settle_mode", SETTLE_MODE_VALUES);
+export const openingKind = pgEnum("opening_kind", OPENING_KIND_VALUES);
+export const allocationKind = pgEnum("allocation_kind", ALLOCATION_KIND_VALUES);
+export const auditAction = pgEnum("audit_action", AUDIT_ACTION_VALUES);
 
 // Invoice and receipt numbers (D-036): assigned at save in code, never to a reversal.
 export const invoiceNoSeq = pgSequence("sales_invoice_no_seq");

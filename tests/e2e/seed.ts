@@ -1,7 +1,7 @@
 import { createCipheriv, randomBytes, randomUUID } from "node:crypto";
 import type { Locator, Page } from "@playwright/test";
 import postgres from "postgres";
-import { type Theme, themes } from "@/lib/themes";
+import { type Theme, themes } from "@mbl/domain/themes";
 import { LOCAL_DB_URL } from "../integration/local-db";
 import { E2E_CARD_KEY, PARTNER } from "./helpers";
 

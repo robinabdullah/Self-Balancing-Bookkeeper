@@ -1,5 +1,5 @@
-import { type BankAccountFields, bankFields, businessName, slug } from "@/lib/business";
-import { dhakaToday, formatSaved } from "@/lib/dates";
+import { type BankAccountFields, bankFields, businessName, slug } from "@mbl/domain/business";
+import { dhakaToday, formatSaved } from "@mbl/domain/dates";
 
 // D-041: the parts every PDF shares, as plain text: the header (business details), the
 // document's own terms (D-049) and "Generated …" line, the How to pay blocks and the file name.

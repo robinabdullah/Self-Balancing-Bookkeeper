@@ -1,9 +1,9 @@
 import "server-only";
-import { TYPE_LABEL } from "@/components/journal/labels";
-import { addMonths, monthOf } from "@/lib/dates";
-import { computeBooks } from "@/lib/engine/index";
-import { type MonthlyPack, OTHERS, monthlyPack, packDates } from "@/lib/monthly-pack";
-import { setupNames } from "@/lib/setup";
+import { TYPE_LABEL } from "@mbl/domain/journal/labels";
+import { addMonths, monthOf } from "@mbl/domain/dates";
+import { computeBooks } from "@mbl/domain/engine/index";
+import { type MonthlyPack, OTHERS, monthlyPack, packDates } from "@mbl/domain/monthly-pack";
+import { setupNames } from "@mbl/domain/setup";
 import { booksOn, typeOfEntries } from "@/server/account-reports";
 import { loadBooks } from "@/server/books";
 import { loadSnapshots } from "@/server/months";

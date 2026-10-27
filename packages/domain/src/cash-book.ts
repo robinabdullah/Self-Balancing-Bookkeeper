@@ -1,5 +1,5 @@
-import type { Posted } from "@/lib/engine/post";
-import { add } from "@/lib/money";
+import type { Posted } from "./engine/post";
+import { add } from "./money";
 
 // D-043 (UIDD §4.17): the Cash book, read off the posted entries' cash effects. Each entry that
 // moved cash is one row (its cash effects summed; a reversal's are already negated, on its own

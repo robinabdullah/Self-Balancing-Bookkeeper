@@ -3,7 +3,7 @@ import { type ReactElement, createElement } from "react";
 import { type DocumentProps, Text } from "@react-pdf/renderer";
 import { extractText } from "unpdf";
 import { describe, expect, it } from "vitest";
-import { businessDetailsSchema, pdfTermsSchema, TERMS_MAX } from "@/lib/validation/business";
+import { businessDetailsSchema, pdfTermsSchema, TERMS_MAX } from "@mbl/domain/validation/business";
 import { PdfDocument, renderPdf } from "@/pdf/document";
 import { type PdfBusiness, type PdfKind, pdfFrame } from "@/pdf/layout";
 

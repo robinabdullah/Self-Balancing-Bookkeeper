@@ -1,7 +1,7 @@
 // The month dropdowns' options (UIDD §2, D-035). They mirror the guards, so every open month on
 // offer passes `dateErrors`; the server still checks every save.
-import { addMonths, formatMonth, monthDiff, monthOf } from "@/lib/dates";
-import { type Calendar, closed } from "@/lib/guards";
+import { addMonths, formatMonth, monthDiff, monthOf } from "./dates";
+import { type Calendar, closed } from "./guards";
 
 export type MonthChoice = { value: string; label: string; closed: boolean };
 

@@ -1,9 +1,9 @@
 // The investor card fixture (SRS §6, D-069): fictional cards and rows in an investor's card-sheet
 // shape (date, card, type, amount, cash-out?), mapped to entries and posted. The expected values
 // in tests/engine/cards.test.ts and SRS §6 were checked by hand.
-import type { Card } from "@/lib/engine/cards";
-import { type Entry, type Posted, postEntry } from "@/lib/engine/post";
-import { parse } from "@/lib/money";
+import type { Card } from "@mbl/domain/engine/cards";
+import { type Entry, type Posted, postEntry } from "@mbl/domain/engine/post";
+import { parse } from "@mbl/domain/money";
 
 export const INVESTOR = "person-nadim";
 
@@ -47,7 +47,13 @@ const ROWS: [string, string, Type, string, boolean][] = [
 ];
 
 /** Maps one row as in SRS §6 (Regression fixture → Mapping). */
-function toEntry(account: string, type: Type, date: string, amount: number, cashOut: boolean): Entry {
+function toEntry(
+  account: string,
+  type: Type,
+  date: string,
+  amount: number,
+  cashOut: boolean,
+): Entry {
   const card = { cardId: account };
   if (type === "Card purchase" && cashOut) {
     return {

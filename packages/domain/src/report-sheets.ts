@@ -1,12 +1,12 @@
-import type { StatementRange } from "@/lib/accounts";
-import { type ModelRow, modelSheet } from "@/lib/by-model";
-import { type Cell, type Column, type Kind, type Sheet, positionRows } from "@/lib/export";
-import { formatMonth } from "@/lib/dates";
-import type { InvestorReport } from "@/lib/investor-report";
-import { type MonthlyPack, topGroups } from "@/lib/monthly-pack";
-import { NOT_ALLOCATED, cardState } from "@/lib/report-text";
-import { salesSheets } from "@/lib/sales-report";
-import { stockSheet } from "@/lib/stock-movement";
+import type { StatementRange } from "./accounts";
+import { type ModelRow, modelSheet } from "./by-model";
+import { type Cell, type Column, type Kind, type Sheet, positionRows } from "./export";
+import { formatMonth } from "./dates";
+import type { InvestorReport } from "./investor-report";
+import { type MonthlyPack, topGroups } from "./monthly-pack";
+import { NOT_ALLOCATED, cardState } from "./report-text";
+import { salesSheets } from "./sales-report";
+import { stockSheet } from "./stock-movement";
 
 // D-045: the Excel files of the per-account reports and the Monthly pack: one sheet per section,
 // from the same models as the screens (money stays poisha; the workbook writer converts it).

@@ -7,11 +7,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { db } from "@/db";
 import { GET as xlsxGet } from "@/app/(app)/reports/sales/xlsx/route";
 import { GET as pdfGet } from "@/app/pdf/sales/route";
-import { dhakaToday, monthOf } from "@/lib/dates";
-import { monthProfit } from "@/lib/engine/months";
-import { salesPdfHref, salesXlsxHref, withQuery } from "@/lib/href";
-import { add, format, toDecimal } from "@/lib/money";
-import { receiptLabel } from "@/lib/whatsapp";
+import { dhakaToday, monthOf } from "@mbl/domain/dates";
+import { monthProfit } from "@mbl/domain/engine/months";
+import { salesPdfHref, salesXlsxHref, withQuery } from "@mbl/domain/href";
+import { add, format, toDecimal } from "@mbl/domain/money";
+import { receiptLabel } from "@mbl/domain/whatsapp";
 import { saveMoneyEntry } from "@/server/actions/money";
 import { saveReturn } from "@/server/actions/return";
 import { reverseEntry } from "@/server/actions/reverse";

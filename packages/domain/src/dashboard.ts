@@ -1,10 +1,10 @@
 // The Home screen's lists and the balance chip's breakdown (UIDD §3, §4.2), read off the engine's
 // `Books`. Pure: no amount is computed here that the engine doesn't already hold, only picked,
 // summed across cards/people and ordered. Integer poisha.
-import { daysBetween } from "@/lib/dates";
-import type { Books } from "@/lib/engine/index";
-import { aboveTarget } from "@/lib/engine/customers";
-import { add } from "@/lib/money";
+import { daysBetween } from "./dates";
+import type { Books } from "./engine/index";
+import { aboveTarget } from "./engine/customers";
+import { add } from "./money";
 
 const total = (amounts: number[]) => amounts.reduce(add, 0);
 

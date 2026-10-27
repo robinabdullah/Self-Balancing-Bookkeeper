@@ -15,12 +15,12 @@ import { ProfitDetail } from "@/components/charts/profit-detail";
 import { STOCK_CHARTS, STOCK_TITLE, type StockChart } from "@/components/charts/stock-cards";
 import { StockDetail } from "@/components/charts/stock-detail";
 import { ReportSheet } from "@/components/report/report-sheet";
-import { periodQuery } from "@/lib/charts/period";
-import { CARD_FEES } from "@/lib/charts/profit";
-import { AGES } from "@/lib/charts/stock";
-import { monthOf } from "@/lib/dates";
-import { withQuery } from "@/lib/href";
-import { EXPENSE_CATEGORIES } from "@/lib/validation/fields";
+import { periodQuery } from "@mbl/domain/charts/period";
+import { CARD_FEES } from "@mbl/domain/charts/profit";
+import { AGES } from "@mbl/domain/charts/stock";
+import { monthOf } from "@mbl/domain/dates";
+import { withQuery } from "@mbl/domain/href";
+import { EXPENSE_CATEGORIES } from "@mbl/domain/validation/fields";
 import {
   loadChartPeriod,
   loadCustomerCharts,

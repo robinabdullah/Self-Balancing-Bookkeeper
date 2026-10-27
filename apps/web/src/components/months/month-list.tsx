@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ChevronRightIcon } from "lucide-react";
 import { Amount } from "@/components/amount";
-import { formatMonth } from "@/lib/dates";
-import type { MonthListRow } from "@/lib/months-view";
+import { formatMonth } from "@mbl/domain/dates";
+import type { MonthListRow } from "@mbl/domain/months-view";
 
 // UIDD §4.9 (task 5.1): the Months list, newest first: month, profit, status (Open / Closed on
 // dd Mon). The next month to close opens its close screen; a closed month, its snapshot (5.2); a

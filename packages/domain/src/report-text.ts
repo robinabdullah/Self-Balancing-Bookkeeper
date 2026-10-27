@@ -1,12 +1,12 @@
-import { type ModelRow, modelTotal, piecesAt } from "@/lib/by-model";
-import { STATUS } from "@/lib/card-view";
-import { positionSections } from "@/lib/dashboard";
-import { formatDate, formatMonth } from "@/lib/dates";
-import type { InvestorReport } from "@/lib/investor-report";
-import { format, sub } from "@/lib/money";
-import { type MonthlyPack, topGroups } from "@/lib/monthly-pack";
-import { stockTotal } from "@/lib/stock-movement";
-import { compose } from "@/lib/whatsapp";
+import { type ModelRow, modelTotal, piecesAt } from "./by-model";
+import { STATUS } from "./card-view";
+import { positionSections } from "./dashboard";
+import { formatDate, formatMonth } from "./dates";
+import type { InvestorReport } from "./investor-report";
+import { format, sub } from "./money";
+import { type MonthlyPack, topGroups } from "./monthly-pack";
+import { stockTotal } from "./stock-movement";
+import { compose } from "./whatsapp";
 
 // D-045: the messages of the per-account reports and the Monthly pack, in the sectioned + emoji
 // style of the v1.1 plan's samples. Each reads the same model as its screen, PDF and Excel.

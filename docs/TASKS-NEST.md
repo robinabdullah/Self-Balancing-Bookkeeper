@@ -7,10 +7,11 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S3 in progress. N-1.1 is committed locally (`5f72103`, not pushed). N-1.2
-  (workspaces plus `apps/web`) is done and waiting for review: the `git mv` is staged and the
-  rewrite is unstaged. S3 stops for review after each step.
-- **Next:** N-1.3 (`packages/domain`), after N-1.2 is committed.
+- **Session:** S3 in progress. Committed locally, not pushed: N-1.1 (`5f72103`) and N-1.2
+  (`f60cd2c` the move, `e719669` the rewrite). N-1.3 (`packages/domain`) is done and waiting for
+  review: the `git mv` is staged and the rewrite is unstaged. S3 stops for review after each step.
+- **Next:** N-1.4 (`packages/db`), after N-1.3 is committed. Its enum lists are already done
+  (N-1.3).
 - **Blocked on:** —
 
 ## How to use
@@ -282,12 +283,47 @@ Screenshots: the parity report; Home, Stock, a PDF (unchanged).
         `server.js`), and `/` → 307 to login;
       - `drizzle-kit generate` reports no change;
       - parity MATCH (202 files, TTFB +3.3%).
-- [ ] **N-1.3 `packages/domain`**
+- [x] **N-1.3 `packages/domain`** (2026-10-27)
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/lib/**`, `src/components/journal/labels.ts`
-  - [ ] Move the pure lib (engine, money, dates, guards, validation, view helpers, `labels.ts`,
+  - [x] Move the pure lib (engine, money, dates, guards, validation, view helpers, `labels.ts`,
     `money/types.ts`, the `PayAccount` type) with relative imports. `card-view.ts` and
     `form-help.ts` stay in web. Structural types replace the `SetupData`/`JournalRow` imports.
+  - **Tests:** [x] U-N-1.3.1 nothing in domain imports the app, a framework, the DB or the session
+    (a planted `next/link` import fails it) · [x] U-N-1.3.2 every pgEnum is built from its domain
+    list · [x] unit, integration · [x] E2E smoke, home, stock, pdf, export (night_owl) ·
+    [x] parity.
   - **Acceptance:** the unit suite is green from its new home; parity.
+  - **Result (2026-10-27):**
+    - **The move:** 58 files went to `packages/domain/src` (`@mbl/domain`, which exports
+      `"./*": "./src/*.ts"` and depends only on `zod`). Their paths mirror the source:
+      - `lib/<x>` → `src/<x>`;
+      - `components/journal/labels.ts` → `src/journal/labels.ts`;
+      - `components/money/types.ts` → `src/money/types.ts`.
+    - **What stays in web:** `form-help.ts` (a React hook), `supabase/server.ts` and `utils.ts`.
+    - **Deviation (user's decision):** `card-view.ts` moved too. It is pure, and `export.ts`,
+      `investor-report.ts` and `report-text.ts` (plus four lib files that use those) need
+      `cardRows` and `STATUS`. Its badge colour strings travel as plain text.
+    - **Imports:** a script rewrote `@/lib/x` → `@mbl/domain/x` in web, tests and scripts
+      (294 files), and to relative paths inside domain. Next compiles the package via
+      `transpilePackages`.
+    - **Pulled forward from N-1.4:** `packages/domain/src/enums.ts` holds every pgEnum's value
+      list.
+      - `schema.ts` builds `pgEnum(name, X_VALUES)` from them; the theme uses `themes`.
+      - The engine types and the forms' `z.enum` use the same lists, so domain never imports the
+        schema.
+    - **Structural types:**
+      - `prefill.ts` reads a local `SetupRows`;
+      - `labels.ts` reads a local `JournalRow` with the 10 fields it uses;
+      - `PayAccount` now lives in domain `business.ts`.
+    - **Also fixed:** the eslint ignores now match `.next*` build folders at any depth. N-1.2's lint
+      had passed only because no build existed under `apps/web` yet.
+    - **Results:**
+      - unit 720 (+2) and integration 140;
+      - E2E 23 passed, 2 skipped;
+      - `drizzle-kit generate` reports no change;
+      - parity MATCH (202 files).
+      - TTFB +7% against the morning's baseline, but −8% against the reference measured at the
+        same moment, so the difference is machine load.
 - [ ] **N-1.4 `packages/db`**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/db/**`,
     `src/lib/validation/{money-entry,trade,setup}.ts`

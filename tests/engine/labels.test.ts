@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entryLabels, entryTitle, reversalLabel } from "@/components/journal/labels";
+import { entryLabels, entryTitle, reversalLabel } from "@mbl/domain/journal/labels";
 import type { JournalRow } from "@/server/journal";
 
 // CR-034 (D-043, D-058): one naming rule for a reversal on the Cash book and every statement.

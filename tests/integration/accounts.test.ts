@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { billProfit } from "@/lib/accounts";
-import { dhakaToday } from "@/lib/dates";
+import { billProfit } from "@mbl/domain/accounts";
+import { dhakaToday } from "@mbl/domain/dates";
 import { customerBills } from "@/server/accounts";
 import { loadBooks } from "@/server/books";
 import { localSql } from "./local-db";

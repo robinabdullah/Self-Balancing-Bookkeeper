@@ -2,8 +2,8 @@ import "server-only";
 import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { purchaseLines, purchases } from "@/db/schema";
-import type { StockLot } from "@/lib/engine/stock";
-import { parse } from "@/lib/money";
+import type { StockLot } from "@mbl/domain/engine/stock";
+import { parse } from "@mbl/domain/money";
 import { stockLots } from "@/server/stock";
 
 // What the return form picks from (UIDD §4.5): the bill lines of sales that weren't reversed,

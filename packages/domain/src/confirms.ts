@@ -1,17 +1,11 @@
 // UIDD §5 (D-060, D-061): the sheets that confirm what Save will do, only where the money goes
 // somewhere the form's name doesn't say. Each is a title, one sentence, the entry's own rows
 // (`effectRows`, from `postEntry`) and small notes. Null: save at once. Pure.
-import { feePct } from "@/lib/cash-out";
-import type { BillDates, Card } from "@/lib/engine/cards";
-import {
-  type Effect,
-  type Entry,
-  type MoneyEntry,
-  type Partner,
-  postEntry,
-} from "@/lib/engine/post";
-import { type EffectRow, type RowsContext, billOf, effectRows } from "@/lib/effect-rows";
-import { format, sub } from "@/lib/money";
+import { feePct } from "./cash-out";
+import type { BillDates, Card } from "./engine/cards";
+import { type Effect, type Entry, type MoneyEntry, type Partner, postEntry } from "./engine/post";
+import { type EffectRow, type RowsContext, billOf, effectRows } from "./effect-rows";
+import { format, sub } from "./money";
 
 /** A confirm sheet's content: a sentence, label · amount rows, small notes. */
 export type ConfirmSheet = {

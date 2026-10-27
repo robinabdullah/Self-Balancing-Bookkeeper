@@ -2,11 +2,11 @@
 
 import { useContext, useEffect, useState } from "react";
 import { CalendarIcon } from "lucide-react";
-import { autoSlash, dhakaToday, formatDmy, formatMonth, parseDmy } from "@/lib/dates";
-import type { MonthChoice } from "@/lib/month-choices";
+import { autoSlash, dhakaToday, formatDmy, formatMonth, parseDmy } from "@mbl/domain/dates";
+import type { MonthChoice } from "@mbl/domain/month-choices";
 import { cn } from "@/lib/utils";
 import { Field, FormChanged, FormInitial, inputClass } from "./field";
-import type { HelpField } from "@/lib/help-text";
+import type { HelpField } from "@mbl/domain/help-text";
 
 // UIDD §2 (D-035): dates are typed as dd/mm/yyyy whatever the phone's language, with a 📅 that
 // opens the phone's calendar; the form still sends YYYY-MM-DD. Months are a dropdown of the

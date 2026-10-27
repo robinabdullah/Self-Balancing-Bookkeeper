@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { statementRange, statementRowsOf } from "@/lib/accounts";
-import { cardDetail, cardRows, creditSplit } from "@/lib/card-view";
-import { cardAlerts, cardDues } from "@/lib/dashboard";
-import { type Card, cardSummaries } from "@/lib/engine/cards";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import type { Entry, MoneyEntry, Posted, PurchaseEntry } from "@/lib/engine/post";
-import { dayBefore, investorReport } from "@/lib/investor-report";
-import { add, splitShares } from "@/lib/money";
-import { monthlyPack } from "@/lib/monthly-pack";
-import { salesReport } from "@/lib/sales-report";
+import { statementRange, statementRowsOf } from "@mbl/domain/accounts";
+import { cardDetail, cardRows, creditSplit } from "@mbl/domain/card-view";
+import { cardAlerts, cardDues } from "@mbl/domain/dashboard";
+import { type Card, cardSummaries } from "@mbl/domain/engine/cards";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import type { Entry, MoneyEntry, Posted, PurchaseEntry } from "@mbl/domain/engine/post";
+import { dayBefore, investorReport } from "@mbl/domain/investor-report";
+import { add, splitShares } from "@mbl/domain/money";
+import { monthlyPack } from "@mbl/domain/monthly-pack";
+import { salesReport } from "@mbl/domain/sales-report";
 import { PARTNERS, expectBalanced, posted } from "./invariant";
 import {
   CARD,

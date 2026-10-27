@@ -1,9 +1,9 @@
-import { type StatementLine, statementLines } from "@/lib/accounts";
-import { monthOf } from "@/lib/dates";
-import type { Books } from "@/lib/engine/index";
-import { dueStatements } from "@/lib/engine/customers";
-import type { Allocation } from "@/lib/engine/months";
-import { add, sub } from "@/lib/money";
+import { type StatementLine, statementLines } from "./accounts";
+import { monthOf } from "./dates";
+import type { Books } from "./engine/index";
+import { dueStatements } from "./engine/customers";
+import type { Allocation } from "./engine/months";
+import { add, sub } from "./money";
 
 // UIDD §4.8 (task 4.5): the People list and a person's detail, read off `computeBooks` (capital,
 // profit owed, opening difference) and the stored `allocations` of the closed months (SRS §7).

@@ -2,10 +2,10 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
-import { addMonths, dhakaToday, formatMonth, monthOf } from "@/lib/dates";
-import { computeBooks } from "@/lib/engine/index";
-import { defaultReversal } from "@/lib/guards";
-import { parse } from "@/lib/money";
+import { addMonths, dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
+import { computeBooks } from "@mbl/domain/engine/index";
+import { defaultReversal } from "@mbl/domain/guards";
+import { parse } from "@mbl/domain/money";
 import { type Result, loadCalendar } from "@/server/action";
 import { deleteMoneyEntry, saveMoneyEntry } from "@/server/actions/money";
 import { closeMonth } from "@/server/actions/months";
@@ -130,9 +130,11 @@ const expenseInput = (date: string, forMonth: string, amount = "1,000") => ({
 });
 
 const count = async () =>
-  (await sql.unsafe(`select
+  (
+    await sql.unsafe(`select
     (select count(*) from purchases) + (select count(*) from sales) +
-    (select count(*) from returns) + (select count(*) from money_entries) as n`))[0].n;
+    (select count(*) from returns) + (select count(*) from money_entries) as n`)
+  )[0].n;
 
 describe("5.3 Locks everywhere", () => {
   it("I5.3.1 creating, editing or deleting an entry dated (or for) a closed month → rejected", async () => {

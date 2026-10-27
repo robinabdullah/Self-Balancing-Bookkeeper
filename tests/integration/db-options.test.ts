@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { auditLog, moneyEntries, people } from "@/db/schema";
-import { parse } from "@/lib/money";
+import { parse } from "@mbl/domain/money";
 import { localSql } from "./local-db";
 
 // I-CR-013.3 (D-032): the app's DB client keeps its connections (no 30–60 min recycling) and skips

@@ -1,4 +1,4 @@
-import type { MoneyEntry } from "@/lib/engine/post";
+import type { MoneyEntry } from "../engine/post";
 
 // The money entry form's types (UIDD §4.6): every single-amount type but `opening`, which only
 // the opening import writes (SRS §9). Plain module, so the server page can check `?type=`.

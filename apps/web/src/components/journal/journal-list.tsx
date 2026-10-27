@@ -18,8 +18,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { SHEET_POP, replaceUrl } from "@/components/ui/use-back-close";
-import { formatDate, formatMonth, monthOf } from "@/lib/dates";
-import { entryHref, withQuery } from "@/lib/href";
+import { formatDate, formatMonth, monthOf } from "@mbl/domain/dates";
+import { entryHref, withQuery } from "@mbl/domain/href";
 import {
   type JournalFilter,
   NO_FILTER,
@@ -29,11 +29,11 @@ import {
   periodOptions,
   rangeError,
   toQuery,
-} from "@/lib/journal-filter";
-import { format } from "@/lib/money";
+} from "@mbl/domain/journal-filter";
+import { format } from "@mbl/domain/money";
 import { cn } from "@/lib/utils";
 import type { JournalRow } from "@/server/journal";
-import { TYPE_LABEL, entryTitle, whoOf } from "./labels";
+import { TYPE_LABEL, entryTitle, whoOf } from "@mbl/domain/journal/labels";
 
 // UIDD §4.10 (task 3.8.1, D-032): every entry, newest first, as stacked cards on a phone and a
 // table-like grid on desktop. Filters (a bottom sheet on a phone), kept in the URL: type, who (a

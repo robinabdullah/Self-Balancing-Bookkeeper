@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import { computeClose, monthProfit } from "@/lib/engine/months";
-import type { Entry, MoneyEntry } from "@/lib/engine/post";
-import { splitShares } from "@/lib/money";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import { computeClose, monthProfit } from "@mbl/domain/engine/months";
+import type { Entry, MoneyEntry } from "@mbl/domain/engine/post";
+import { splitShares } from "@mbl/domain/money";
 import { PARTNERS } from "./invariant";
 
 // Synthetic ids only (D-014).

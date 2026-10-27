@@ -1,5 +1,5 @@
 import { ExportButton } from "@/components/export/export-button";
-import { formatStamp } from "@/lib/dates";
+import { formatStamp } from "@mbl/domain/dates";
 import { lastExport } from "@/server/export";
 
 // UIDD §4.12 (task 6.4.2): the download, the last export (time and who, from the audit log,

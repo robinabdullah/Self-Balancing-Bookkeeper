@@ -1,11 +1,11 @@
-import { type StatementKind, type StatementRange, supplierDueText } from "@/lib/accounts";
-import type { BankAccountFields } from "@/lib/business";
-import { piecesAt } from "@/lib/by-model";
-import { formatDate, formatMonth, formatRange } from "@/lib/dates";
-import { add, format, mul } from "@/lib/money";
-import { toWords } from "@/lib/words";
-import type { CashBook, CashRow } from "@/lib/cash-book";
-import type { SalesReport } from "@/lib/sales-report";
+import { type StatementKind, type StatementRange, supplierDueText } from "./accounts";
+import type { BankAccountFields } from "./business";
+import { piecesAt } from "./by-model";
+import { formatDate, formatMonth, formatRange } from "./dates";
+import { add, format, mul } from "./money";
+import { toWords } from "./words";
+import type { CashBook, CashRow } from "./cash-book";
+import type { SalesReport } from "./sales-report";
 
 // D-040: every WhatsApp message, as plain text in the sectioned + emoji style of the v1.1 plan's
 // samples (`*bold*`, `_italic_`, `- ` bullets). Each builder returns the body only: the send

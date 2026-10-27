@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Amount } from "@/components/amount";
-import type { ChartPeriod } from "@/lib/charts/period";
-import { categoryLabel, type MonthsWindow, type ProfitCharts } from "@/lib/charts/profit";
-import { formatRange } from "@/lib/dates";
-import { withQuery } from "@/lib/href";
-import { format } from "@/lib/money";
+import type { ChartPeriod } from "@mbl/domain/charts/period";
+import { categoryLabel, type MonthsWindow, type ProfitCharts } from "@mbl/domain/charts/profit";
+import { formatRange } from "@mbl/domain/dates";
+import { withQuery } from "@mbl/domain/href";
+import { format } from "@mbl/domain/money";
 import { ChartTable } from "./chart-table";
 import { Bars, LineSeries } from "./charts";
 import { type ProfitChart, SERIES, isEmpty, profitTitle, rowsOf } from "./profit-cards";

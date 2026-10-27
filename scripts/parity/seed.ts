@@ -4,10 +4,10 @@
 // computed from them by the engine, as the close action would.
 import { createCipheriv, randomBytes } from "node:crypto";
 import type postgres from "postgres";
-import { type StoredEntry, toPosted } from "@/lib/engine/index";
-import { type Allocation, computeClose, monthProfit } from "@/lib/engine/months";
-import type { MoneyEntry, Partner, PurchaseEntry, ReturnEntry } from "@/lib/engine/post";
-import { parse, toDecimal } from "@/lib/money";
+import { type StoredEntry, toPosted } from "@mbl/domain/engine/index";
+import { type Allocation, computeClose, monthProfit } from "@mbl/domain/engine/months";
+import type { MoneyEntry, Partner, PurchaseEntry, ReturnEntry } from "@mbl/domain/engine/post";
+import { parse, toDecimal } from "@mbl/domain/money";
 import { E2E_CARD_KEY, PARTNER } from "../../tests/e2e/helpers";
 import { linkPartner } from "../../tests/e2e/global-setup";
 import { truncateAll } from "../../tests/integration/local-db";
@@ -294,7 +294,13 @@ export async function seedParity(sql: postgres.Sql): Promise<Seeded> {
   ]);
   await money({ date: "2026-08-11", amount: tk("60000"), ...rahman, ref: "receipt" });
   await giveBack({ date: "2026-08-12", kind: "customer", ...star }, [
-    { lotId: redmiLot, saleLineId: starLine, qty: 1, unitAmount: tk("17500"), unitCost: tk("15000") },
+    {
+      lotId: redmiLot,
+      saleLineId: starLine,
+      qty: 1,
+      unitAmount: tk("17500"),
+      unitCost: tk("15000"),
+    },
   ]);
   await money({
     date: "2026-08-14",
@@ -319,7 +325,12 @@ export async function seedParity(sql: postgres.Sql): Promise<Seeded> {
     source: "cash",
     amount: tk("50000"),
   });
-  await money({ date: "2026-08-20", type: "capital_in", personId: ids.kamal, amount: tk("500000") });
+  await money({
+    date: "2026-08-20",
+    type: "capital_in",
+    personId: ids.kamal,
+    amount: tk("500000"),
+  });
   await money({ date: "2026-08-25", type: "card_payment", cardId: ids.visa, amount: tk("40000") });
 
   // September (open): more stock and sales, a purchase return, a payment reversed and re-paid.
@@ -371,9 +382,20 @@ export async function seedParity(sql: postgres.Sql): Promise<Seeded> {
   await sale({ date: "2026-09-18", ...star }, [
     { lotId: iphoneLot, qty: 1, unitPrice: tk("79000"), unitCost: tk("72000") },
   ]);
-  await money({ date: "2026-09-21", amount: tk("30000"), ...star, reversesId: paid, ref: "reversal" });
+  await money({
+    date: "2026-09-21",
+    amount: tk("30000"),
+    ...star,
+    reversesId: paid,
+    ref: "reversal",
+  });
   await money({ date: "2026-09-22", amount: tk("30000"), ...star });
-  await money({ date: "2026-09-25", type: "profit_paid", personId: ids.kamal, amount: tk("10000") });
+  await money({
+    date: "2026-09-25",
+    type: "profit_paid",
+    personId: ids.kamal,
+    amount: tk("10000"),
+  });
   await money({ date: "2026-09-28", type: "cashback", source: "cash", amount: tk("300") });
 
   // October (this month, up to the harness's today).

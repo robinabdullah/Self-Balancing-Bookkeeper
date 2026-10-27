@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { chartPeriod } from "@/lib/charts/period";
-import { dailyCash, moneyCharts, positionAt, profitShares } from "@/lib/charts/position";
-import { wholeMonths } from "@/lib/charts/profit";
-import { cashBook } from "@/lib/cash-book";
-import { breakdown, cardAlerts } from "@/lib/dashboard";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import { type Allocation, computeClose, monthProfit } from "@/lib/engine/months";
-import type { Entry } from "@/lib/engine/post";
-import { add, sub } from "@/lib/money";
+import { chartPeriod } from "@mbl/domain/charts/period";
+import { dailyCash, moneyCharts, positionAt, profitShares } from "@mbl/domain/charts/position";
+import { wholeMonths } from "@mbl/domain/charts/profit";
+import { cashBook } from "@mbl/domain/cash-book";
+import { breakdown, cardAlerts } from "@mbl/domain/dashboard";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import { type Allocation, computeClose, monthProfit } from "@mbl/domain/engine/months";
+import type { Entry } from "@mbl/domain/engine/post";
+import { add, sub } from "@mbl/domain/money";
 import { PARTNERS, expectBalanced } from "./invariant";
 
 // CR-042 (D-064, clarified 2026-10-24): the Money tab's figures tie out to `computeBooks` (the

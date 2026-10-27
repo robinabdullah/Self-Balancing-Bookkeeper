@@ -9,14 +9,14 @@ import {
   profitsFor,
   salesProfitByDay,
   wholeMonths,
-} from "@/lib/charts/profit";
-import { chartPeriod } from "@/lib/charts/period";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import { computeClose, monthProfit, nextToClose } from "@/lib/engine/months";
-import type { Entry } from "@/lib/engine/post";
-import { add } from "@/lib/money";
-import { monthList } from "@/lib/months-view";
-import { salesReport } from "@/lib/sales-report";
+} from "@mbl/domain/charts/profit";
+import { chartPeriod } from "@mbl/domain/charts/period";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import { computeClose, monthProfit, nextToClose } from "@mbl/domain/engine/months";
+import type { Entry } from "@mbl/domain/engine/post";
+import { add } from "@mbl/domain/money";
+import { monthList } from "@mbl/domain/months-view";
+import { salesReport } from "@mbl/domain/sales-report";
 import { PARTNERS, expectBalanced } from "./invariant";
 
 // CR-041 (D-064, clarified 2026-10-24): the Profit tab's figures tie out to the Months list, the

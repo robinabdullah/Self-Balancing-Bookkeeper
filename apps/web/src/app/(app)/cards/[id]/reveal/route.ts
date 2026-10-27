@@ -1,5 +1,5 @@
-import { REVEAL_SECONDS } from "@/lib/card-secrets";
-import { rowId } from "@/lib/validation/fields";
+import { REVEAL_SECONDS } from "@mbl/domain/card-secrets";
+import { rowId } from "@mbl/domain/validation/fields";
 import { requirePartner } from "@/server/auth";
 import { REVEAL_WINDOW_COOKIE } from "@/server/card-crypto";
 import { revealCardDetails } from "@/server/card-secrets";

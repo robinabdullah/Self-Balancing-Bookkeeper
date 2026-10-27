@@ -1,4 +1,4 @@
-import { setupNames } from "@/lib/setup";
+import { setupNames } from "@mbl/domain/setup";
 import { loadBooks } from "@/server/books";
 import { loadEntry } from "@/server/journal";
 import { loadSetup } from "@/server/setup";

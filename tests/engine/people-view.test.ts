@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import type { Allocation } from "@/lib/engine/months";
-import type { MoneyEntry } from "@/lib/engine/post";
-import { add, sub } from "@/lib/money";
-import { peopleRows, personDetail } from "@/lib/people-view";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import type { Allocation } from "@mbl/domain/engine/months";
+import type { MoneyEntry } from "@mbl/domain/engine/post";
+import { add, sub } from "@mbl/domain/money";
+import { peopleRows, personDetail } from "@mbl/domain/people-view";
 import { PARTNERS, expectBalanced } from "./invariant";
 
 // Task 4.5 (UIDD §4.8): the People list and a person's detail, off `computeBooks`. Synthetic ids

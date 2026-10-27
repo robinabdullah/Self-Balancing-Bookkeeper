@@ -2,15 +2,15 @@ import Link from "next/link";
 import { Amount } from "@/components/amount";
 import { BankBadge } from "@/components/cards/bank-badge";
 import { StatusBadge } from "@/components/cards/card-list";
-import { formatDate, formatMonth } from "@/lib/dates";
-import type { InvestorReport } from "@/lib/investor-report";
+import { formatDate, formatMonth } from "@mbl/domain/dates";
+import type { InvestorReport } from "@mbl/domain/investor-report";
 import {
   NOT_ALLOCATED,
   OPEN_NOTE,
   allocationText,
   cardState,
   monthsLabel,
-} from "@/lib/report-text";
+} from "@mbl/domain/report-text";
 
 // D-045 (UIDD §4.17): a person's Investor / Partner report on screen: capital, card investment,
 // allocations per month, the profit roll-forward to "Profit owed now" and, for a partner, the

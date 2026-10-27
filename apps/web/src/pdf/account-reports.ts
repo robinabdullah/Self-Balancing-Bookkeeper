@@ -1,15 +1,15 @@
-import type { StatementRange } from "@/lib/accounts";
-import { AVG, type ModelRow, modelTotal } from "@/lib/by-model";
-import { formatDate, formatMonth, formatRange } from "@/lib/dates";
-import type { InvestorReport } from "@/lib/investor-report";
-import { format } from "@/lib/money";
+import type { StatementRange } from "@mbl/domain/accounts";
+import { AVG, type ModelRow, modelTotal } from "@mbl/domain/by-model";
+import { formatDate, formatMonth, formatRange } from "@mbl/domain/dates";
+import type { InvestorReport } from "@mbl/domain/investor-report";
+import { format } from "@mbl/domain/money";
 import {
   NOT_ALLOCATED,
   OPEN_NOTE,
   allocationText,
   cardState,
   monthsLabel,
-} from "@/lib/report-text";
+} from "@mbl/domain/report-text";
 import type { ReportPdf, ReportSection } from "./report";
 
 // D-045 (UIDD §4.16): what the card statement, the By model tables and the Investor report PDFs

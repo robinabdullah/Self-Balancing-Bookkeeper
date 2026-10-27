@@ -6,7 +6,7 @@ import {
   randomBytes,
   timingSafeEqual,
 } from "node:crypto";
-import { NO_KEY } from "@/lib/card-secrets";
+import { NO_KEY } from "@mbl/domain/card-secrets";
 
 // D-046 (SRS §11): each saved card field is AES-256-GCM ciphertext, with the card's id bound in
 // as the extra data, so a value moved to another card can't be read. The key `CARD_SECRET_KEY`

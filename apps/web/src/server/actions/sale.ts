@@ -3,12 +3,12 @@
 import { and, asc, eq, notInArray, sql } from "drizzle-orm";
 import { auditLog, moneyEntries, saleLines, sales } from "@/db/schema";
 import { nextInvoiceNo, nextReceiptNo } from "@/server/numbers";
-import { formatDate } from "@/lib/dates";
-import { type Planned, planSale } from "@/lib/engine/stock";
-import { type Errors, deleteErrors } from "@/lib/guards";
-import { add, mul, toDecimal } from "@/lib/money";
-import { nest, optional, rowId } from "@/lib/validation/fields";
-import { type SaleValues, saleSchema } from "@/lib/validation/trade";
+import { formatDate } from "@mbl/domain/dates";
+import { type Planned, planSale } from "@mbl/domain/engine/stock";
+import { type Errors, deleteErrors } from "@mbl/domain/guards";
+import { add, mul, toDecimal } from "@mbl/domain/money";
+import { nest, optional, rowId } from "@mbl/domain/validation/fields";
+import { type SaleValues, saleSchema } from "@mbl/domain/validation/trade";
 import { CONFLICT, type Row, type Tx, byId, isReversed, runAction } from "@/server/action";
 import { stockLots } from "@/server/stock";
 

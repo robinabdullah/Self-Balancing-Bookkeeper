@@ -1,5 +1,5 @@
-import { type CardNetwork, NETWORK_LABEL, typeWordIn } from "@/lib/banks";
-import { format } from "@/lib/money";
+import { type CardNetwork, NETWORK_LABEL, typeWordIn } from "./banks";
+import { format } from "./money";
 
 // Setup display rules and messages (PRD §4.1; SRS §4 Setup; UIDD §4.11; D-022, D-023). Pure, so
 // the Setup screen, pickers and actions share one source.

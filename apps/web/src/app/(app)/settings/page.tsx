@@ -2,7 +2,7 @@ import { BusinessSettings } from "@/components/settings/business-settings";
 import { FingerprintSetting } from "@/components/settings/fingerprint-setting";
 import { ThemeSetting } from "@/components/settings/theme-setting";
 import { FormHelpSetting } from "@/components/shell/form-help-setting";
-import { dhakaToday, formatDate } from "@/lib/dates";
+import { dhakaToday, formatDate } from "@mbl/domain/dates";
 import { getUser } from "@/lib/supabase/server";
 import { getProfile } from "@/server/auth";
 import { getBusiness, logoSrc } from "@/server/business";

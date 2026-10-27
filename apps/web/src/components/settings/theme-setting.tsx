@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { type Theme, themeLabels, themes } from "@/lib/themes";
+import { type Theme, themeLabels, themes } from "@mbl/domain/themes";
 import { setTheme } from "@/server/actions/settings";
 
 const CHANGED_ELSEWHERE = "Your theme was changed on another device — reload the page";

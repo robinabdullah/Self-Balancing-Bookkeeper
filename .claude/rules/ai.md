@@ -2,7 +2,7 @@
 paths:
   - "apps/web/src/server/ai/**"
   - "apps/web/src/app/(app)/ask/**"
-  - "apps/web/src/lib/labels.ts"
+  - "packages/domain/src/journal/labels.ts"
 ---
 
 # AI assistant rules (docs/AI.md, D-057)

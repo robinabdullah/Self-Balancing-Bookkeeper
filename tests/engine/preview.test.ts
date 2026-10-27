@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { effectRows } from "@/lib/effect-rows";
-import { previewEntry } from "@/lib/preview";
-import { cardName, customerName } from "@/lib/setup";
-import { moneyEntrySchema } from "@/lib/validation/money-entry";
+import { effectRows } from "@mbl/domain/effect-rows";
+import { previewEntry } from "@mbl/domain/preview";
+import { cardName, customerName } from "@mbl/domain/setup";
+import { moneyEntrySchema } from "@mbl/domain/validation/money-entry";
 
 // Task 3.3.3 (UIDD §3 "What this will do"; D-024): the preview rows come from postEntry
 // (label · amount rows since D-061).

@@ -6,19 +6,19 @@ import {
   formatMonth,
   monthDiff,
   monthOf,
-} from "@/lib/dates";
-import { type MonthProfit, monthProfit } from "@/lib/engine/months";
-import type { Posted } from "@/lib/engine/post";
-import { add, sub } from "@/lib/money";
-import { type BreakdownLine, type MonthListRow, breakdownLines } from "@/lib/months-view";
+} from "../dates";
+import { type MonthProfit, monthProfit } from "../engine/months";
+import type { Posted } from "../engine/post";
+import { add, sub } from "../money";
+import { type BreakdownLine, type MonthListRow, breakdownLines } from "../months-view";
 import {
   type ReturnedLine,
   type SalesReport,
   type SoldLine,
   margin,
   salesReport,
-} from "@/lib/sales-report";
-import { EXPENSE_LABELS } from "@/lib/validation/fields";
+} from "../sales-report";
+import { EXPENSE_LABELS } from "../validation/fields";
 import type { ChartPeriod } from "./period";
 
 // D-064 (UIDD §4.17): the Profit tab: Net profit, Sales & margin, Expenses. Each figure comes from

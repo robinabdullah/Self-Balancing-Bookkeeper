@@ -10,9 +10,9 @@ import {
   saleLines,
   sales,
 } from "@/db/schema";
-import { MONEY, MONTH } from "@/lib/audit";
-import { parse, plain } from "@/lib/money";
-import { rowId } from "@/lib/validation/fields";
+import { MONEY, MONTH } from "@mbl/domain/audit";
+import { parse, plain } from "@mbl/domain/money";
+import { rowId } from "@mbl/domain/validation/fields";
 import type { EntryTable } from "@/server/actions/reverse";
 
 // Edit opens the same form as Add (UIDD §3, §4.10): a stored entry as the form's text values,

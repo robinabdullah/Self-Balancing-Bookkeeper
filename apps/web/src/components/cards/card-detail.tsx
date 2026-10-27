@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Amount } from "@/components/amount";
 import { EmptyState } from "@/components/states";
-import { formatDate, formatMonth } from "@/lib/dates";
-import type { CardMove, EmiPlan } from "@/lib/engine/cards";
-import { entryHref } from "@/lib/href";
+import { formatDate, formatMonth } from "@mbl/domain/dates";
+import type { CardMove, EmiPlan } from "@mbl/domain/engine/cards";
+import { entryHref } from "@mbl/domain/href";
 import { cn } from "@/lib/utils";
 
 // UIDD §4.8 (task 4.4.2): a card's charges and credits (newest first; a charge shows its bill)

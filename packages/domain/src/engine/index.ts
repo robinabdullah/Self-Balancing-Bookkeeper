@@ -1,11 +1,11 @@
 // computeBooks (SRS §2): the one entry point from the stored facts to every derived balance. It
 // posts each entry once (`postEntry`, SRS §5) and hands the effects to the views. Pure: plain
 // arrays in, plain objects out; `asOf` is passed in.
-import { type Balance, balance } from "@/lib/engine/balance";
-import { type BillDates, type Card, type CardSummary, cardSummaries } from "@/lib/engine/cards";
-import { type Statement, dueStatements } from "@/lib/engine/customers";
-import { type Allocation, type MonthRow, profitBooks } from "@/lib/engine/months";
-import { type Entry, type Partner, type Posted, postEntry } from "@/lib/engine/post";
+import { type Balance, balance } from "./balance";
+import { type BillDates, type Card, type CardSummary, cardSummaries } from "./cards";
+import { type Statement, dueStatements } from "./customers";
+import { type Allocation, type MonthRow, profitBooks } from "./months";
+import { type Entry, type Partner, type Posted, postEntry } from "./post";
 
 /** A stored entry: its row id and `created_at` (ties within a date). */
 export type StoredEntry = Entry & { id: string; createdAt: string };

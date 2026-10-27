@@ -9,11 +9,11 @@ import { FormModal } from "@/components/forms/form-modal";
 import { money } from "@/components/shell/nav";
 import { EmptyState } from "@/components/states";
 import { Button } from "@/components/ui/button";
-import { billToPay, visibleBills } from "@/lib/card-view";
-import { daysInMonth, formatDate, formatMonth } from "@/lib/dates";
-import type { Bill } from "@/lib/engine/cards";
-import { withQuery } from "@/lib/href";
-import { toDecimal } from "@/lib/money";
+import { billToPay, visibleBills } from "@mbl/domain/card-view";
+import { daysInMonth, formatDate, formatMonth } from "@mbl/domain/dates";
+import type { Bill } from "@mbl/domain/engine/cards";
+import { withQuery } from "@mbl/domain/href";
+import { toDecimal } from "@mbl/domain/money";
 import { deleteBillDates, saveBillDates } from "@/server/actions/cards";
 import type { BillDatesRow } from "@/server/cards";
 

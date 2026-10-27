@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { type Locator, type Page, expect, test } from "@playwright/test";
-import { formatMonth } from "@/lib/dates";
-import type { EffectRow } from "@/lib/effect-rows";
-import { type Entry, SIDE, postEntry } from "@/lib/engine/post";
-import { parse } from "@/lib/money";
-import { previewEntry } from "@/lib/preview";
+import { formatMonth } from "@mbl/domain/dates";
+import type { EffectRow } from "@mbl/domain/effect-rows";
+import { type Entry, SIDE, postEntry } from "@mbl/domain/engine/post";
+import { parse } from "@mbl/domain/money";
+import { previewEntry } from "@mbl/domain/preview";
 import { localSql } from "../integration/local-db";
 import { goHome } from "./helpers";
 import { fillDate } from "./seed";

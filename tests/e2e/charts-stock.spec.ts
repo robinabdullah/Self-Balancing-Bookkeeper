@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { format, parse } from "@/lib/money";
+import { format, parse } from "@mbl/domain/money";
 import { goHome, noSideScroll } from "./helpers";
 import { dhaka, escapeRe, phone, seedAccounts, sql } from "./seed";
 
@@ -83,7 +83,10 @@ test.describe("CR-044 Charts · Stock tab", () => {
     // No horizontal scroll; 44 px taps on All ages and the period row.
     await noSideScroll(page);
     const allAges = page.getByRole("link", { name: "All ages" });
-    const taps = [allAges, ...(await page.getByRole("navigation", { name: "Period" }).getByRole("link").all())];
+    const taps = [
+      allAges,
+      ...(await page.getByRole("navigation", { name: "Period" }).getByRole("link").all()),
+    ];
     for (const link of taps) expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await allAges.click();
     await page.waitForURL((u) => !u.searchParams.has("age"));

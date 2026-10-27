@@ -1,6 +1,6 @@
 import { type Page, expect, test } from "@playwright/test";
-import { formatDate } from "@/lib/dates";
-import { parse } from "@/lib/money";
+import { formatDate } from "@mbl/domain/dates";
+import { parse } from "@mbl/domain/money";
 import { goHome, noSideScroll } from "./helpers";
 import { dhaka, phone, seedAccounts, seedMoney, sql } from "./seed";
 

@@ -1,10 +1,23 @@
-import { LABEL } from "@/components/money/types";
-import { invoiceLabel, receiptLabel } from "@/lib/whatsapp";
-import type { JournalRow } from "@/server/journal";
+import { LABEL } from "../money/types";
+import { invoiceLabel, receiptLabel } from "../whatsapp";
 
 // What the Journal calls each entry (UIDD §4.10): the type, with a purchase's "paid by" or a
 // return's reason, and the counterparty from the Setup names. Plain module: the list, the detail
 // and their filters share it.
+
+/** The fields of a Journal row (the web's `JournalRow`) that the labels read. */
+type JournalRow = {
+  table: "purchase" | "sale" | "return" | "money";
+  id: string;
+  type: string;
+  detail: string | null;
+  docNo: number | null;
+  reversesId: string | null;
+  customerId: string | null;
+  supplierId: string | null;
+  cardId: string | null;
+  personId: string | null;
+};
 
 /** The filter's types, in the New sheet's order (UIDD §3), then the rest. */
 export const TYPE_LABEL: Record<string, string> = {

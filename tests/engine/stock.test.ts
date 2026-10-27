@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { type Lot, type LotMove, lotsRemaining, pickLots, planSale } from "@/lib/engine/stock";
+import {
+  type Lot,
+  type LotMove,
+  lotsRemaining,
+  pickLots,
+  planSale,
+} from "@mbl/domain/engine/stock";
 import { expectBalanced, posted } from "./invariant";
 
 // Synthetic ids only (D-014).

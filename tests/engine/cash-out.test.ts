@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { BAD_RATE, feePct, receivedAt } from "@/lib/cash-out";
-import { parse, sub } from "@/lib/money";
+import { BAD_RATE, feePct, receivedAt } from "@mbl/domain/cash-out";
+import { parse, sub } from "@mbl/domain/money";
 
 // CR-033 (D-056; UIDD §4.6): the Cash-out form's Fee % fills Cash received, exact to the paisa.
 

@@ -1,8 +1,8 @@
 // D-039: Settings → Business (Details · Logo · Messages · PDF terms, D-049) and the saved bank
 // accounts. The business row's id comes with each save, plus the `updatedAt` the form saw (D-010).
 import { z } from "zod";
-import { MESSAGE_TYPES } from "@/lib/business";
-import { name, optional, optionalText, rowId } from "@/lib/validation/fields";
+import { MESSAGE_TYPES } from "../business";
+import { name, optional, optionalText, rowId } from "./fields";
 
 export const businessDetailsSchema = z.object({
   id: rowId,

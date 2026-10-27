@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
-import type { EffectRow } from "@/lib/effect-rows";
+import type { EffectRow } from "@mbl/domain/effect-rows";
 import { useFormHelp } from "@/lib/form-help";
-import { type AboutForm, aboutText } from "@/lib/help-text";
+import { type AboutForm, aboutText } from "@mbl/domain/help-text";
 import { cn } from "@/lib/utils";
 import { EffectRows } from "./effect-rows";
 

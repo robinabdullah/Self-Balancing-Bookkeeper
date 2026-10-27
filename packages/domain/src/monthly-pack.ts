@@ -1,13 +1,13 @@
-import { cashBook } from "@/lib/cash-book";
-import { profitsFor } from "@/lib/charts/profit";
-import { type Breakdown, breakdown } from "@/lib/dashboard";
-import { addMonths, clampDay } from "@/lib/dates";
-import type { Books } from "@/lib/engine/index";
-import type { Allocation, MonthProfit } from "@/lib/engine/months";
-import { add, sub } from "@/lib/money";
-import { breakdownLines } from "@/lib/months-view";
-import type { SalesGroup, SalesReport } from "@/lib/sales-report";
-import { type StockLine, type StockMoveRow, stockMovement } from "@/lib/stock-movement";
+import { cashBook } from "./cash-book";
+import { profitsFor } from "./charts/profit";
+import { type Breakdown, breakdown } from "./dashboard";
+import { addMonths, clampDay } from "./dates";
+import type { Books } from "./engine/index";
+import type { Allocation, MonthProfit } from "./engine/months";
+import { add, sub } from "./money";
+import { breakdownLines } from "./months-view";
+import type { SalesGroup, SalesReport } from "./sales-report";
+import { type StockLine, type StockMoveRow, stockMovement } from "./stock-movement";
 
 // D-045 (UIDD §4.17): the Monthly partner pack, read off the books as on the month's last day
 // (today for this month) and the books the day before its 1st. Each section comes from the same

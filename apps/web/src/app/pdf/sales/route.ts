@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { parseRange } from "@/lib/journal-filter";
+import { parseRange } from "@mbl/domain/journal-filter";
 import { pdfFileName } from "@/pdf/layout";
 import { salesPdf } from "@/pdf/sales";
 import { renderReportPdf } from "@/pdf/report-pdf";

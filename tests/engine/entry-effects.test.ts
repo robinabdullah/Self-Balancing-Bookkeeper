@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { moneyType, openingKind, purchaseSource, refundTo } from "@/db/schema";
-import { entryConfirm } from "@/lib/confirms";
+import { entryConfirm } from "@mbl/domain/confirms";
 import {
   type Posting,
   billOf,
@@ -10,17 +10,17 @@ import {
   netEffects,
   reversalRows,
   signed,
-} from "@/lib/effect-rows";
-import type { Card } from "@/lib/engine/cards";
-import type { StoredEntry } from "@/lib/engine/index";
+} from "@mbl/domain/effect-rows";
+import type { Card } from "@mbl/domain/engine/cards";
+import type { StoredEntry } from "@mbl/domain/engine/index";
 import {
   type Effect,
   type Entry,
   type MoneyEntry,
   type PurchaseEntry,
   postEntry,
-} from "@/lib/engine/post";
-import { add } from "@/lib/money";
+} from "@mbl/domain/engine/post";
+import { add } from "@mbl/domain/money";
 import { PARTNERS, expectBalanced, imbalance, posted } from "./invariant";
 
 // CR-036 (D-061; UIDD §3, §4.10, §5): one row style for what an entry does. The rows are the

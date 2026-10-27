@@ -1,8 +1,8 @@
 // Customer and supplier dues (PRD §4.3, UIDD §4.8): each one's balance and a statement with a
 // running balance (also a person's capital and profit owed, task 4.5). The amounts come only from
 // `postEntry` effects (SRS §5). Pure; integer poisha.
-import type { Posted } from "@/lib/engine/post";
-import { add, sub } from "@/lib/money";
+import type { Posted } from "./post";
+import { add, sub } from "../money";
 
 /** One entry's signed change to the due, and the balance after it. */
 export type StatementRow = { entryId: string; date: string; amount: number; balance: number };

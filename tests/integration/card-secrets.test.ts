@@ -4,14 +4,14 @@ import { verifyAuthenticationResponse, verifyRegistrationResponse } from "@simpl
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
 import { POST } from "@/app/(app)/cards/[id]/reveal/route";
-import { rowId } from "@/lib/validation/fields";
+import { rowId } from "@mbl/domain/validation/fields";
 import {
   DUPLICATE_NUMBER,
   NO_KEY,
   ONE_PRIMARY,
   REVEAL_FIRST,
   USE_FINGERPRINT,
-} from "@/lib/card-secrets";
+} from "@mbl/domain/card-secrets";
 import { removeCardDetails, saveCardDetails } from "@/server/actions/card-secrets";
 import {
   fingerprintSetupOptions,

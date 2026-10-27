@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import type { ChartPeriod } from "@/lib/charts/period";
-import type { MoneyCharts, Position, ShareMonth } from "@/lib/charts/position";
-import type { MonthsWindow } from "@/lib/charts/profit";
-import { formatDate } from "@/lib/dates";
-import { format, sub } from "@/lib/money";
+import type { ChartPeriod } from "@mbl/domain/charts/period";
+import type { MoneyCharts, Position, ShareMonth } from "@mbl/domain/charts/position";
+import type { MonthsWindow } from "@mbl/domain/charts/profit";
+import { formatDate } from "@mbl/domain/dates";
+import { format, sub } from "@mbl/domain/money";
 import { ChartCard, type Delta } from "./chart-card";
 import { Bars, type ChartRow, LineSeries, type Series, SignedStack } from "./charts";
 import { deltaOf, isEmpty, prevNote, rowsOf } from "./profit-cards";

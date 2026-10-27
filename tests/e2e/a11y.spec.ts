@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
 import { type Page, expect, test } from "@playwright/test";
-import { billMonthOf } from "@/lib/engine/cards";
+import { billMonthOf } from "@mbl/domain/engine/cards";
 import { SIGNED_OUT, goHome } from "./helpers";
 import { THEMES, dhaka, seedAccounts, seedCardDetails, seedMoney, setTheme, sql } from "./seed";
 

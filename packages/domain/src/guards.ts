@@ -1,7 +1,7 @@
 // Write guards (SRS §3, §7, §8; D-003, D-005, D-009). Pure: the server action passes in today,
 // the opening date, the last closed month and the dependent facts it read from the DB. Each guard
 // returns field → message (UIDD §5 wording); `{}` = allowed. `form` is a whole-form error.
-import { formatDate, formatMonth, monthOf } from "@/lib/dates";
+import { formatDate, formatMonth, monthOf } from "./dates";
 
 export type Errors = Record<string, string>;
 

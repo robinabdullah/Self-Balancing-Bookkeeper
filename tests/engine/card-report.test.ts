@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { statementRange, statementRowsOf } from "@/lib/accounts";
-import { billsIn, creditSplit, emiSchedule } from "@/lib/card-view";
-import { computeBooks } from "@/lib/engine/index";
-import { add, sub } from "@/lib/money";
-import { monthlyPack } from "@/lib/monthly-pack";
-import { salesReport } from "@/lib/sales-report";
+import { statementRange, statementRowsOf } from "@mbl/domain/accounts";
+import { billsIn, creditSplit, emiSchedule } from "@mbl/domain/card-view";
+import { computeBooks } from "@mbl/domain/engine/index";
+import { add, sub } from "@mbl/domain/money";
+import { monthlyPack } from "@mbl/domain/monthly-pack";
+import { salesReport } from "@mbl/domain/sales-report";
 import { CARD, TODAY, books, data, snapshots, stock, typeOf } from "./report-fixture";
 
 // CR-025 (D-045; UIDD §4.8): a card's statement for a period, read as on its last day: its bills,

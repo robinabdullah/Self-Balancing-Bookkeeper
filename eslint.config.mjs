@@ -36,13 +36,13 @@ const eslintConfig = [
     // Generated files are exempt (D-013).
     ignores: [
       "node_modules/**",
-      ".next/**",
-      ".next-e2e/**",
-      ".next-parity/**",
+      "**/.next/**",
+      "**/.next-e2e/**",
+      "**/.next-parity/**",
       ".parity/**",
       "out/**",
       "build/**",
-      "next-env.d.ts",
+      "**/next-env.d.ts",
       "apps/web/src/components/ui/**",
       "apps/web/src/db/migrations/**",
     ],

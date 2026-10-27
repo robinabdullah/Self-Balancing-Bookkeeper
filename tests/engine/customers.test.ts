@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { aboveTarget, dueStatements } from "@/lib/engine/customers";
-import { type Account, type Effect, type MoneyEntry, type Posted } from "@/lib/engine/post";
-import { type Lot, lotsRemaining, pickLots } from "@/lib/engine/stock";
-import { splitShares } from "@/lib/money";
+import { aboveTarget, dueStatements } from "@mbl/domain/engine/customers";
+import { type Account, type Effect, type MoneyEntry, type Posted } from "@mbl/domain/engine/post";
+import { type Lot, lotsRemaining, pickLots } from "@mbl/domain/engine/stock";
+import { splitShares } from "@mbl/domain/money";
 import { PARTNERS, expectBalanced, posted } from "./invariant";
 
 // Synthetic ids only (D-014).

@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Amount } from "@/components/amount";
 import { EmptyState } from "@/components/states";
 import { rowClass, rowLinkClass } from "@/components/tables/row-link";
-import type { StatementLine, StatementRange } from "@/lib/accounts";
-import { formatDate } from "@/lib/dates";
-import { entryHref } from "@/lib/href";
+import type { StatementLine, StatementRange } from "@mbl/domain/accounts";
+import { formatDate } from "@mbl/domain/dates";
+import { entryHref } from "@mbl/domain/href";
 import { cn } from "@/lib/utils";
 
 // UIDD §4.8 (task 4.3): a due statement, newest first. At ≥ 1024px a table (date, entry, debit,

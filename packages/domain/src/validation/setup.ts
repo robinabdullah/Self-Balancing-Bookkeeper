@@ -2,18 +2,8 @@
 // deactivate-instead-of-delete need the database, so the action checks those. The partners'
 // total isn't checked on save; Setup only warns (D-023).
 import { z } from "zod";
-import { cardNetwork, personKind } from "@/db/schema";
-import {
-  date,
-  int,
-  money,
-  month,
-  name,
-  optional,
-  optionalText,
-  pick,
-  rowId,
-} from "@/lib/validation/fields";
+import { CARD_NETWORK_VALUES, PERSON_KIND_VALUES } from "../enums";
+import { date, int, money, month, name, optional, optionalText, pick, rowId } from "./fields";
 
 /** A profit share % like 50 or 33.333: 0–100, at most 3 decimals (numeric(6,3)). */
 const percent = z.coerce
@@ -35,7 +25,7 @@ export const personSchema = z
   .object({
     id: rowId,
     name: name("a name"),
-    kind: z.enum(personKind.enumValues, { error: "Choose Partner or Investor" }),
+    kind: z.enum(PERSON_KIND_VALUES, { error: "Choose Partner or Investor" }),
     profitSharePct: optional(percent),
     note: optionalText,
     ...contacts,
@@ -54,7 +44,7 @@ export const personSchema = z
 export const cardSchema = z.object({
   id: rowId,
   name: name("the card name"),
-  network: z.enum(cardNetwork.enumValues, { error: "Choose the type" }).default("none"),
+  network: z.enum(CARD_NETWORK_VALUES, { error: "Choose the type" }).default("none"),
   ownerPersonId: pick("the owner"),
   statementDay: int(1, 31),
   dueDay: int(1, 31),

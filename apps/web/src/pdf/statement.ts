@@ -1,6 +1,6 @@
-import type { StatementRange } from "@/lib/accounts";
-import { formatDate, formatRange } from "@/lib/dates";
-import { format } from "@/lib/money";
+import type { StatementRange } from "@mbl/domain/accounts";
+import { formatDate, formatRange } from "@mbl/domain/dates";
+import { format } from "@mbl/domain/money";
 import type { ReportSection } from "./report";
 
 // D-041 (UIDD §4.16): what a customer's or supplier's due statement PDF says, as text. Its input

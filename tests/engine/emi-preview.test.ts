@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { type BillDates, type Card, cardSummaries } from "@/lib/engine/cards";
-import type { PurchaseEntry } from "@/lib/engine/post";
-import { addMonths } from "@/lib/dates";
-import { emiPreview } from "@/lib/preview";
+import { type BillDates, type Card, cardSummaries } from "@mbl/domain/engine/cards";
+import type { PurchaseEntry } from "@mbl/domain/engine/post";
+import { addMonths } from "@mbl/domain/dates";
+import { emiPreview } from "@mbl/domain/preview";
 import { posted } from "./invariant";
 
 // U-CR-013.6 (D-032): the purchase form's EMI preview equals the bills the engine makes for the

@@ -2,17 +2,17 @@
 // and the forms' "What this will do" preview (UIDD §3) both call `postEntry`; nothing else may
 // hold a copy of these rules. Pure: plain objects in, plain objects out, integer poisha.
 import type {
-  moneyType,
-  openingKind,
-  purchaseSource,
-  refundTo,
-  returnReason,
-  settleMode,
-} from "@/db/schema";
-import { monthOf } from "@/lib/dates";
-import { add, mul, splitShares, sub } from "@/lib/money";
+  MONEY_TYPE_VALUES,
+  OPENING_KIND_VALUES,
+  PURCHASE_SOURCE_VALUES,
+  REFUND_TO_VALUES,
+  RETURN_REASON_VALUES,
+  SETTLE_MODE_VALUES,
+} from "../enums";
+import { monthOf } from "../dates";
+import { add, mul, splitShares, sub } from "../money";
 
-type Enum<T extends { enumValues: readonly string[] }> = T["enumValues"][number];
+type Enum<T extends readonly string[]> = T[number];
 
 export type Account =
   | "cash"
@@ -90,7 +90,7 @@ type Base = { date: string; reversesId?: Id };
 
 export type PurchaseEntry = Base & {
   table: "purchase";
-  source: Enum<typeof purchaseSource>;
+  source: Enum<typeof PURCHASE_SOURCE_VALUES>;
   cardId?: Id;
   supplierId?: Id;
   customerId?: Id;
@@ -111,13 +111,13 @@ export type ReturnEntry = Base & {
   customerId?: Id;
   cardId?: Id;
   supplierId?: Id;
-  refundTo?: Enum<typeof refundTo> | null;
-  reason?: Enum<typeof returnReason> | null;
+  refundTo?: Enum<typeof REFUND_TO_VALUES> | null;
+  reason?: Enum<typeof RETURN_REASON_VALUES> | null;
   lines: { qty: number; unitAmount: number; unitCost: number }[];
 };
 
 export type MoneyEntry = Base & {
-  type: Enum<typeof moneyType>;
+  type: Enum<typeof MONEY_TYPE_VALUES>;
   table: "money";
   amount: number;
   forMonth?: string | null; // "YYYY-MM" or the stored 1st "YYYY-MM-01"
@@ -129,10 +129,10 @@ export type MoneyEntry = Base & {
   category?: string | null;
   cardCharged?: number | null;
   cashReceived?: number | null;
-  settleMode?: Enum<typeof settleMode> | null;
+  settleMode?: Enum<typeof SETTLE_MODE_VALUES> | null;
   billMonthOverride?: string | null;
   emiMonths?: number | null;
-  openingKind?: Enum<typeof openingKind> | null;
+  openingKind?: Enum<typeof OPENING_KIND_VALUES> | null;
 };
 
 export type Entry = PurchaseEntry | SaleEntry | ReturnEntry | MoneyEntry;

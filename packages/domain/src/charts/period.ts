@@ -7,8 +7,8 @@ import {
   formatMonth,
   monthDiff,
   monthOf,
-} from "@/lib/dates";
-import { parseRange } from "@/lib/journal-filter";
+} from "../dates";
+import { parseRange } from "../journal-filter";
 
 // D-064 (UIDD §4.17): the Charts page's window, kept in the URL (`?period=6m|12m|year`, or a
 // custom `?from=&to=` from the Report sheet's View on screen). Pure.

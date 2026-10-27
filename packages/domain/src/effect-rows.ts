@@ -2,11 +2,11 @@
 // forms' "What this will do", the confirm sheets and the Journal ("What it did", Delete, Reverse).
 // The rows are an entry's own `postEntry` effects (SRS §5) and a card charge's bill the cards
 // engine's `billMonthOf` (SRS §6.3), so nothing here can disagree with the books. Pure.
-import { formatMonth, monthOf } from "@/lib/dates";
-import { type BillDates, type Card, billMonthOf } from "@/lib/engine/cards";
-import type { StoredEntry } from "@/lib/engine/index";
-import { type Account, type Effect, type Entry, type Partner, postEntry } from "@/lib/engine/post";
-import { add, format } from "@/lib/money";
+import { formatMonth, monthOf } from "./dates";
+import { type BillDates, type Card, billMonthOf } from "./engine/cards";
+import type { StoredEntry } from "./engine/index";
+import { type Account, type Effect, type Entry, type Partner, postEntry } from "./engine/post";
+import { add, format } from "./money";
 
 /** id → display name: customers "Shop (Proprietor)", cards "Owner · Card" (D-022, D-024). */
 export type Names = Record<string, string>;

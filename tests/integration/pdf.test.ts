@@ -8,17 +8,17 @@ import { GET as invoiceGet } from "@/app/pdf/invoice/route";
 import { GET as receiptGet } from "@/app/pdf/receipt/route";
 import { GET as salesGet } from "@/app/pdf/sales/route";
 import { GET } from "@/app/pdf/statement/route";
-import { docLabel } from "@/components/journal/labels";
-import { addDays, dhakaToday, monthOf } from "@/lib/dates";
+import { docLabel } from "@mbl/domain/journal/labels";
+import { addDays, dhakaToday, monthOf } from "@mbl/domain/dates";
 import {
   invoicePdfHref,
   receiptPdfHref,
   salesPdfHref,
   statementPdfHref,
   withQuery,
-} from "@/lib/href";
-import { format } from "@/lib/money";
-import { invoiceLabel, receiptLabel } from "@/lib/whatsapp";
+} from "@mbl/domain/href";
+import { format } from "@mbl/domain/money";
+import { invoiceLabel, receiptLabel } from "@mbl/domain/whatsapp";
 import { customerBills } from "@/server/accounts";
 import { saveMoneyEntry } from "@/server/actions/money";
 import { reverseEntry } from "@/server/actions/reverse";

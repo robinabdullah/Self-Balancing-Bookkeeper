@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/db";
-import { addMonths, dhakaToday, monthOf } from "@/lib/dates";
-import { type BooksData, type StoredEntry, computeBooks, toPosted } from "@/lib/engine/index";
-import { type Allocation, computeClose, monthProfit } from "@/lib/engine/months";
-import type { MoneyEntry, Partner, PurchaseEntry, ReturnEntry } from "@/lib/engine/post";
-import { parse, toDecimal } from "@/lib/money";
+import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
+import { type BooksData, type StoredEntry, computeBooks, toPosted } from "@mbl/domain/engine/index";
+import { type Allocation, computeClose, monthProfit } from "@mbl/domain/engine/months";
+import type { MoneyEntry, Partner, PurchaseEntry, ReturnEntry } from "@mbl/domain/engine/post";
+import { parse, toDecimal } from "@mbl/domain/money";
 import { loadBooksData } from "@/server/books";
 import { expectBalanced } from "../engine/invariant";
 import { localSql } from "./local-db";

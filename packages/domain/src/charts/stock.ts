@@ -1,9 +1,9 @@
-import { daysBetween } from "@/lib/dates";
-import type { StockLot } from "@/lib/engine/stock";
-import { topGroups } from "@/lib/monthly-pack";
-import { add, mul } from "@/lib/money";
-import type { SalesGroup } from "@/lib/sales-report";
-import { type ModelStock, stockByModel } from "@/lib/stock-view";
+import { daysBetween } from "../dates";
+import type { StockLot } from "../engine/stock";
+import { topGroups } from "../monthly-pack";
+import { add, mul } from "../money";
+import type { SalesGroup } from "../sales-report";
+import { type ModelStock, stockByModel } from "../stock-view";
 import { TOP } from "./customers";
 
 // D-064 (UIDD §4.17; clarified 2026-10-24): the Stock tab. Stock age is today's stock (the period

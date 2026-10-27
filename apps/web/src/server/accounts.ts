@@ -1,7 +1,7 @@
 import "server-only";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
-import { parse } from "@/lib/money";
+import { parse } from "@mbl/domain/money";
 
 // UIDD §4.8 (task 4.3.1): a customer's Bills tab: each sale with its lines (model, qty, unit price
 // and the lot's unit cost), newest first. A reversal is not a bill; a reversed bill says so. The

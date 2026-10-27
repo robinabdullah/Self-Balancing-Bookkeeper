@@ -2,9 +2,9 @@ import "server-only";
 import { cache } from "react";
 import { type SQL, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { isLocked } from "@/lib/guards";
-import { parse } from "@/lib/money";
-import { rowId } from "@/lib/validation/fields";
+import { isLocked } from "@mbl/domain/guards";
+import { parse } from "@mbl/domain/money";
+import { rowId } from "@mbl/domain/validation/fields";
 import { loadCalendar } from "@/server/action";
 import type { EntryTable } from "@/server/actions/reverse";
 

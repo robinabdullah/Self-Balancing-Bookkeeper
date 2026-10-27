@@ -1,7 +1,7 @@
-import { formatDate } from "@/lib/dates";
-import { add, format, mul } from "@/lib/money";
-import { type Dues, type ItemLine, mergeLines } from "@/lib/whatsapp";
-import { toWords } from "@/lib/words";
+import { formatDate } from "@mbl/domain/dates";
+import { add, format, mul } from "@mbl/domain/money";
+import { type Dues, type ItemLine, mergeLines } from "@mbl/domain/whatsapp";
+import { toWords } from "@mbl/domain/words";
 
 // D-042 (UIDD §4.16): what a sale's invoice and a customer payment's money receipt say, as text.
 // The same figures as the Sale and Payment in messages (D-040). Their inputs have no cost or profit

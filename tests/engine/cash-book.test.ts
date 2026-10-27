@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { cashBook } from "@/lib/cash-book";
-import { addDays } from "@/lib/dates";
-import { cashBookText } from "@/lib/whatsapp";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import type { Entry, MoneyEntry } from "@/lib/engine/post";
-import { add } from "@/lib/money";
+import { cashBook } from "@mbl/domain/cash-book";
+import { addDays } from "@mbl/domain/dates";
+import { cashBookText } from "@mbl/domain/whatsapp";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import type { Entry, MoneyEntry } from "@mbl/domain/engine/post";
+import { add } from "@mbl/domain/money";
 import { expectBalanced, PARTNERS } from "./invariant";
 
 // CR-023 (D-043; UIDD §4.17): the Cash book. Synthetic ids and figures only (D-014).

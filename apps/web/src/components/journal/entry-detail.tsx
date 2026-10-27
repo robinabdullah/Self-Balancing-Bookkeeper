@@ -19,8 +19,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { auditChanges } from "@/lib/audit";
-import { formatDate, formatMonth, formatStamp } from "@/lib/dates";
+import { auditChanges } from "@mbl/domain/audit";
+import { formatDate, formatMonth, formatStamp } from "@mbl/domain/dates";
 import {
   type EffectRow,
   type Posting,
@@ -28,14 +28,14 @@ import {
   deleteRows,
   didRows,
   reversalRows,
-} from "@/lib/effect-rows";
-import type { BillDates, Card } from "@/lib/engine/cards";
-import { type Calendar, dateErrors, defaultReversal } from "@/lib/guards";
-import { entryHref, invoicePdfHref, receiptPdfHref, sendHref, withQuery } from "@/lib/href";
-import { format } from "@/lib/money";
-import { forMonthChoices } from "@/lib/month-choices";
+} from "@mbl/domain/effect-rows";
+import type { BillDates, Card } from "@mbl/domain/engine/cards";
+import { type Calendar, dateErrors, defaultReversal } from "@mbl/domain/guards";
+import { entryHref, invoicePdfHref, receiptPdfHref, sendHref, withQuery } from "@mbl/domain/href";
+import { format } from "@mbl/domain/money";
+import { forMonthChoices } from "@mbl/domain/month-choices";
 import { cn } from "@/lib/utils";
-import { SEND_TYPES } from "@/lib/whatsapp";
+import { SEND_TYPES } from "@mbl/domain/whatsapp";
 import type { Result } from "@/server/action";
 import { deleteMoneyEntry } from "@/server/actions/money";
 import { deletePurchase } from "@/server/actions/purchase";
@@ -43,7 +43,7 @@ import { deleteReturn } from "@/server/actions/return";
 import { reverseEntry } from "@/server/actions/reverse";
 import { deleteSale } from "@/server/actions/sale";
 import type { JournalEntry, JournalRow } from "@/server/journal";
-import { editPath, entryTitle, isOpening, whoOf } from "./labels";
+import { editPath, entryTitle, isOpening, whoOf } from "@mbl/domain/journal/labels";
 
 // UIDD §4.10 (task 3.8.2): an entry's detail, a bottom sheet on a phone. It opens over the page it
 // was tapped on (`<page>?entry=<id>`, D-032) and closing returns to `closeHref`. Details · History

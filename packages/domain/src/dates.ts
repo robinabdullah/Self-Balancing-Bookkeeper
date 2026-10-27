@@ -168,6 +168,7 @@ export function formatSaved(createdAt: string, date: string): string {
 
 /** D-040: "01 Oct – 31 Oct 2026"; across years "01 Dec 2025 – 31 Jan 2026". */
 export function formatRange(from: string, to: string): string {
-  const start = from.slice(0, 4) === to.slice(0, 4) ? formatDate(from).slice(0, 6) : formatDate(from);
+  const start =
+    from.slice(0, 4) === to.slice(0, 4) ? formatDate(from).slice(0, 6) : formatDate(from);
   return `${start} – ${formatDate(to)}`;
 }

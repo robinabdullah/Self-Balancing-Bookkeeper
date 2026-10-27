@@ -1,9 +1,9 @@
 import { ReportSheet } from "@/components/report/report-sheet";
 import { SendOverlay } from "@/components/send/send-overlay";
-import type { StatementKind } from "@/lib/accounts";
-import { monthOf } from "@/lib/dates";
-import { statementXlsxHref, withQuery } from "@/lib/href";
-import { rowId } from "@/lib/validation/fields";
+import type { StatementKind } from "@mbl/domain/accounts";
+import { monthOf } from "@mbl/domain/dates";
+import { statementXlsxHref, withQuery } from "@mbl/domain/href";
+import { rowId } from "@mbl/domain/validation/fields";
 import { payAccounts } from "@/server/business";
 
 // D-040: what an account page opens over itself from the URL: the Report sheet (`?report=1`) and

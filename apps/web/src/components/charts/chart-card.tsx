@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { format } from "@/lib/money";
+import { format } from "@mbl/domain/money";
 
 // D-064 (UIDD §4.17): a chart card is one link to its detail page: the title, one headline
 // figure, a muted delta with an arrow (never red or green) and a mini chart without text, hidden

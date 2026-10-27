@@ -9,11 +9,17 @@ import { InfoNote } from "@/components/info-note";
 import { EmptyState } from "@/components/states";
 import { rowClass, rowLinkClass } from "@/components/tables/row-link";
 import { Button } from "@/components/ui/button";
-import { type CardRow, type OwnerGroup, STATUS, groupByOwner, searchCards } from "@/lib/card-view";
-import type { CardStatus } from "@/lib/engine/cards";
-import { formatDate } from "@/lib/dates";
-import { viewHelp } from "@/lib/help-text";
-import { cardTitle } from "@/lib/setup";
+import {
+  type CardRow,
+  type OwnerGroup,
+  STATUS,
+  groupByOwner,
+  searchCards,
+} from "@mbl/domain/card-view";
+import type { CardStatus } from "@mbl/domain/engine/cards";
+import { formatDate } from "@mbl/domain/dates";
+import { viewHelp } from "@mbl/domain/help-text";
+import { cardTitle } from "@mbl/domain/setup";
 import { cn } from "@/lib/utils";
 
 // UIDD §4.8 (task 4.4.1): the Cards summary, mirroring Nadim's Summary. At ≥ 1024px the full

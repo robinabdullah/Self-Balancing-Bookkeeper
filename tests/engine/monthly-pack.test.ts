@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { computeBooks } from "@/lib/engine/index";
-import { add, sub } from "@/lib/money";
-import { monthlyPack, packDates, sumOf, topGroups } from "@/lib/monthly-pack";
-import { type ReturnedLine, type SoldLine, salesReport } from "@/lib/sales-report";
-import { stockColumns, stockTotal } from "@/lib/stock-movement";
+import { computeBooks } from "@mbl/domain/engine/index";
+import { add, sub } from "@mbl/domain/money";
+import { monthlyPack, packDates, sumOf, topGroups } from "@mbl/domain/monthly-pack";
+import { type ReturnedLine, type SoldLine, salesReport } from "@mbl/domain/sales-report";
+import { stockColumns, stockTotal } from "@mbl/domain/stock-movement";
 import {
   CARD,
   CUST,

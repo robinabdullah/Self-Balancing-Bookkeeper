@@ -7,7 +7,8 @@ import { XIcon } from "lucide-react";
 import { DMY_ERROR, DateInput } from "@/components/forms/date-fields";
 import { inputClass } from "@/components/forms/field";
 import { modalSheet } from "@/components/forms/form-modal";
-import { HowToPay, type PayAccount, firstPick } from "@/components/send/how-to-pay";
+import type { PayAccount } from "@mbl/domain/business";
+import { HowToPay, firstPick } from "@/components/send/how-to-pay";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Sheet,
@@ -17,9 +18,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { addMonths, clampDay, formatDate, formatMonth, formatRange, monthOf } from "@/lib/dates";
-import { statementPdfHref, withQuery } from "@/lib/href";
-import { periodOptions, periodRange } from "@/lib/journal-filter";
+import {
+  addMonths,
+  clampDay,
+  formatDate,
+  formatMonth,
+  formatRange,
+  monthOf,
+} from "@mbl/domain/dates";
+import { statementPdfHref, withQuery } from "@mbl/domain/href";
+import { periodOptions, periodRange } from "@mbl/domain/journal-filter";
 import { cn } from "@/lib/utils";
 import { SharePdfButton } from "./share-pdf";
 

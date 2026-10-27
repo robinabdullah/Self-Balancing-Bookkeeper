@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { type BooksData, type StoredEntry, computeBooks } from "@/lib/engine/index";
-import { type Allocation, computeClose, monthProfit, nextToClose } from "@/lib/engine/months";
-import type { MoneyEntry } from "@/lib/engine/post";
-import { add } from "@/lib/money";
-import { breakdownLines, closeScreen, monthList, parseRate, readLine } from "@/lib/months-view";
+import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
+import { type Allocation, computeClose, monthProfit, nextToClose } from "@mbl/domain/engine/months";
+import type { MoneyEntry } from "@mbl/domain/engine/post";
+import { add } from "@mbl/domain/money";
+import {
+  breakdownLines,
+  closeScreen,
+  monthList,
+  parseRate,
+  readLine,
+} from "@mbl/domain/months-view";
 import { PARTNERS, expectBalanced } from "./invariant";
 
 // Task 5.1 (UIDD §4.9, SRS §7): the Months list and the close screen's defaults. Synthetic ids
