@@ -35,6 +35,14 @@ async function balanceSheet(page: Page) {
 
 /** The last row of a chart's values (label → shown text): the phone list or the desktop table. */
 async function lastRow(page: Page, name: string): Promise<Record<string, string>> {
+  // The reads below don't wait: wait for the rows first, not the loading skeleton (CI run
+  // 40593721189 read the phone list before it rendered).
+  await expect(
+    page
+      .getByRole(phone(page) ? "list" : "table", { name })
+      .getByRole(phone(page) ? "listitem" : "row")
+      .last(),
+  ).toBeVisible();
   if (phone(page)) {
     const item = page.getByRole("list", { name }).getByRole("listitem").last();
     return Object.fromEntries(
