@@ -148,6 +148,15 @@ export function as(app: INestApplication, user: TestUser) {
     reverseEntry: (input: unknown) => write("put", "/reversals", input),
     closeMonth: (input: unknown) => write("put", "/month-closes", input),
     reopenMonth: (input: unknown) => write("delete", "/month-closes", input),
+    // N-3.7: card bill dates (apps/api/src/cards); business and bank accounts (apps/api/src/business).
+    saveBillDates: (input: unknown) => write("put", "/cards/bill-dates", input),
+    deleteBillDates: (input: unknown) => write("delete", "/cards/bill-dates", input),
+    saveBusinessDetails: (input: unknown) => write("put", "/business/details", input),
+    saveLogo: (input: unknown) => write("put", "/business/logo", input),
+    saveTemplate: (input: unknown) => write("put", "/business/template", input),
+    savePdfTerms: (input: unknown) => write("put", "/business/pdf-terms", input),
+    saveBankAccount: (input: unknown) => write("put", "/bank-accounts", input),
+    deleteBankAccount: (input: unknown) => write("delete", "/bank-accounts", input),
   };
 }
 

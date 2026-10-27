@@ -1,14 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
-import {
-  deleteBankAccount,
-  saveBankAccount,
-  saveBusinessDetails,
-  saveLogo,
-  savePdfTerms,
-  saveTemplate,
-} from "@/server/actions/business";
+import { LOGO_MAX } from "@mbl/domain/validation/business";
 import { loadBooks } from "@/server/books";
 import { bankCounts, getBusiness, getLogo, loadBankAccounts } from "@/server/business";
 import { loadSetup } from "@/server/setup";
@@ -18,7 +11,8 @@ import { localSql } from "./local-db";
 // CR-019 (D-039; UIDD §4.11, §4.13, §4.14): the business profile, message templates, contacts in
 // Setup and the saved bank accounts; CR-029 (D-049): the PDF terms; each saved through the action helper with an audit row. The
 // session and `revalidatePath` are stood in for as in action.test.ts. N-3.1: the Setup writes go
-// through the api (the facade), as the same partner. Synthetic data only; none of this posts
+// through the api (the facade), as the same partner; N-3.7: the business and bank-account writes
+// too. Synthetic data only; none of this posts
 // anything, so the books stay balanced. The seeded profile is restored afterwards.
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
@@ -31,6 +25,12 @@ const savePerson = (input: unknown) => api.savePerson(input);
 const saveCustomer = (input: unknown) => api.saveCustomer(input);
 const saveSupplier = (input: unknown) => api.saveSupplier(input);
 const removeRow: typeof api.removeRow = (kind, input) => api.removeRow(kind, input);
+const saveBusinessDetails = (input: unknown) => api.saveBusinessDetails(input);
+const saveLogo = (input: unknown) => api.saveLogo(input);
+const saveTemplate = (input: unknown) => api.saveTemplate(input);
+const savePdfTerms = (input: unknown) => api.savePdfTerms(input);
+const saveBankAccount = (input: unknown) => api.saveBankAccount(input);
+const deleteBankAccount = (input: unknown) => api.deleteBankAccount(input);
 let seeded: Record<string, unknown>;
 
 const PNG =
@@ -151,6 +151,17 @@ describe("CR-019 business profile", () => {
     expect((await saveLogo({ ...(await meta()), logo: "https://x/logo.png" })).status).toBe(
       "invalid",
     );
+  });
+
+  it("I-N-3.7.1 a logo of LOGO_MAX characters fits the api's body limit; one more is refused", async () => {
+    const prefix = "data:image/png;base64,";
+    const largest = prefix + "A".repeat(LOGO_MAX - prefix.length);
+    await ok(await saveLogo({ ...(await meta()), logo: largest }));
+    expect(await getLogo()).toBe(largest);
+    expect(await saveLogo({ ...(await meta()), logo: `${largest}A` })).toEqual({
+      status: "invalid",
+      errors: { logo: "The image is too large" },
+    });
   });
 
   it("I-CR-019.3 a template is merged in; the other types keep theirs", async () => {

@@ -742,10 +742,24 @@ Screenshots: a reversal, a month close, the logo upload, the card reveal.
       - `journal-actions`, `reopen-actions` and `lock-actions`;
       - charts, numbers, pdf, reports, profit-actions, money-actions and cards gain the names.
     - **Tests:** 12 files, 57 passed; E2E 13 passed.
-- [ ] **N-3.7 Card bill dates; business details, logo (1 MB), templates, PDF terms, bank accounts**
+- [x] **N-3.7 Card bill dates; business details, logo (1 MB), templates, PDF terms, bank accounts**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/cards.ts`,
     `src/server/actions/business.ts`
-  - **Tests:** [ ] `cards`, `business-actions`; `business.spec`, `card-page.spec`.
+  - **Tests:** [x] `cards`, `business-actions`; `business.spec`, `card-page.spec`.
+  - **Result (2026-10-27):**
+    - `apps/api/src/cards/bill-dates.*`: `PUT|DELETE /cards/bill-dates`.
+    - `apps/api/src/business/business-actions.service.ts` and `business.controller.ts`:
+      - `PUT /business/{details,logo,template,pdf-terms}`;
+      - `PUT|DELETE /bank-accounts`.
+      - The reads' `BusinessService` is unchanged.
+      - `git diff -w` against the Ref shows the wrapper, with `terms` and `owner` moved above the
+        class.
+    - **Logo:** `LOGO_MAX` is 200,000 characters, well under the api's 1 MB JSON limit.
+      I-N-3.7.1 (new) saves a logo of exactly `LOGO_MAX` through the api; one more character gets
+      "The image is too large" (422), not a 413.
+    - Switched: `business-actions` and `cards` (ported).
+    - **Tests:** 3 files (with card-page), 12 passed; E2E 16 passed, 1 skipped (desktop-only by
+      design).
 - [ ] **N-3.8 Card details save/remove; passkeys**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/card-secrets.ts`,
     `src/server/actions/passkeys.ts`, `src/server/password-check.ts`

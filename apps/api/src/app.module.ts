@@ -2,7 +2,11 @@ import { Module } from "@nestjs/common";
 import { Runner } from "./action/runner";
 import { AuthModule } from "./auth/auth.module";
 import { BooksService } from "./books/books.service";
+import { BusinessActionsService } from "./business/business-actions.service";
+import { BusinessController } from "./business/business.controller";
 import { BusinessService } from "./business/business.service";
+import { BillDatesController } from "./cards/bill-dates.controller";
+import { BillDatesService } from "./cards/bill-dates.service";
 import { ConfigModule } from "./config.module";
 import { DbModule } from "./db/db.module";
 import { HealthController } from "./health.controller";
@@ -36,6 +40,8 @@ import { ShellController } from "./shell/shell.controller";
     ReturnController,
     ReverseController,
     MonthsController,
+    BillDatesController,
+    BusinessController,
   ],
   providers: [
     Runner,
@@ -48,6 +54,8 @@ import { ShellController } from "./shell/shell.controller";
     ReturnService,
     ReverseService,
     MonthsService,
+    BillDatesService,
+    BusinessActionsService,
   ],
 })
 export class AppModule {}

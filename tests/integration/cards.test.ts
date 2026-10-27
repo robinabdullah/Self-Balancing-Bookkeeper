@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
-import { deleteBillDates, saveBillDates } from "@/server/actions/cards";
 import { loadBooks } from "@/server/books";
 import { CONFLICT, type Result } from "@/server/action";
 import { partnerApi } from "./api";
@@ -9,13 +8,16 @@ import { localSql } from "./local-db";
 
 // Task 4.4.2 (UIDD §4.8; SRS §6; D-020): a card bill's actual dates through the action. The
 // session and `revalidatePath` are stood in for as in action.test.ts.
-// N-3.2: money entries go through the api (the facade), as the same partner. Synthetic data only.
+// N-3.2: money entries go through the api (the facade), as the same partner; N-3.6/N-3.7: the
+// reversals and the bill dates too. Synthetic data only.
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const saveBillDates = (input: unknown) => api.saveBillDates(input);
+const deleteBillDates = (input: unknown) => api.deleteBillDates(input);
 const reverseEntry = (input: unknown) => api.reverseEntry(input);
 let userId = "";
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
