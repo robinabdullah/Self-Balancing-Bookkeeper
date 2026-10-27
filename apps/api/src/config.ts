@@ -11,6 +11,13 @@ const schema = z.object({
   SUPABASE_URL: z.url(),
   /** Only for a project on the legacy shared JWT secret (HS256). */
   SUPABASE_JWT_SECRET: z.string().min(32).optional(),
+  /** N-3.8: the password check before a fingerprint set-up signs in with it (D-046). */
+  SUPABASE_ANON_KEY: z.string().min(1),
+  /**
+   * N-3.8: saved card details (D-046), read when used: without it a save says NO_KEY, as in the
+   * reference, and the api still starts.
+   */
+  CARD_SECRET_KEY: z.string().optional(),
 });
 
 export type Config = z.infer<typeof schema>;

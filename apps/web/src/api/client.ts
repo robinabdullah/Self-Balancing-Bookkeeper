@@ -68,12 +68,13 @@ async function body(res: Response, path: string) {
   return text ? JSON.parse(text) : null;
 }
 
-/** A write's `Result` (200/409/422), without revalidating (e.g. passkey options). */
+/** A write's `Result` (200/409/422), without revalidating (e.g. passkey options; null when empty). */
 export async function call<T = Result>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await send(method, path, body);
   if (![200, 409, 422].includes(res.status))
     throw new Error(`api ${method} ${path}: ${res.status}`);
-  return res.json();
+  const text = await res.text(); // the api sends null as an empty body
+  return text ? JSON.parse(text) : (null as T);
 }
 
 /** A write through the api's runner; on ok, every page shows the change (as runAction did). */

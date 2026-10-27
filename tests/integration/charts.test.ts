@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { addDays, addMonths, clampDay, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { breakdown } from "@mbl/domain/dashboard";
@@ -25,12 +25,8 @@ import { localSql } from "./local-db";
 // report and to a closed month's stored snapshot; the Money tab's today = the Books balance sheet;
 // the Customers tab's total dues = the books and its Given sales (+ Walk-in's) = the Sales report;
 // the Stock tab's stock age = the books' stock and the Stock page.
-// The session and `revalidatePath` are stood in for as in action.test.ts. Synthetic data only
-// (D-014).
-// N-3.2: money entries go through the api (the facade), as the same partner.
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// N-3.2/N-3.6: every write goes through the api (the facade), as a signed-in partner. Synthetic
+// data only (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
@@ -97,7 +93,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql.unsafe(`truncate ${TABLES}, audit_log`);
 });
 

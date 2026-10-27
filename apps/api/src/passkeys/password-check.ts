@@ -1,10 +1,10 @@
-import "server-only";
 import { createClient } from "@supabase/supabase-js";
 
-// D-046 (SRS §11): the login password, checked again before card details are shown or a
-// fingerprint is set up. A separate client that saves no session, so the signed-in session is
-// untouched; the session it opens is signed out at once. 5 wrong tries lock it for 15 minutes per
-// user, kept in this server's memory (a restart clears it).
+// Ref: src/server/password-check.ts (N-3.8). D-046 (SRS §11): the login password, checked again
+// before a fingerprint is set up. A separate client that saves no session, so the signed-in
+// session is untouched; the session it opens is signed out at once. 5 wrong tries lock it for 15
+// minutes per user, kept in this server's memory (a restart clears it). The api's own env names
+// the project: SUPABASE_URL and SUPABASE_ANON_KEY (config.ts).
 
 export const MAX_TRIES = 5;
 export const LOCK_MINUTES = 15;
@@ -25,11 +25,9 @@ export async function checkPassword(
   if (t.until > now) return "locked";
   if (!email || !password) return fail(userId, t, now);
 
-  const client = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } },
-  );
+  const client = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
   const { error } = await client.auth.signInWithPassword({ email, password });
   if (error?.status === 429) return "locked"; // Supabase Auth's own limit
   if (error?.status === 400) return fail(userId, t, now); // invalid credentials

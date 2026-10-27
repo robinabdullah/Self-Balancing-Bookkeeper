@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { addMonths, dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
 import { type Effect, type MoneyEntry, type Partner, postEntry } from "@mbl/domain/engine/post";
@@ -9,13 +9,9 @@ import { expectBalanced, posted } from "../engine/invariant";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
-// Task 3.7 (PRD §4.2; SRS §4 money_entries, §5; UIDD §4.6; D-005, D-007, D-009). The session and
-// `revalidatePath` are stood in for as in action.test.ts. N-3.2: the money entries are saved
-// through the api (the facade), as the same partner web's reversal still runs as. Synthetic data
-// only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Task 3.7 (PRD §4.2; SRS §4 money_entries, §5; UIDD §4.6; D-005, D-007, D-009). N-3.2/N-3.6: the
+// money entries and their reversals go through the api (the facade), as a signed-in partner.
+// Synthetic data only (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
@@ -56,7 +52,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql`truncate money_entries, audit_log, month_closes`;
 });
 

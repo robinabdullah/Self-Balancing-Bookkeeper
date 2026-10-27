@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { addMonths, dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
 import { type Effect, type Partner, type PurchaseEntry, postEntry } from "@mbl/domain/engine/post";
@@ -9,12 +9,8 @@ import type { Result } from "@mbl/domain/result";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
-// Task 3.4 (PRD §4.2; SRS §4 purchases, §5, §8; UIDD §4.3; D-009). The session and `revalidatePath`
-// are stood in for as in action.test.ts. N-3.3: through the api (the facade), as Partner A.
-// Synthetic data only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Task 3.4 (PRD §4.2; SRS §4 purchases, §5, §8; UIDD §4.3; D-009). N-3.3: through the api (the
+// facade), as Partner A. Synthetic data only (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
@@ -53,7 +49,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql.unsafe(`truncate ${TABLES}, audit_log, month_closes`);
 });
 

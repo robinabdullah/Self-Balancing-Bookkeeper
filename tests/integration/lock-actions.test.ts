@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { addMonths, dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
@@ -14,12 +14,9 @@ import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // Task 5.3 (SRS §7 lock rule, §8): every create/edit/delete path rejects a closed month, and a
-// locked entry is reversed into an open month (S18). Months are closed through the action. The
-// session and `revalidatePath` are stood in for as in action.test.ts. N-3.2: money entries go
-// through the api (the facade), as the same partner. Synthetic data only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// locked entry is reversed into an open month (S18). Months are closed through the action.
+// N-3.2–N-3.6: every write goes through the api (the facade), as a signed-in partner. Synthetic
+// data only (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
@@ -31,7 +28,6 @@ const saveSale = (input: unknown) => api.saveSale(input);
 const deleteSale = (input: unknown) => api.deleteSale(input);
 const saveReturn = (input: unknown) => api.saveReturn(input);
 const deleteReturn = (input: unknown) => api.deleteReturn(input);
-let userId = "";
 const deleteMoneyEntry = (input: unknown) => api.deleteMoneyEntry(input);
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 
@@ -50,7 +46,6 @@ const CLOSED_DATE = `Date is in a closed month (${formatMonth(lastMonth)})`;
 
 beforeAll(async () => {
   api = await partnerApi(sql, "Partner A");
-  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50)`;
   await sql`insert into customers (id, proprietor_name, shop_name)
@@ -59,7 +54,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql.unsafe(`truncate ${TABLES}`);
 });
 

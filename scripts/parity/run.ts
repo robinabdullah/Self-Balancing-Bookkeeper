@@ -133,6 +133,8 @@ async function serveApi(clock: string): Promise<ChildProcess> {
       NODE_OPTIONS: `--require "${clock}"`,
       DATABASE_URL: supabase.dbUrl,
       SUPABASE_URL: supabase.url,
+      SUPABASE_ANON_KEY: supabase.anonKey,
+      CARD_SECRET_KEY: E2E_CARD_KEY,
       API_PORT: String(PARITY_API_PORT),
       NODE_ENV: "production",
     },

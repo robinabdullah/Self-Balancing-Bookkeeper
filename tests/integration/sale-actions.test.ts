@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { addDays, dhakaToday } from "@mbl/domain/dates";
 import { type Effect, type Entry, type Partner, postEntry } from "@mbl/domain/engine/post";
@@ -9,18 +9,13 @@ import type { Result } from "@mbl/domain/result";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
-// Task 3.5 (PRD §4.2; SRS §4 sales + lot picking, §5, §8; UIDD §4.4; D-004, D-006). The session and
-// `revalidatePath` are stood in for as in action.test.ts. N-3.4: through the api (the facade), as
-// Partner A. Synthetic data only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Task 3.5 (PRD §4.2; SRS §4 sales + lot picking, §5, §8; UIDD §4.4; D-004, D-006). N-3.4: through
+// the api (the facade), as Partner A. Synthetic data only (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
 const saveSale = (input: unknown) => api.saveSale(input);
 const deleteSale = (input: unknown) => api.deleteSale(input);
-let userId = "";
 
 const today = dhakaToday();
 const ids = {
@@ -39,7 +34,6 @@ const TABLES = "purchases, purchase_lines, sales, sale_lines, returns, return_li
 
 beforeAll(async () => {
   api = await partnerApi(sql, "Partner A");
-  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50)`;
   await sql`insert into customers (id, proprietor_name, shop_name)
@@ -48,7 +42,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql.unsafe(`truncate ${TABLES}, audit_log, month_closes`);
 });
 

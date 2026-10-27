@@ -7,17 +7,18 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S5 done (2026-10-27), uncommitted, waiting for the user's review: N-3.1 … N-3.5.
-  - CI on the S4 push (run 40573116578) is green.
+- **Session:** S6 done (2026-10-27), uncommitted, waiting for the user's review: N-3.6 … N-3.8.
+  Phase N-3 is complete: no `runAction` in `apps/web`.
+  - CI on the S5 push (run 40584256281) is green.
   - **Phase gate:**
     - typecheck and lint clean;
-    - unit 721; integration 153 (35 files);
-    - E2E 43 passed (setup, money, personal-spend, purchase, sale, entry-flow, return; night_owl,
-      360 + 1280);
-    - parity MATCH (202 files).
+    - unit 721; integration 155 (35 files);
+    - E2E 48 passed, 1 skipped by design (reversal, month-close, business, card-page,
+      card-secrets, settings; night_owl, 360 + 1280);
+    - parity MATCH (202 files), TTFB over 92 routes 9633 → 6389 ms (−34%).
   - At N-7.2, update the VPS's installed unit file to run `apps/web/server.js` (N-1.2), and do the
     production key-type check (moved from N-2.3).
-- **Next:** S6 (`/next-phase S6`, in a new conversation), after S5 is pushed and CI is green.
+- **Next:** S7 (`/next-phase S7`, in a new conversation), after S6 is pushed and CI is green.
 - **Blocked on:** —
 
 ## How to use
@@ -760,13 +761,59 @@ Screenshots: a reversal, a month close, the logo upload, the card reveal.
     - Switched: `business-actions` and `cards` (ported).
     - **Tests:** 3 files (with card-page), 12 passed; E2E 16 passed, 1 skipped (desktop-only by
       design).
-- [ ] **N-3.8 Card details save/remove; passkeys**
+- [x] **N-3.8 Card details save/remove; passkeys**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/card-secrets.ts`,
     `src/server/actions/passkeys.ts`, `src/server/password-check.ts`
-  - [ ] Passkeys: the setup options with the password check and lockout, register, remove, and
+  - [x] Passkeys: the setup options with the password check and lockout, register, remove, and
     the reveal options.
-  - **Tests:** [ ] `card-secrets.test` (header mocks become forwarded headers);
+  - **Tests:** [x] `card-secrets.test` (header mocks become forwarded headers);
     `card-secrets.spec`, `settings.spec`.
+  - **Result (2026-10-27):**
+    - **Routes:**
+      - `apps/api/src/card-secrets/*`: `PUT|DELETE /card-secrets`;
+      - `apps/api/src/passkeys/*`: `POST /passkeys/setup-options`, `POST /passkeys` (register),
+        `DELETE /passkeys`, and `POST /passkeys/reveal-options`.
+      - The reveal options aren't a `Result`, so that route has no `ResultStatus`. It answers 200
+        with the options, or an empty body (null) when there is no passkey. Web's `call()` now
+        reads an empty body as null, as reads already did.
+    - **Request context:** it gains `host`, `proto` and `userAgent`, from the X-Forwarded-Host,
+      X-Forwarded-Proto and User-Agent headers web already forwards.
+      - The relying party comes from them, falling back to `localhost` as the Ref does; the api's
+        own `Host` (127.0.0.1) is never used.
+      - The device name comes from the user agent; the set-up's email from the token.
+    - **Copies in the api, left in web until N-5.3** (the reveal route):
+      - `card-crypto.ts` (whole, so N-5.3 reuses it);
+      - `recentReveal`;
+      - the Ref's `server/passkeys.ts` minus `verifyAuthentication`, as an injectable `Passkeys`.
+      - Web's `server/passkeys.ts` is trimmed to `relyingParty`, `takeChallenge`,
+        `verifyAuthentication` and `loadPasskeys`. Challenges are rows, so the api's options and
+        web's check work together.
+    - **Password check:** `apps/api/src/passkeys/password-check.ts`. The 5-try lockout lives in the
+      api process's memory now (a restart clears it, as before). Web's copy is deleted.
+    - **Env:** the api's `config.ts` gains `SUPABASE_ANON_KEY` (required) and `CARD_SECRET_KEY`
+      (optional: without it a save says NO_KEY, as in the Ref).
+      - Both are passed to the api in `playwright.config.ts` and `scripts/parity/run.ts`, and
+        `.env.example` documents them.
+      - The facade sets `SUPABASE_ANON_KEY` from local Supabase.
+      - The local `.env.local` gained `SUPABASE_ANON_KEY` (the same local key).
+      - N-7.1's note is updated.
+    - **Dependencies:** the api's `package.json` gains `@simplewebauthn/server` 13.3.3 and
+      `@supabase/supabase-js` (web's versions; the lockfile only records them).
+    - **Web's `server/action.ts`:** `runAction`, `Spec`, `byId`, `isReversed`, `CONFLICT` and the
+      row types are gone. `Tx`, `Result` and `loadCalendar` stay for the reads until N-4.
+      - Grep: no `runAction` in `apps/web`, and the only `db.transaction` is `export.ts` (N-5.2).
+        The phase N-3 acceptance holds.
+    - **Tests:**
+      - `card-secrets.test` is ported. The facade's `as(app, user, headers)` forwards Host and
+        User-Agent, and the reveal route (web) still uses the `next/headers` stand-in.
+      - New: I-N-3.8.1, the passkey site is the forwarded host (`books.example.test` over https),
+        or `localhost` when nothing is forwarded.
+      - `cards.test` takes `CONFLICT` from the api's runner.
+      - **Sweep:** the `getUser`/`revalidatePath` mocks are removed from 14 files that no longer
+        call web code needing a session, with their comments and unused `userId`. They stay in
+        account-reports, auth, card-secrets, export, pdf and reports (web routes and
+        `requirePartner`).
+      - Counts: 6 files, 29 passed; the sweep's 14 files, 67 passed; E2E 21 passed.
 
 ---
 
@@ -833,7 +880,9 @@ Screenshots: the PDFs and XLSX, the 8 screens × 3 themes, the README.
   - **Tests:** [ ] `export.test`, `reports.test`; `export.spec`; cell parity.
 - [ ] **N-5.3 Card reveal and `/logo`**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/app/(app)/cards/[id]/reveal/route.ts`,
-    `logo/route.ts`, `src/lib/card-crypto.ts`
+    `logo/route.ts`, `src/server/card-crypto.ts` (already in the api since N-3.8:
+    `apps/api/src/card-secrets/card-crypto.ts`), `src/server/card-secrets.ts` (`revealCardDetails`),
+    `src/server/passkeys.ts` (`verifyAuthentication`)
   - [ ] The reveal needs a passkey and sets the 30 s `card_reveal` cookie (`Path=/cards`).
   - **Tests:** [ ] `card-secrets.spec` (CDP authenticator on localhost); `curl -I /logo` headers
     identical.
@@ -879,6 +928,8 @@ Screenshots: the rehearsal log; the production smoke test.
     - Then drop the unused path from `apps/api/src/auth/jwt.guard.ts`.
   - [ ] Node 24 via nvm; clone this repo to the VPS (deploy key); web and api `.env` (mode 600)
     from the old `.env.local`; the units; deploy.
+    - The api's `.env` also needs `SUPABASE_ANON_KEY` (the old `NEXT_PUBLIC_SUPABASE_ANON_KEY`) and
+      `CARD_SECRET_KEY` (the same key, or saved card details can't be read; N-3.8).
   - [ ] Smoke test with both partners: login, save/delete, PDF, reveal.
   - [ ] One week of watching, with the old clone kept for rollback.
   - **Tests:** [ ] M-N-7.2.x smoke passes; logs clean for 24 h. Then the reference becomes an

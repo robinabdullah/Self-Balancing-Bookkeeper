@@ -6,6 +6,7 @@ import type postgres from "postgres";
 import request from "supertest";
 import type { Result } from "@mbl/domain/result";
 import type { SetupKind } from "@mbl/domain/setup";
+import type { RevealOptions, SetupOptions } from "../../apps/api/src/passkeys/passkeys.service";
 import type { Me } from "../../apps/api/src/shell/shell.controller";
 import type { Jsonify } from "../../apps/web/src/api/jsonify";
 import { setupApp } from "../../apps/api/src/app";
@@ -27,6 +28,8 @@ export async function startApi(
   controllers: Type[] = [],
   providers: Provider[] = [],
 ): Promise<INestApplication> {
+  // N-3.8: the password check reads it from the env, as main.ts's api does.
+  process.env.SUPABASE_ANON_KEY ??= localSupabase().anonKey;
   const cfg = { ...loadConfig(), ...config };
   const ref = await Test.createTestingModule({ imports: [AppModule], controllers, providers })
     .overrideProvider(CONFIG)
@@ -95,11 +98,12 @@ export async function deleteUsers(sql: postgres.Sql) {
 
 /**
  * The old server-function names, called as `user` through the api with a JSON round trip, as
- * web's thin proxies call it (N-2.4). Later steps add theirs.
+ * web's thin proxies call it (N-2.4). Later steps add theirs. `headers` are what web forwards
+ * from the browser (N-3.8: X-Forwarded-Host and User-Agent for passkeys).
  */
-export function as(app: INestApplication, user: TestUser) {
+export function as(app: INestApplication, user: TestUser, headers: Record<string, string> = {}) {
   const http = () => request(app.getHttpServer());
-  const auth = { Authorization: `Bearer ${user.token}` };
+  const auth = { ...headers, Authorization: `Bearer ${user.token}` };
   /** A read's body (null when the api sent null); throws on any other status than 200. */
   const read = async <T>(path: string): Promise<T> => {
     const res = await http().get(path).set(auth);
@@ -157,6 +161,19 @@ export function as(app: INestApplication, user: TestUser) {
     savePdfTerms: (input: unknown) => write("put", "/business/pdf-terms", input),
     saveBankAccount: (input: unknown) => write("put", "/bank-accounts", input),
     deleteBankAccount: (input: unknown) => write("delete", "/bank-accounts", input),
+    // N-3.8: card details (apps/api/src/card-secrets) and passkeys (apps/api/src/passkeys).
+    saveCardDetails: (input: unknown) => write("put", "/card-secrets", input),
+    removeCardDetails: (input: unknown) => write("delete", "/card-secrets", input),
+    fingerprintSetupOptions: async (input: unknown) =>
+      (await write("post", "/passkeys/setup-options", input)) as unknown as SetupOptions,
+    registerFingerprint: (response: unknown) => write("post", "/passkeys", response),
+    removeFingerprint: (input: unknown) => write("delete", "/passkeys", input),
+    /** Options or null (an empty body), as web's `call()` reads them. */
+    revealOptions: async () => {
+      const res = await http().post("/passkeys/reveal-options").set(auth);
+      if (res.status !== 200) throw new Error(`POST /passkeys/reveal-options: ${res.status}`);
+      return (res.text ? JSON.parse(res.text) : null) as RevealOptions;
+    },
   };
 }
 

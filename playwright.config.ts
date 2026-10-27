@@ -103,6 +103,9 @@ export default defineConfig({
       env: {
         DATABASE_URL: supabase.dbUrl,
         SUPABASE_URL: supabase.url,
+        // N-3.8: the password check before a fingerprint set-up; saved card details (D-046).
+        SUPABASE_ANON_KEY: supabase.anonKey,
+        CARD_SECRET_KEY: E2E_CARD_KEY,
         API_PORT: String(API_PORT),
         // Production mode: no Swagger.
         NODE_ENV: "production",

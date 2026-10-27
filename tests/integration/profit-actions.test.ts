@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
@@ -10,12 +10,9 @@ import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // Task 5.5 (PRD §4.2, SRS §5, §7): profit paid / reinvested moves a person's profit owed, which the
-// money form shows; an amount above it is only a warning, so the action saves it. The session and
-// `revalidatePath` are stood in for as in action.test.ts. N-3.2: money entries go through the api
-// (the facade), as the same partner. Synthetic data only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// money form shows; an amount above it is only a warning, so the action saves it. N-3.2/N-3.6:
+// every write goes through the api (the facade), as a signed-in partner. Synthetic data only
+// (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
@@ -56,7 +53,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql`truncate money_entries, allocations, month_closes, audit_log`;
   // M1: opening cash 500,000 = Arif's capital; a cashback of 100,000 is M1's profit.
   await sql`insert into money_entries (type, date, amount, opening_kind, person_id, created_by)

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { addMonths, dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
@@ -12,12 +12,8 @@ import { localSql } from "./local-db";
 
 // Task 5.4 (PRD §4.4, SRS §7 re-open): only the latest closed month re-opens; its allocations and
 // `month_closes` row go (kept in the `reopen` audit row) and the month unlocks. The confirm lists
-// the profit paid / reinvested entries made since the close. The session and `revalidatePath` are
-// stood in for as in action.test.ts. N-3.2: money entries go through the api (the facade), as the
-// same partner. Synthetic data only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// the profit paid / reinvested entries made since the close. N-3.2/N-3.6: every write goes through
+// the api (the facade), as a signed-in partner. Synthetic data only (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
@@ -68,7 +64,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql`truncate money_entries, allocations, month_closes, audit_log`;
   await sql`insert into money_entries (type, date, amount, opening_kind, person_id, created_by)
     values ('opening', ${`${M1}-01`}, '500000.00', 'cash', null, ${userId}),

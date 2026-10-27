@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { auditChanges } from "@mbl/domain/audit";
 import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
@@ -13,12 +13,8 @@ import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // Task 3.8 + CR-007 (PRD §4.5; SRS §8; UIDD §4.10; D-003, D-008, D-026): Journal delete, reverse
-// and edit through the actions. The session and `revalidatePath` are stood in for as in
-// action.test.ts. N-3.2: money entries go through the api (the facade), as the same partner.
+// and edit. N-3.2–N-3.6: every write goes through the api (the facade), as a signed-in partner.
 // Synthetic data only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
@@ -60,7 +56,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql.unsafe(`truncate ${TABLES}, audit_log, month_closes`);
 });
 

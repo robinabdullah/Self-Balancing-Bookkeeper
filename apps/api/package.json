@@ -17,6 +17,8 @@
     "@nestjs/core": "^11.2.8",
     "@nestjs/platform-express": "^11.2.8",
     "@nestjs/swagger": "^11.4.7",
+    "@simplewebauthn/server": "13.3.3",
+    "@supabase/supabase-js": "^2.117.2",
     "express": "^5.2.1",
     "jose": "^6.2.12",
     "reflect-metadata": "^0.2.2",

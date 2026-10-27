@@ -10,6 +10,10 @@ export type RequestContext = {
   /** From the verified token (jwt.guard.ts); null on a @Public route. */
   userId: string | null;
   email: string | null;
+  /** N-3.8: the browser's host, protocol and user agent, as web forwards them (passkeys, audit). */
+  host: string | null;
+  proto: string | null;
+  userAgent: string | null;
   /** This request's own memo (memo.ts). */
   memo: Map<string, Promise<unknown>>;
 };
@@ -32,6 +36,9 @@ export function withContext(req: Request, _res: Response, next: NextFunction) {
       renderId: UUID.test(renderId) ? renderId : null,
       userId: null,
       email: null,
+      host: req.header("x-forwarded-host") ?? null,
+      proto: req.header("x-forwarded-proto") ?? null,
+      userAgent: req.header("user-agent") ?? null,
       memo: new Map(),
     },
     next,

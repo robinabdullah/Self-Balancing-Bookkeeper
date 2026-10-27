@@ -5,6 +5,8 @@ import { BooksService } from "./books/books.service";
 import { BusinessActionsService } from "./business/business-actions.service";
 import { BusinessController } from "./business/business.controller";
 import { BusinessService } from "./business/business.service";
+import { CardSecretsController } from "./card-secrets/card-secrets.controller";
+import { CardSecretsService } from "./card-secrets/card-secrets.service";
 import { BillDatesController } from "./cards/bill-dates.controller";
 import { BillDatesService } from "./cards/bill-dates.service";
 import { ConfigModule } from "./config.module";
@@ -14,6 +16,9 @@ import { MoneyController } from "./money/money.controller";
 import { MoneyService } from "./money/money.service";
 import { MonthsController } from "./months/months.controller";
 import { MonthsService } from "./months/months.service";
+import { Passkeys } from "./passkeys/passkeys";
+import { PasskeysController } from "./passkeys/passkeys.controller";
+import { PasskeysService } from "./passkeys/passkeys.service";
 import { PurchaseController } from "./purchase/purchase.controller";
 import { PurchaseService } from "./purchase/purchase.service";
 import { ReturnController } from "./return/return.controller";
@@ -42,6 +47,8 @@ import { ShellController } from "./shell/shell.controller";
     MonthsController,
     BillDatesController,
     BusinessController,
+    CardSecretsController,
+    PasskeysController,
   ],
   providers: [
     Runner,
@@ -56,6 +63,9 @@ import { ShellController } from "./shell/shell.controller";
     MonthsService,
     BillDatesService,
     BusinessActionsService,
+    CardSecretsService,
+    Passkeys,
+    PasskeysService,
   ],
 })
 export class AppModule {}

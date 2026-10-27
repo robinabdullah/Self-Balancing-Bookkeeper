@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { billToPay, cardDetail, visibleBills } from "@mbl/domain/card-view";
 import { cardAlerts } from "@mbl/domain/dashboard";
@@ -13,17 +13,12 @@ import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // I-CR-013.4 / I-CR-013.5 (D-032): pre-fill against real Setup rows, and an EMI card purchase saved
-// through the action as the card page and Home read it. The session and `revalidatePath` are stood
-// in for as in action.test.ts. N-3.3: the purchase goes through the api (the facade), as the same
-// partner. Synthetic data only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// as the card page and Home read it. N-3.3: the purchase goes through the api (the facade), as a
+// signed-in partner. Synthetic data only (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
 const savePurchase = (input: unknown) => api.savePurchase(input);
-let userId = "";
 const ids = {
   person: randomUUID(),
   card: randomUUID(),
@@ -35,7 +30,6 @@ const ids = {
 
 beforeAll(async () => {
   api = await partnerApi(sql, "Partner A");
-  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct)
     values (${ids.person}, 'Partner A', 'partner', 100)`;
   await sql`insert into cards (id, name, owner_person_id, statement_day, due_day, active) values
@@ -47,9 +41,7 @@ beforeAll(async () => {
   await sql`insert into models (id, name) values (${ids.model}, 'Model E')`;
 });
 
-beforeEach(() => {
-  getUser.mockResolvedValue({ id: userId });
-});
+beforeEach(() => {});
 
 afterAll(async () => {
   await sql`truncate purchases, purchase_lines, money_entries, audit_log cascade`;

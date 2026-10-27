@@ -1,25 +1,21 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { loadBooks } from "@/server/books";
-import { CONFLICT, type Result } from "@/server/action";
+import type { Result } from "@mbl/domain/result";
+import { CONFLICT } from "../../apps/api/src/action/runner";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
-// Task 4.4.2 (UIDD §4.8; SRS §6; D-020): a card bill's actual dates through the action. The
-// session and `revalidatePath` are stood in for as in action.test.ts.
-// N-3.2: money entries go through the api (the facade), as the same partner; N-3.6/N-3.7: the
-// reversals and the bill dates too. Synthetic data only.
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Task 4.4.2 (UIDD §4.8; SRS §6; D-020): a card bill's actual dates. N-3.2/N-3.6/N-3.7: the money
+// entries, reversals and bill dates go through the api (the facade), as a signed-in partner.
+// Synthetic data only.
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
 const saveBillDates = (input: unknown) => api.saveBillDates(input);
 const deleteBillDates = (input: unknown) => api.deleteBillDates(input);
 const reverseEntry = (input: unknown) => api.reverseEntry(input);
-let userId = "";
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 const deleteMoneyEntry = (input: unknown) => api.deleteMoneyEntry(input);
 const ids = { person: randomUUID(), card: randomUUID(), fee: randomUUID() };
@@ -27,7 +23,6 @@ const asOf = "2026-10-15";
 
 beforeAll(async () => {
   api = await partnerApi(sql, "Partner A");
-  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct)
     values (${ids.person}, 'Partner A', 'partner', 100)`;
   // EBL-style days: statement 5th, due 20th the same month.
@@ -38,9 +33,7 @@ beforeAll(async () => {
     values (${ids.fee}, '2026-09-10', 'card_fee', 1000.00, ${ids.card}, 'card fee/interest', '2026-09-01')`;
 });
 
-beforeEach(() => {
-  getUser.mockResolvedValue({ id: userId });
-});
+beforeEach(() => {});
 
 afterAll(async () => {
   await sql`truncate money_entries, card_bill_dates, cards, audit_log cascade`;

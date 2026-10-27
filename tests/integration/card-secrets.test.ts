@@ -13,17 +13,14 @@ import {
   REVEAL_FIRST,
   USE_FINGERPRINT,
 } from "@mbl/domain/card-secrets";
-import { removeCardDetails, saveCardDetails } from "@/server/actions/card-secrets";
-import {
-  fingerprintSetupOptions,
-  registerFingerprint,
-  removeFingerprint,
-  revealOptions,
-} from "@/server/actions/passkeys";
 import { loadBooks } from "@/server/books";
 import { signRevealWindow } from "@/server/card-crypto";
 import { loadCardSecrets } from "@/server/card-secrets";
-import { LOCKED, WRONG_PASSWORD, resetPasswordTries } from "@/server/password-check";
+import {
+  LOCKED,
+  WRONG_PASSWORD,
+  resetPasswordTries,
+} from "../../apps/api/src/passkeys/password-check";
 import { localSupabase } from "../e2e/local-supabase";
 import { type TestUser, as, startApi } from "./api";
 import { localSql } from "./local-db";
@@ -34,7 +31,9 @@ import { localSql } from "./local-db";
 // gates only fingerprint set-up. No audit row holds a value. The session, `revalidatePath`, the
 // request headers and the WebAuthn signature checks are stood in for; the challenge handling
 // around them is real. N-3.1: deleting a card goes through the api (the facade), signed in as the
-// same partner. Synthetic test numbers only.
+// same partner; N-3.8: the card details and passkey actions too, with the browser's host and user
+// agent forwarded as web sends them (the reveal route is still web's until N-5.3). Synthetic test
+// numbers only.
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -61,8 +60,19 @@ let cardA = "";
 let cardB = "";
 let app: INestApplication;
 let signedIn: TestUser;
-const removeRow: ReturnType<typeof as>["removeRow"] = (kind, input) =>
-  as(app, signedIn).removeRow(kind, input);
+/** What web forwards from the browser (the reveal route's `next/headers` stand-in above). */
+const FORWARDED = {
+  "X-Forwarded-Host": "localhost:3000",
+  "User-Agent": "Mozilla/5.0 (Linux; Android 14)",
+};
+const api = () => as(app, signedIn, FORWARDED);
+const removeRow: ReturnType<typeof as>["removeRow"] = (kind, input) => api().removeRow(kind, input);
+const saveCardDetails = (input: unknown) => api().saveCardDetails(input);
+const removeCardDetails = (input: unknown) => api().removeCardDetails(input);
+const fingerprintSetupOptions = (input: unknown) => api().fingerprintSetupOptions(input);
+const registerFingerprint = (response: unknown) => api().registerFingerprint(response);
+const removeFingerprint = (input: unknown) => api().removeFingerprint(input);
+const revealOptions = () => api().revealOptions();
 
 async function newUser(name: string, password = randomUUID()) {
   const email = `cards-${randomUUID()}@test.local`;
@@ -78,8 +88,6 @@ async function newUser(name: string, password = randomUUID()) {
 
 beforeAll(async () => {
   process.env.CARD_SECRET_KEY = randomBytes(32).toString("base64");
-  process.env.NEXT_PUBLIC_SUPABASE_URL = url;
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = anonKey;
   user = await newUser("Partner A", PASSWORD);
   other = (await newUser("Partner B")).id;
   app = await startApi();
@@ -473,6 +481,17 @@ describe("CR-026 card details", () => {
       errors: { password: LOCKED },
     });
     expect(await sql`select id from passkey_challenges`).toHaveLength(0);
+  });
+
+  it("I-N-3.8.1 the passkey site is the browser's host that web forwards, never the api's own", async () => {
+    await addPasskey();
+    const behindNginx = as(app, signedIn, {
+      "X-Forwarded-Host": "books.example.test",
+      "X-Forwarded-Proto": "https",
+    });
+    expect((await behindNginx.revealOptions())?.rpId).toBe("books.example.test");
+    // Nothing forwarded (the api is called on 127.0.0.1): the reference's own default.
+    expect((await as(app, signedIn).revealOptions())?.rpId).toBe("localhost");
   });
 
   it("I-CR-026.4 deleting a card removes its details; its audit row holds no value", async () => {

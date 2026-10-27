@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { LOGO_MAX } from "@mbl/domain/validation/business";
 import { loadBooks } from "@/server/books";
@@ -9,18 +9,13 @@ import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // CR-019 (D-039; UIDD §4.11, §4.13, §4.14): the business profile, message templates, contacts in
-// Setup and the saved bank accounts; CR-029 (D-049): the PDF terms; each saved through the action helper with an audit row. The
-// session and `revalidatePath` are stood in for as in action.test.ts. N-3.1: the Setup writes go
-// through the api (the facade), as the same partner; N-3.7: the business and bank-account writes
-// too. Synthetic data only; none of this posts
-// anything, so the books stay balanced. The seeded profile is restored afterwards.
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Setup and the saved bank accounts; CR-029 (D-049): the PDF terms; each saved with an audit row.
+// N-3.1/N-3.7: every write goes through the api (the facade), as a signed-in partner. Synthetic
+// data only; none of this posts anything, so the books stay balanced. The seeded profile is
+// restored afterwards.
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
-let userId = "";
 const savePerson = (input: unknown) => api.savePerson(input);
 const saveCustomer = (input: unknown) => api.saveCustomer(input);
 const saveSupplier = (input: unknown) => api.saveSupplier(input);
@@ -38,12 +33,10 @@ const PNG =
 
 beforeAll(async () => {
   api = await partnerApi(sql);
-  userId = api.user.userId;
   [seeded] = await sql`select * from business_profile`;
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql`truncate bank_accounts, suppliers, audit_log cascade`;
   await sql`delete from people`;
   await sql`delete from customers where not is_system`;

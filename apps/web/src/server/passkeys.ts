@@ -1,23 +1,19 @@
 import "server-only";
-import { and, asc, eq, gt, lte, or } from "drizzle-orm";
+import { and, asc, eq, gt } from "drizzle-orm";
 import { headers } from "next/headers";
 import {
   type AuthenticationResponseJSON,
   type AuthenticatorTransportFuture,
-  type RegistrationResponseJSON,
-  generateAuthenticationOptions,
-  generateRegistrationOptions,
   verifyAuthenticationResponse,
-  verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import { db } from "@mbl/db";
 import { passkeyChallenges, passkeys } from "@mbl/db/schema";
 
 // D-046 (SRS §11): fingerprint unlock (passkeys, WebAuthn). Every challenge is one-time: saved for
 // 2 minutes, for this user, and deleted when it is answered. The site (rpID) and origin are the
-// public host behind nginx (X-Forwarded-Host/-Proto, as in proxy.ts; D-031).
-
-const CHALLENGE_MS = 2 * 60_000;
+// public host behind nginx (X-Forwarded-Host/-Proto, as in proxy.ts; D-031). N-3.8: set-up and the
+// reveal's options moved to the api (apps/api/src/passkeys); the reveal's check stays here with
+// the reveal route until N-5.3, and the device list until its page's read moves (N-4.6).
 
 /** The passkey's site and origin, from the request. */
 export async function relyingParty() {
@@ -27,18 +23,6 @@ export async function relyingParty() {
   const local = hostname === "localhost" || hostname === "127.0.0.1";
   const proto = h.get("x-forwarded-proto") ?? (local ? "http" : "https");
   return { rpID: hostname, origin: `${proto}://${host}` };
-}
-
-async function saveChallenge(userId: string, challenge: string) {
-  await db
-    .delete(passkeyChallenges)
-    .where(or(eq(passkeyChallenges.userId, userId), lte(passkeyChallenges.expiresAt, new Date())));
-  await db.insert(passkeyChallenges).values({
-    userId,
-    challenge,
-    expiresAt: new Date(Date.now() + CHALLENGE_MS),
-    createdBy: userId,
-  });
 }
 
 /** Deletes the challenge; true only if it was this user's and still fresh. */
@@ -86,76 +70,6 @@ export async function loadPasskeys(userId: string) {
     .where(eq(passkeys.userId, userId))
     .orderBy(asc(passkeys.createdAt));
   return rows;
-}
-
-export async function registrationOptions(
-  user: { id: string; email?: string },
-  displayName: string,
-) {
-  const { rpID } = await relyingParty();
-  const existing = await loadPasskeys(user.id);
-  const options = await generateRegistrationOptions({
-    rpName: "Mobile Business Lite",
-    rpID,
-    userID: new TextEncoder().encode(user.id),
-    userName: user.email ?? displayName,
-    userDisplayName: displayName,
-    attestationType: "none",
-    excludeCredentials: existing.map((p) => ({
-      id: p.credentialId,
-      transports: transportsOf(p.transports),
-    })),
-    authenticatorSelection: {
-      authenticatorAttachment: "platform",
-      residentKey: "preferred",
-      userVerification: "required",
-    },
-  });
-  await saveChallenge(user.id, options.challenge);
-  return options;
-}
-
-/** The new credential, or null when the challenge or the signature isn't valid. */
-export async function verifyRegistration(userId: string, response: RegistrationResponseJSON) {
-  const challenge = signedChallenge(response);
-  if (!challenge || !(await takeChallenge(userId, challenge))) return null;
-  const { rpID, origin } = await relyingParty();
-  try {
-    const { verified, registrationInfo } = await verifyRegistrationResponse({
-      response,
-      expectedChallenge: challenge,
-      expectedOrigin: origin,
-      expectedRPID: rpID,
-      requireUserVerification: true,
-    });
-    if (!verified || !registrationInfo) return null;
-    const { credential } = registrationInfo;
-    return {
-      credentialId: credential.id,
-      publicKey: Buffer.from(credential.publicKey).toString("base64url"),
-      counter: credential.counter,
-      transports: credential.transports ?? null,
-    };
-  } catch {
-    return null;
-  }
-}
-
-/** Options for a reveal, or null when this user has no passkey. */
-export async function authenticationOptions(userId: string) {
-  const mine = await loadPasskeys(userId);
-  if (!mine.length) return null;
-  const { rpID } = await relyingParty();
-  const options = await generateAuthenticationOptions({
-    rpID,
-    allowCredentials: mine.map((p) => ({
-      id: p.credentialId,
-      transports: transportsOf(p.transports),
-    })),
-    userVerification: "required",
-  });
-  await saveChallenge(userId, options.challenge);
-  return options;
 }
 
 /** True when the fingerprint answered this user's fresh challenge with one of their passkeys. */

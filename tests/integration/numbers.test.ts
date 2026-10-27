@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { dhakaToday } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
@@ -11,19 +11,15 @@ import { localSql } from "./local-db";
 
 // CR-016.2 (D-036): invoice and receipt numbers, given at save to new sales and customer payments
 // (including "Received now"), never to a reversal; an edit keeps its number; Undo leaves a gap and
-// a number is never reused. The session and `revalidatePath` are stood in for as in action.test.ts.
-// N-3.2: money entries go through the api (the facade), as the same partner. Synthetic data only.
-// The sequences carry on across test files, so the numbers are checked relative to each other.
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// a number is never reused. N-3.2–N-3.6: every write goes through the api (the facade), as a
+// signed-in partner. Synthetic data only. The sequences carry on across test files, so the numbers
+// are checked relative to each other.
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
 const reverseEntry = (input: unknown) => api.reverseEntry(input);
 const saveSale = (input: unknown) => api.saveSale(input);
 const deleteSale = (input: unknown) => api.deleteSale(input);
-let userId = "";
 const deleteMoneyEntry = (input: unknown) => api.deleteMoneyEntry(input);
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 
@@ -34,7 +30,6 @@ const TABLES =
 
 beforeAll(async () => {
   api = await partnerApi(sql, "Partner A");
-  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct)
     values (${ids.arif}, 'Arif', 'partner', 100)`;
   await sql`insert into customers (id, proprietor_name) values (${ids.customer}, 'Jamal')`;
@@ -42,7 +37,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql.unsafe(`truncate ${TABLES}`);
   // 20 phones in stock, bought today for cash.
   const purchaseId = randomUUID();
