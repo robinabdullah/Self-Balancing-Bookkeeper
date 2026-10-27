@@ -11,7 +11,6 @@ import { monthProfit } from "@mbl/domain/engine/months";
 import { salesPdfHref, salesXlsxHref, withQuery } from "@mbl/domain/href";
 import { add, format, toDecimal } from "@mbl/domain/money";
 import { receiptLabel } from "@mbl/domain/whatsapp";
-import { saveReturn } from "@/server/actions/return";
 import { reverseEntry } from "@/server/actions/reverse";
 import { loadBooks } from "@/server/books";
 import { loadStatementExtras } from "@/server/account-reports";
@@ -31,6 +30,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
 const saveSale = (input: unknown) => api.saveSale(input);
+const saveReturn = (input: unknown) => api.saveReturn(input);
 let userId = "";
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 

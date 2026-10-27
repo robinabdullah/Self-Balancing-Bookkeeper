@@ -7,22 +7,17 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S4 done (2026-10-27), uncommitted, waiting for the user's review: N-2.1 … N-2.5.
-  - **CI on the S3 push (run 40555560370) failed in `checks`:**
-    - `parity-seed.test.ts` saw no August close. The seed closes August as `partner@test.local`,
-      and only E2E's global setup created that user, which the `checks` job never runs.
-    - Fix (its own `fix(...)` commit): `ensurePartner()` in `tests/e2e/global-setup.ts`, called
-      by `seedParity`.
-    - Reproduced locally by deleting the user (fails as on CI), and green with the fix.
+- **Session:** S5 done (2026-10-27), uncommitted, waiting for the user's review: N-3.1 … N-3.5.
+  - CI on the S4 push (run 40573116578) is green.
   - **Phase gate:**
     - typecheck and lint clean;
-    - unit 721; integration 153;
-    - E2E 52 passed, 7 skipped (smoke, home, stock, pdf, export, settings, shell, ui-dark;
-      night_owl);
+    - unit 721; integration 153 (35 files);
+    - E2E 43 passed (setup, money, personal-spend, purchase, sale, entry-flow, return; night_owl,
+      360 + 1280);
     - parity MATCH (202 files).
   - At N-7.2, update the VPS's installed unit file to run `apps/web/server.js` (N-1.2), and do the
     production key-type check (moved from N-2.3).
-- **Next:** S5 (`/next-phase S5`, in a new conversation), after S4 is pushed and CI is green.
+- **Next:** S6 (`/next-phase S6`, in a new conversation), after S5 is pushed and CI is green.
 - **Blocked on:** —
 
 ## How to use
@@ -713,9 +708,18 @@ Screenshots: each form saving, the duplicate warning, the Undo toast.
     - Switched: `sale-actions` (ported); account-reports, charts, journal-actions, lock-actions,
       messages, numbers, pdf and reports gain the names.
     - **Tests:** 9 files, 37 passed; E2E 11 passed.
-- [ ] **N-3.5 Returns**
+- [x] **N-3.5 Returns**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/return.ts`
-  - **Tests:** [ ] `return-actions.test`; `return.spec`.
+  - **Tests:** [x] `return-actions.test`; `return.spec`.
+  - **Result (2026-10-27):**
+    - `apps/api/src/return/*`; `PUT|DELETE /returns`.
+    - Switched: `return-actions` (ported); account-reports, journal-actions, lock-actions, messages
+      and reports gain the names.
+    - **Tests:** 6 files, 22 passed; E2E 5 passed.
+    - **Gate:** see Now. Parity TTFB over 92 routes: 9633 → 7726 ms (−20%); S5 changed no reads,
+      so the gap to S4's −35% is run-to-run noise.
+    - Screenshots (360 + 1280, night_owl): each form saving with the Undo toast, the duplicate
+      warning, a Setup save.
 
 ### Session S6
 Screenshots: a reversal, a month close, the logo upload, the card reveal.

@@ -1,24 +1,25 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
 import { addDays, dhakaToday, formatDate } from "@mbl/domain/dates";
 import { type Effect, type Entry, type Partner, postEntry } from "@mbl/domain/engine/post";
 import { parse } from "@mbl/domain/money";
-import { deleteReturn, saveReturn } from "@/server/actions/return";
 import { expectBalanced, posted } from "../engine/invariant";
-import { localSupabase } from "../e2e/local-supabase";
+import type { Result } from "@mbl/domain/result";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
-// Task 3.6 (PRD §4.2; SRS §4 returns, §5, §8; UIDD §4.5; D-011). The session and
-// `revalidatePath` are stood in for as in action.test.ts. Synthetic data only (D-014).
+// Task 3.6 (PRD §4.2; SRS §4 returns, §5, §8; UIDD §4.5; D-011). The session and `revalidatePath`
+// are stood in for as in action.test.ts. N-3.5: through the api (the facade), as Partner A.
+// Synthetic data only (D-014).
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
+const saveReturn = (input: unknown) => api.saveReturn(input);
+const deleteReturn = (input: unknown) => api.deleteReturn(input);
 let userId = "";
 
 const today = dhakaToday();
@@ -39,14 +40,8 @@ const partners: Partner[] = [
 const TABLES = "purchases, purchase_lines, sales, sale_lines, returns, return_lines, money_entries";
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `return-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql, "Partner A");
+  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50)`;
   await sql`insert into customers (id, proprietor_name, shop_name) values
@@ -65,8 +60,7 @@ afterAll(async () => {
   await sql`delete from people`;
   await sql`delete from customers where not is_system`;
   await sql`delete from suppliers`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });
@@ -127,7 +121,7 @@ const purchaseReturn = (lotId: string, over: object = {}) => ({
   ...over,
 });
 
-async function saved(result: Awaited<ReturnType<typeof saveReturn>>) {
+async function saved(result: Result) {
   if (result.status !== "ok") throw new Error(JSON.stringify(result));
   return result;
 }

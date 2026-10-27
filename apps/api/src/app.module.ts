@@ -10,6 +10,8 @@ import { MoneyController } from "./money/money.controller";
 import { MoneyService } from "./money/money.service";
 import { PurchaseController } from "./purchase/purchase.controller";
 import { PurchaseService } from "./purchase/purchase.service";
+import { ReturnController } from "./return/return.controller";
+import { ReturnService } from "./return/return.service";
 import { SaleController } from "./sale/sale.controller";
 import { SaleService } from "./sale/sale.service";
 import { SettingsController } from "./settings/settings.controller";
@@ -27,6 +29,7 @@ import { ShellController } from "./shell/shell.controller";
     MoneyController,
     PurchaseController,
     SaleController,
+    ReturnController,
   ],
   providers: [
     Runner,
@@ -36,6 +39,7 @@ import { ShellController } from "./shell/shell.controller";
     MoneyService,
     PurchaseService,
     SaleService,
+    ReturnService,
   ],
 })
 export class AppModule {}
