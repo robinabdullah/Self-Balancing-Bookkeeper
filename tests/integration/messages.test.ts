@@ -1,29 +1,28 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
 import { addDays, addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { format } from "@mbl/domain/money";
 import { invoiceLabel, receiptLabel } from "@mbl/domain/whatsapp";
-import { saveMoneyEntry } from "@/server/actions/money";
 import { saveReturn } from "@/server/actions/return";
 import { saveSale } from "@/server/actions/sale";
 import { loadBooks } from "@/server/books";
 import { loadDraft } from "@/server/messages";
 import { expectBalanced } from "../engine/invariant";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // CR-020 (D-040): message drafts from real saves, tied out to the books. The session and
-// `revalidatePath` are stood in for as in action.test.ts. Synthetic data only (D-014).
+// `revalidatePath` are stood in for as in action.test.ts. N-3.2: money entries go through the api
+// (the facade), as the same partner. Synthetic data only (D-014).
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
 let userId = "";
+const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 let walkIn = "";
 
 const today = dhakaToday();
@@ -38,14 +37,8 @@ const ids = {
 const TABLES = "purchases, purchase_lines, sales, sale_lines, returns, return_lines, money_entries";
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `messages-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql, "Partner A");
+  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct, whatsapp) values
     (${ids.arif}, 'Arif', 'partner', 50, '+8801711000001'),
     (${ids.sumon}, 'Sumon', 'partner', 50, null)`;
@@ -65,8 +58,7 @@ afterAll(async () => {
   await sql.unsafe(`truncate ${TABLES}, audit_log, month_closes, models, suppliers cascade`);
   await sql`delete from people`;
   await sql`delete from customers where not is_system`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });

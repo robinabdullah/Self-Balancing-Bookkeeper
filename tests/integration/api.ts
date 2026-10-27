@@ -132,6 +132,9 @@ export function as(app: INestApplication, user: TestUser) {
     saveModel: (input: unknown) => write("put", "/setup/model", input),
     setActive: (kind: SetupKind, input: unknown) => write("put", `/setup/${kind}/active`, input),
     removeRow: (kind: SetupKind, input: unknown) => write("delete", `/setup/${kind}`, input),
+    // N-3.2: money entries (apps/api/src/money).
+    saveMoneyEntry: (input: unknown) => write("put", "/money-entries", input),
+    deleteMoneyEntry: (input: unknown) => write("delete", "/money-entries", input),
   };
 }
 

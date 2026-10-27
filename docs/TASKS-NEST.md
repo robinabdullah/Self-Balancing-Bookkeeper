@@ -684,9 +684,16 @@ Screenshots: each form saving, the duplicate warning, the Undo toast.
       person in the DB from an earlier spec. Right after an integration run (which empties
       `people` on the same local DB) it failed on mobile; it passed on the re-run and in the
       gate. CI's E2E job has its own DB.
-- [ ] **N-3.2 Money entries**
+- [x] **N-3.2 Money entries**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/money.ts`
-  - **Tests:** [ ] `money-actions.test`; `money.spec`, `personal-spend.spec`.
+  - **Tests:** [x] `money-actions.test`; `money.spec`, `personal-spend.spec`.
+  - **Result (2026-10-27):**
+    - `apps/api/src/money/*` and `apps/api/src/numbers.ts` (the Ref's `nextReceiptNo` /
+      `nextInvoiceNo`); `PUT|DELETE /money-entries`.
+    - Switched to the facade: `money-actions` (ported) and 11 files that save money entries for
+      their data (account-reports, cards, charts, journal-actions, lock-actions, messages, numbers,
+      pdf, profit-actions, reopen-actions, reports). Sonnet subagents edited them; reviewed here.
+    - **Tests:** 12 files, 52 passed; E2E 17 passed.
 - [ ] **N-3.3 Purchases**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/purchase.ts`
   - **Tests:** [ ] `purchase-actions.test`; `purchase.spec`.

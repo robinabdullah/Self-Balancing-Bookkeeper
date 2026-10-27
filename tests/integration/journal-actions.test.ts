@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
 import { auditChanges } from "@mbl/domain/audit";
@@ -7,7 +6,6 @@ import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { type Effect, type Entry, type Partner, postEntry } from "@mbl/domain/engine/post";
 import { parse } from "@mbl/domain/money";
 import type { Result } from "@/server/action";
-import { deleteMoneyEntry, saveMoneyEntry } from "@/server/actions/money";
 import { deletePurchase, savePurchase } from "@/server/actions/purchase";
 import { deleteReturn, saveReturn } from "@/server/actions/return";
 import { reverseEntry } from "@/server/actions/reverse";
@@ -15,20 +13,22 @@ import { deleteSale, saveSale } from "@/server/actions/sale";
 import { loadEntry, loadJournal } from "@/server/journal";
 import { stockLots } from "@/server/stock";
 import { expectBalanced, posted } from "../engine/invariant";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // Task 3.8 + CR-007 (PRD §4.5; SRS §8; UIDD §4.10; D-003, D-008, D-026): Journal delete, reverse
 // and edit through the actions. The session and `revalidatePath` are stood in for as in
-// action.test.ts. Synthetic data only (D-014).
+// action.test.ts. N-3.2: money entries go through the api (the facade), as the same partner.
+// Synthetic data only (D-014).
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
 let userId = "";
+const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
+const deleteMoneyEntry = (input: unknown) => api.deleteMoneyEntry(input);
 
 const today = dhakaToday();
 const month = monthOf(today);
@@ -47,14 +47,8 @@ const partners: Partner[] = [
 const TABLES = "purchases, purchase_lines, sales, sale_lines, returns, return_lines, money_entries";
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `journal-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql, "Partner A");
+  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50)`;
   await sql`insert into customers (id, proprietor_name, shop_name)
@@ -71,8 +65,7 @@ afterAll(async () => {
   await sql.unsafe(`truncate ${TABLES}, audit_log, month_closes, models cascade`);
   await sql`delete from people`;
   await sql`delete from customers where not is_system`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });

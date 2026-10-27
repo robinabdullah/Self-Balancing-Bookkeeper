@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import ExcelJS from "exceljs";
 import { NextRequest } from "next/server";
 import { extractText } from "unpdf";
@@ -12,7 +11,6 @@ import { monthProfit } from "@mbl/domain/engine/months";
 import { salesPdfHref, salesXlsxHref, withQuery } from "@mbl/domain/href";
 import { add, format, toDecimal } from "@mbl/domain/money";
 import { receiptLabel } from "@mbl/domain/whatsapp";
-import { saveMoneyEntry } from "@/server/actions/money";
 import { saveReturn } from "@/server/actions/return";
 import { reverseEntry } from "@/server/actions/reverse";
 import { saveSale } from "@/server/actions/sale";
@@ -20,20 +18,21 @@ import { loadBooks } from "@/server/books";
 import { loadStatementExtras } from "@/server/account-reports";
 import { loadCashBook, loadSales } from "@/server/reports";
 import { expectBalanced } from "../engine/invariant";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // CR-023 (D-043; UIDD §4.17): the Cash book and Sales report loaders on real saves tie out to the
 // books, and the Sales PDF / Excel routes (partner-only, no audit row). The session and
-// `revalidatePath` are stood in for as in action.test.ts. Synthetic data only (D-014).
+// `revalidatePath` are stood in for as in action.test.ts. N-3.2: money entries go through the api
+// (the facade), as the same partner. Synthetic data only (D-014).
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
 let userId = "";
+const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 
 const today = dhakaToday();
 const range = { from: `${monthOf(today)}-01`, to: today };
@@ -47,14 +46,8 @@ const ids = {
 const TABLES = "purchases, purchase_lines, sales, sale_lines, returns, return_lines, money_entries";
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `reports-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql, "Partner A");
+  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50)`;
   await sql`insert into customers (id, proprietor_name, shop_name)
@@ -72,8 +65,7 @@ afterAll(async () => {
   await sql.unsafe(`truncate ${TABLES}, audit_log, models, suppliers cascade`);
   await sql`delete from people`;
   await sql`delete from customers where not is_system`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });

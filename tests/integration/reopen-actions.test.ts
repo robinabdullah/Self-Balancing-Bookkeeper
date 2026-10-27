@@ -1,30 +1,29 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
 import { addMonths, dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
-import type { Result } from "@/server/action";
-import { saveMoneyEntry } from "@/server/actions/money";
+import type { Result } from "@mbl/domain/result";
 import { closeMonth, reopenMonth } from "@/server/actions/months";
 import { loadBooksData } from "@/server/books";
 import { profitSinceClose } from "@/server/months";
 import { expectBalanced } from "../engine/invariant";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // Task 5.4 (PRD §4.4, SRS §7 re-open): only the latest closed month re-opens; its allocations and
 // `month_closes` row go (kept in the `reopen` audit row) and the month unlocks. The confirm lists
-// the profit paid / reinvested entries made since the close. The session and `revalidatePath`
-// are stood in for as in action.test.ts. Synthetic data only (D-014).
+// the profit paid / reinvested entries made since the close. The session and `revalidatePath` are
+// stood in for as in action.test.ts. N-3.2: money entries go through the api (the facade), as the
+// same partner. Synthetic data only (D-014).
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
 let userId = "";
+const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 
 const today = dhakaToday();
 const M1 = addMonths(monthOf(today), -2);
@@ -61,14 +60,8 @@ async function expectBooksBalanced() {
 }
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `reopen-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql, "Partner A");
+  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50)`;
 });
@@ -86,8 +79,7 @@ beforeEach(async () => {
 afterAll(async () => {
   await sql`truncate money_entries, allocations, month_closes, audit_log`;
   await sql`delete from people`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });

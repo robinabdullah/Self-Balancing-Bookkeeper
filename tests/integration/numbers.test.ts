@@ -1,31 +1,30 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
 import { dhakaToday } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
-import type { Result } from "@/server/action";
-import { deleteMoneyEntry, saveMoneyEntry } from "@/server/actions/money";
+import type { Result } from "@mbl/domain/result";
 import { reverseEntry } from "@/server/actions/reverse";
 import { deleteSale, saveSale } from "@/server/actions/sale";
 import { loadBooksData } from "@/server/books";
 import { expectBalanced } from "../engine/invariant";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // CR-016.2 (D-036): invoice and receipt numbers, given at save to new sales and customer payments
 // (including "Received now"), never to a reversal; an edit keeps its number; Undo leaves a gap and
-// a number is never reused. The session and `revalidatePath` are stood in for as in
-// action.test.ts. Synthetic data only. The sequences carry on across test files, so the numbers
-// are checked relative to each other.
+// a number is never reused. The session and `revalidatePath` are stood in for as in action.test.ts.
+// N-3.2: money entries go through the api (the facade), as the same partner. Synthetic data only.
+// The sequences carry on across test files, so the numbers are checked relative to each other.
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
 let userId = "";
+const deleteMoneyEntry = (input: unknown) => api.deleteMoneyEntry(input);
+const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 
 const today = dhakaToday();
 const ids = { arif: randomUUID(), customer: randomUUID(), model: randomUUID() };
@@ -33,14 +32,8 @@ const TABLES =
   "purchases, purchase_lines, sales, sale_lines, returns, return_lines, money_entries, audit_log";
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `numbers-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql, "Partner A");
+  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct)
     values (${ids.arif}, 'Arif', 'partner', 100)`;
   await sql`insert into customers (id, proprietor_name) values (${ids.customer}, 'Jamal')`;
@@ -61,8 +54,7 @@ afterAll(async () => {
   await sql.unsafe(`truncate ${TABLES}, models cascade`);
   await sql`delete from people`;
   await sql`delete from customers where not is_system`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });

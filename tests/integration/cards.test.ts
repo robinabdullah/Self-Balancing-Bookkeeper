@@ -1,37 +1,31 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
 import { deleteBillDates, saveBillDates } from "@/server/actions/cards";
-import { deleteMoneyEntry, saveMoneyEntry } from "@/server/actions/money";
 import { reverseEntry } from "@/server/actions/reverse";
 import { loadBooks } from "@/server/books";
 import { CONFLICT, type Result } from "@/server/action";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // Task 4.4.2 (UIDD §4.8; SRS §6; D-020): a card bill's actual dates through the action. The
-// session and `revalidatePath` are stood in for as in action.test.ts. Synthetic data only.
+// session and `revalidatePath` are stood in for as in action.test.ts.
+// N-3.2: money entries go through the api (the facade), as the same partner. Synthetic data only.
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
 let userId = "";
+const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
+const deleteMoneyEntry = (input: unknown) => api.deleteMoneyEntry(input);
 const ids = { person: randomUUID(), card: randomUUID(), fee: randomUUID() };
 const asOf = "2026-10-15";
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `cards-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql, "Partner A");
+  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct)
     values (${ids.person}, 'Partner A', 'partner', 100)`;
   // EBL-style days: statement 5th, due 20th the same month.
@@ -49,8 +43,7 @@ beforeEach(() => {
 afterAll(async () => {
   await sql`truncate money_entries, card_bill_dates, cards, audit_log cascade`;
   await sql`delete from people`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });

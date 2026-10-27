@@ -1,13 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
 import { addMonths, dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
 import { defaultReversal } from "@mbl/domain/guards";
 import { parse } from "@mbl/domain/money";
-import { type Result, loadCalendar } from "@/server/action";
-import { deleteMoneyEntry, saveMoneyEntry } from "@/server/actions/money";
+import type { Result } from "@mbl/domain/result";
+import { loadCalendar } from "@/server/action";
 import { closeMonth } from "@/server/actions/months";
 import { deletePurchase, savePurchase } from "@/server/actions/purchase";
 import { deleteReturn, saveReturn } from "@/server/actions/return";
@@ -16,20 +15,22 @@ import { deleteSale, saveSale } from "@/server/actions/sale";
 import { loadBooksData } from "@/server/books";
 import { loadJournal } from "@/server/journal";
 import { expectBalanced } from "../engine/invariant";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // Task 5.3 (SRS §7 lock rule, §8): every create/edit/delete path rejects a closed month, and a
 // locked entry is reversed into an open month (S18). Months are closed through the action. The
-// session and `revalidatePath` are stood in for as in action.test.ts. Synthetic data only (D-014).
+// session and `revalidatePath` are stood in for as in action.test.ts. N-3.2: money entries go
+// through the api (the facade), as the same partner. Synthetic data only (D-014).
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
 let userId = "";
+const deleteMoneyEntry = (input: unknown) => api.deleteMoneyEntry(input);
+const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 
 const today = dhakaToday();
 const month = monthOf(today); // "November" in S18
@@ -45,14 +46,8 @@ const LOCKED = `This entry is in a closed month (${formatMonth(lastMonth)}) — 
 const CLOSED_DATE = `Date is in a closed month (${formatMonth(lastMonth)})`;
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `lock-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql, "Partner A");
+  userId = api.user.userId;
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50)`;
   await sql`insert into customers (id, proprietor_name, shop_name)
@@ -69,8 +64,7 @@ afterAll(async () => {
   await sql.unsafe(`truncate ${TABLES}, models cascade`);
   await sql`delete from people`;
   await sql`delete from customers where not is_system`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });
