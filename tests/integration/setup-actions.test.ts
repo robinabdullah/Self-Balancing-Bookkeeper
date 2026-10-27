@@ -1,46 +1,33 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
+import type { Result } from "@mbl/domain/result";
 import { dhakaToday } from "@mbl/domain/dates";
 import { BUILT_IN, USED } from "@mbl/domain/setup";
-import {
-  removeRow,
-  saveCard,
-  saveCustomer,
-  savePerson,
-  saveSupplier,
-  setActive,
-} from "@/server/actions/setup";
 import { loadSetup } from "@/server/setup";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
-// Task 3.2 + CR-004 (PRD §4.1; SRS §4 Setup; UIDD §4.11; D-023). The session and
-// `revalidatePath` are stood in for as in action.test.ts. Synthetic data only. Setup rows post
-// nothing, so the books stay as they were (empty and balanced).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-
+// Task 3.2 + CR-004 (PRD §4.1; SRS §4 Setup; UIDD §4.11; D-023). N-3.1: the writes go through
+// the api as Partner A (the facade keeps the old names); the Setup list is still web's read.
+// Synthetic data only. Setup rows post nothing, so the books stay as they were (empty and
+// balanced).
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
 let userId = "";
+const savePerson = (input: unknown) => api.savePerson(input);
+const saveCard = (input: unknown) => api.saveCard(input);
+const saveCustomer = (input: unknown) => api.saveCustomer(input);
+const saveSupplier = (input: unknown) => api.saveSupplier(input);
+const setActive: typeof api.setActive = (kind, input) => api.setActive(kind, input);
+const removeRow: typeof api.removeRow = (kind, input) => api.removeRow(kind, input);
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `setup-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql);
+  userId = api.user.userId;
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql`truncate money_entries, cards, suppliers, models, bank_accounts, audit_log cascade`;
   await sql`delete from people`;
   await sql`delete from customers where not is_system`;
@@ -49,8 +36,7 @@ beforeEach(async () => {
 afterAll(async () => {
   await sql`truncate money_entries, cards, suppliers, models, bank_accounts, audit_log cascade`;
   await sql`delete from people`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });
@@ -64,7 +50,7 @@ const person = (over: object = {}) => ({
   ...over,
 });
 
-async function saved(result: Awaited<ReturnType<typeof savePerson>>) {
+async function saved(result: Result) {
   if (result.status !== "ok") throw new Error(JSON.stringify(result));
   return result;
 }

@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
 import {
@@ -10,39 +9,36 @@ import {
   savePdfTerms,
   saveTemplate,
 } from "@/server/actions/business";
-import { removeRow, saveCustomer, savePerson, saveSupplier } from "@/server/actions/setup";
 import { loadBooks } from "@/server/books";
 import { bankCounts, getBusiness, getLogo, loadBankAccounts } from "@/server/business";
 import { loadSetup } from "@/server/setup";
-import { localSupabase } from "../e2e/local-supabase";
+import { partnerApi } from "./api";
 import { localSql } from "./local-db";
 
 // CR-019 (D-039; UIDD §4.11, §4.13, §4.14): the business profile, message templates, contacts in
 // Setup and the saved bank accounts; CR-029 (D-049): the PDF terms; each saved through the action helper with an audit row. The
-// session and `revalidatePath` are stood in for as in action.test.ts. Synthetic data only; none
-// of this posts anything, so the books stay balanced. The seeded profile is restored afterwards.
+// session and `revalidatePath` are stood in for as in action.test.ts. N-3.1: the Setup writes go
+// through the api (the facade), as the same partner. Synthetic data only; none of this posts
+// anything, so the books stay balanced. The seeded profile is restored afterwards.
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+let api: Awaited<ReturnType<typeof partnerApi>>;
 let userId = "";
+const savePerson = (input: unknown) => api.savePerson(input);
+const saveCustomer = (input: unknown) => api.saveCustomer(input);
+const saveSupplier = (input: unknown) => api.saveSupplier(input);
+const removeRow: typeof api.removeRow = (kind, input) => api.removeRow(kind, input);
 let seeded: Record<string, unknown>;
 
 const PNG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=";
 
 beforeAll(async () => {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `business-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userId = data.user.id;
-  await sql`insert into profiles (user_id, name, role) values (${userId}, 'Partner A', 'partner')`;
+  api = await partnerApi(sql);
+  userId = api.user.userId;
   [seeded] = await sql`select * from business_profile`;
 });
 
@@ -67,8 +63,7 @@ afterAll(async () => {
   await sql`truncate bank_accounts, suppliers, audit_log cascade`;
   await sql`delete from people`;
   await sql`delete from customers where not is_system`;
-  await sql`delete from profiles where user_id = ${userId}`;
-  await admin.auth.admin.deleteUser(userId);
+  await api.close();
   await sql.end();
   await db.$client.end();
 });

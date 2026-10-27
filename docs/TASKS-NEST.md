@@ -642,14 +642,48 @@ that file's integration tests to the facade.
 ### Session S5
 Screenshots: each form saving, the duplicate warning, the Undo toast.
 
-- [ ] **N-3.1 Write runner and the Setup lists**
+- [x] **N-3.1 Write runner and the Setup lists**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/action.ts`, `src/server/actions/setup.ts`
   - [x] Port `runAction` almost verbatim; add the status interceptor and web's `write()`/`call()`.
     Done early in N-2.5 (user decision, 2026-10-27): `apps/api/src/action/{runner,result-status}.ts`
     and `apps/web/src/api/client.ts`. Web's `runAction` stays until its last caller moves.
-  - [ ] The Setup lists (`savePerson` … `saveModel`, `setActive`, `removeRow`) set the pattern.
-  - **Tests:** [ ] `action.test` and `setup-actions.test` green via the facade; the `setup.spec`
+  - [x] The Setup lists (`savePerson` … `saveModel`, `setActive`, `removeRow`) set the pattern.
+  - **Tests:** [x] `action.test` and `setup-actions.test` green via the facade; the `setup.spec`
     E2E.
+  - **Result (2026-10-27):**
+    - **The pattern** (every N-3 step):
+      - `apps/api/src/<area>/<area>.service.ts` is the Ref action file as a class: `runAction` →
+        `this.runner.runAction`, imports remapped. `git diff --no-index -w` against the Ref shows
+        only that wrapper.
+      - `<area>.controller.ts` is thin: `ResultStatus`, `@ZodBody` (Swagger), and `@Body() input:
+        unknown` straight to the service. The runner's Zod step validates.
+      - The id stays in the body (the runner's contract), as in `PUT /me/theme`.
+      - Web's `src/server/actions/<file>.ts` keeps its exported names and signatures; each is a
+        `write(method, path, input)`. The forms are unchanged (they pass plain objects).
+    - **Routes:** `PUT /setup/{person,card,customer,supplier,model}`, `PUT /setup/:kind/active`,
+      `DELETE /setup/:kind`. An unknown kind throws "Unknown setup list" (500), as before; web
+      URL-encodes the kind.
+    - **Facade** (`tests/integration/api.ts`):
+      - `as()` gains the old names;
+      - `partnerApi(sql, name)` gives an in-process api, a signed-in partner and those names, with
+        `close()`;
+      - `startApi()` takes `providers` (a test controller's `Runner`) and listens once on an
+        ephemeral port, so supertest reuses the server for concurrent requests (it warned about
+        listeners before).
+    - **`action.test.ts`:** a test-only controller runs the in-test specs on the api's `Runner`
+      over HTTP. I3.1.1–4 are unchanged. I3.1.5 is now HTTP: 401 "Not signed in" without a
+      token, 403 "Only partners can do this" for an investor, nothing written.
+    - **User decision (S5):** files that use these actions only to make data switch to the facade
+      too. Web actions that haven't moved (reverse, close, business, card secrets) keep the
+      `getUser` mock, returning the facade partner's id, so both paths act as one partner.
+      - N-3.1: `setup-actions` (ported), `business-actions` and `card-secrets` (`removeRow`; that
+        file signs its own password partner in).
+    - **Tests:** action + setup-actions 10, business-actions + card-secrets 17; `setup.spec` 9
+      passed.
+    - **Found (not changed):** `setup.spec` E-CR-016.5 picks "the first Owner", so it needs a
+      person in the DB from an earlier spec. Right after an integration run (which empties
+      `people` on the same local DB) it failed on mobile; it passed on the re-run and in the
+      gate. CI's E2E job has its own DB.
 - [ ] **N-3.2 Money entries**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/actions/money.ts`
   - **Tests:** [ ] `money-actions.test`; `money.spec`, `personal-spend.spec`.

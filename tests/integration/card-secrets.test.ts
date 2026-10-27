@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { verifyAuthenticationResponse, verifyRegistrationResponse } from "@simplewebauthn/server";
+import type { INestApplication } from "@nestjs/common";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@mbl/db";
 import { POST } from "@/app/(app)/cards/[id]/reveal/route";
@@ -19,12 +20,12 @@ import {
   removeFingerprint,
   revealOptions,
 } from "@/server/actions/passkeys";
-import { removeRow } from "@/server/actions/setup";
 import { loadBooks } from "@/server/books";
 import { signRevealWindow } from "@/server/card-crypto";
 import { loadCardSecrets } from "@/server/card-secrets";
 import { LOCKED, WRONG_PASSWORD, resetPasswordTries } from "@/server/password-check";
 import { localSupabase } from "../e2e/local-supabase";
+import { type TestUser, as, startApi } from "./api";
 import { localSql } from "./local-db";
 
 // CR-026 (D-046, D-052; SRS §11; UIDD §4.13, §4.14): card details are stored encrypted and leave
@@ -32,7 +33,8 @@ import { localSql } from "./local-db";
 // challenge of your own; never for a password. The password (checked against local Supabase Auth)
 // gates only fingerprint set-up. No audit row holds a value. The session, `revalidatePath`, the
 // request headers and the WebAuthn signature checks are stood in for; the challenge handling
-// around them is real. Synthetic test numbers only.
+// around them is real. N-3.1: deleting a card goes through the api (the facade), signed in as the
+// same partner. Synthetic test numbers only.
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ getUser }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -57,6 +59,10 @@ let user = { id: "", email: "" };
 let other = "";
 let cardA = "";
 let cardB = "";
+let app: INestApplication;
+let signedIn: TestUser;
+const removeRow: ReturnType<typeof as>["removeRow"] = (kind, input) =>
+  as(app, signedIn).removeRow(kind, input);
 
 async function newUser(name: string, password = randomUUID()) {
   const email = `cards-${randomUUID()}@test.local`;
@@ -76,6 +82,19 @@ beforeAll(async () => {
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = anonKey;
   user = await newUser("Partner A", PASSWORD);
   other = (await newUser("Partner B")).id;
+  app = await startApi();
+  const anon = createClient(url, anonKey, { auth: { persistSession: false } });
+  const { data, error } = await anon.auth.signInWithPassword({
+    email: user.email,
+    password: PASSWORD,
+  });
+  if (error) throw error;
+  signedIn = {
+    userId: user.id,
+    profileId: null,
+    email: user.email,
+    token: data.session.access_token,
+  };
 });
 
 beforeEach(async () => {
@@ -93,6 +112,7 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
+  await app.close();
   for (const id of [user.id, other]) await admin.auth.admin.deleteUser(id);
   await sql.end();
   await db.$client.end();

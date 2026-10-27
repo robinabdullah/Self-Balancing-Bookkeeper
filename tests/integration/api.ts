@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
-import type { INestApplication, Type } from "@nestjs/common";
+import type { INestApplication, Provider, Type } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { createClient } from "@supabase/supabase-js";
 import type postgres from "postgres";
 import request from "supertest";
 import type { Result } from "@mbl/domain/result";
+import type { SetupKind } from "@mbl/domain/setup";
 import type { Me } from "../../apps/api/src/shell/shell.controller";
 import type { Jsonify } from "../../apps/web/src/api/jsonify";
 import { setupApp } from "../../apps/api/src/app";
@@ -17,18 +18,23 @@ import { localSupabase } from "../e2e/local-supabase";
 // with the same setup as main.ts, against local Supabase; tests call it over HTTP with
 // supertest, as signed-in users with real tokens from local Supabase Auth.
 
-/** A started api; `config` overrides the checked environment, `controllers` adds test routes. */
+/**
+ * A started api; `config` overrides the checked environment, `controllers` adds test routes and
+ * `providers` what they inject beyond the global modules (e.g. the `Runner`).
+ */
 export async function startApi(
   config: Partial<Config> = {},
   controllers: Type[] = [],
+  providers: Provider[] = [],
 ): Promise<INestApplication> {
   const cfg = { ...loadConfig(), ...config };
-  const ref = await Test.createTestingModule({ imports: [AppModule], controllers })
+  const ref = await Test.createTestingModule({ imports: [AppModule], controllers, providers })
     .overrideProvider(CONFIG)
     .useValue(cfg)
     .compile();
   const app = setupApp(ref.createNestApplication({ bodyParser: false, logger: false }), cfg);
-  await app.init();
+  // Listening once (an ephemeral port) lets supertest reuse the server for concurrent requests.
+  await app.listen(0, "127.0.0.1");
   return app;
 }
 
@@ -101,7 +107,11 @@ export function as(app: INestApplication, user: TestUser) {
     return (res.text ? JSON.parse(res.text) : null) as T;
   };
   /** A write's `Result` (200/409/422), as web's `write()` takes it; throws on anything else. */
-  const write = async (method: "post" | "put" | "delete", path: string, body: unknown) => {
+  const write = async (
+    method: "post" | "put" | "patch" | "delete",
+    path: string,
+    body: unknown,
+  ) => {
     const res = await http()
       [method](path)
       .set(auth)
@@ -114,5 +124,31 @@ export function as(app: INestApplication, user: TestUser) {
     write,
     getProfile: () => read<Jsonify<Me>>("/me"),
     setTheme: (input: unknown) => write("put", "/me/theme", input),
+    // N-3.1: Setup (apps/api/src/setup).
+    savePerson: (input: unknown) => write("put", "/setup/person", input),
+    saveCard: (input: unknown) => write("put", "/setup/card", input),
+    saveCustomer: (input: unknown) => write("put", "/setup/customer", input),
+    saveSupplier: (input: unknown) => write("put", "/setup/supplier", input),
+    saveModel: (input: unknown) => write("put", "/setup/model", input),
+    setActive: (kind: SetupKind, input: unknown) => write("put", `/setup/${kind}/active`, input),
+    removeRow: (kind: SetupKind, input: unknown) => write("delete", `/setup/${kind}`, input),
+  };
+}
+
+/**
+ * N-3.1: an in-process api and a signed-in partner, with the old names bound to them; for files
+ * that only need writes to make their data. `close()` stops the api and removes the user.
+ */
+export async function partnerApi(sql: postgres.Sql, name = "Partner A") {
+  const app = await startApi();
+  const user = await signedInUser(sql, "partner", name);
+  return {
+    app,
+    user,
+    ...as(app, user),
+    close: async () => {
+      await app.close();
+      await deleteUsers(sql);
+    },
   };
 }

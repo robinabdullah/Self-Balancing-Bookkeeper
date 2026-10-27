@@ -1,39 +1,31 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
+import {
+  Body,
+  Controller,
+  Delete,
+  Inject,
+  type INestApplication,
+  Patch,
+  Put,
+  UseInterceptors,
+} from "@nestjs/common";
 import { type AnyColumn, and, eq, sql as q } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "@mbl/db";
+import request from "supertest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { moneyEntries } from "@mbl/db/schema";
 import { addDays, addMonths, dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
 import { toDecimal } from "@mbl/domain/money";
 import { type MoneyEntryValues, moneyEntrySchema } from "@mbl/domain/validation/money-entry";
-import { CONFLICT, byId, runAction } from "@/server/action";
-import { localSupabase } from "../e2e/local-supabase";
+import { ResultStatus } from "../../apps/api/src/action/result-status";
+import { CONFLICT, Runner, byId } from "../../apps/api/src/action/runner";
+import { type TestUser, as, deleteUsers, signedInUser, startApi } from "./api";
 import { localSql } from "./local-db";
 
-// Task 3.1 (SRS §2.3, §3; D-010). The session comes from Next cookies, so the test stands in for
-// the Supabase Auth lookup and for `revalidatePath` (it needs a Next request); everything else
+// Task 3.1 (SRS §2.3, §3; D-010). N-3.1: the api's runner, through a test-only controller with
+// the specs below, called over HTTP as signed-in users with real tokens (the facade); everything
 // runs against local Supabase. Synthetic data only.
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-
 const sql = localSql();
-const { url, serviceRoleKey } = localSupabase();
-const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
-const userIds: string[] = [];
-
-async function user(name: string, role: "partner" | "investor") {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: `action-${randomUUID()}@test.local`,
-    password: randomUUID(),
-    email_confirm: true,
-  });
-  if (error) throw error;
-  userIds.push(data.user.id);
-  await sql`insert into profiles (user_id, name, role) values (${data.user.id}, ${name}, ${role})`;
-  return data.user;
-}
+let app: INestApplication;
 
 // A money entry spec, as the money form's actions will use it (task 3.7).
 const month1st = (m: string | null | undefined) => (m ? `${m}-01` : null);
@@ -61,45 +53,63 @@ const similar = (v: MoneyEntryValues) =>
     same(moneyEntries.personId, "personId" in v ? v.personId : null),
   );
 
-const create = (input: object) =>
-  runAction(
-    {
-      op: "insert",
-      table: moneyEntries,
-      schema: moneyEntrySchema,
-      duplicate: similar,
-      write: async (tx, v, { userId }) => {
-        const [r] = await tx
-          .insert(moneyEntries)
-          .values({ ...row(v), createdBy: userId })
-          .onConflictDoNothing({ target: moneyEntries.id })
-          .returning();
-        return r ?? null;
-      },
-    },
-    input,
-  );
+@Controller("test-action")
+@UseInterceptors(ResultStatus)
+class ActionTestController {
+  constructor(@Inject(Runner) private readonly runner: Runner) {}
 
-const edit = (input: object) =>
-  runAction(
-    {
-      op: "update",
-      table: moneyEntries,
-      schema: moneyEntrySchema,
-      write: async (tx, v) => {
-        const [r] = await tx
-          .update(moneyEntries)
-          .set(row(v))
-          .where(eq(moneyEntries.id, v.id))
-          .returning();
-        return r;
+  @Put()
+  create(@Body() input: unknown) {
+    return this.runner.runAction(
+      {
+        op: "insert",
+        table: moneyEntries,
+        schema: moneyEntrySchema,
+        duplicate: similar,
+        write: async (tx, v, { userId }) => {
+          const [r] = await tx
+            .insert(moneyEntries)
+            .values({ ...row(v), createdBy: userId })
+            .onConflictDoNothing({ target: moneyEntries.id })
+            .returning();
+          return r ?? null;
+        },
       },
-    },
-    input,
-  );
+      input,
+    );
+  }
 
-const remove = (input: object) =>
-  runAction({ op: "delete", table: moneyEntries, schema: byId }, input);
+  @Patch()
+  edit(@Body() input: unknown) {
+    return this.runner.runAction(
+      {
+        op: "update",
+        table: moneyEntries,
+        schema: moneyEntrySchema,
+        write: async (tx, v) => {
+          const [r] = await tx
+            .update(moneyEntries)
+            .set(row(v))
+            .where(eq(moneyEntries.id, v.id))
+            .returning();
+          return r;
+        },
+      },
+      input,
+    );
+  }
+
+  @Delete()
+  remove(@Body() input: unknown) {
+    return this.runner.runAction({ op: "delete", table: moneyEntries, schema: byId }, input);
+  }
+}
+
+let partner: TestUser;
+let investor: TestUser;
+const create = (input: object) => as(app, partner).write("put", "/test-action", input);
+const edit = (input: object) => as(app, partner).write("patch", "/test-action", input);
+const remove = (input: object) => as(app, partner).write("delete", "/test-action", input);
 
 const today = dhakaToday();
 const expense = (over: object = {}) => ({
@@ -118,24 +128,21 @@ async function counts() {
   return { entries: m.n, audits: a.n };
 }
 
-let partner: { id: string };
-let investor: { id: string };
 beforeAll(async () => {
-  partner = await user("Partner A", "partner");
-  investor = await user("Investor B", "investor");
+  app = await startApi({}, [ActionTestController], [Runner]);
+  partner = await signedInUser(sql, "partner", "Partner A");
+  investor = await signedInUser(sql, "investor", "Investor B");
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue(partner);
   await sql`truncate money_entries, audit_log, month_closes`;
 });
 
 afterAll(async () => {
   await sql`truncate money_entries, audit_log, month_closes`;
-  await sql`delete from profiles where user_id = any(${userIds})`;
-  for (const id of userIds) await admin.auth.admin.deleteUser(id);
+  await app.close();
+  await deleteUsers(sql);
   await sql.end();
-  await db.$client.end();
 });
 
 describe("server-action helper (task 3.1)", () => {
@@ -153,7 +160,7 @@ describe("server-action helper (task 3.1)", () => {
       row_id: input.id,
       action: "insert",
       before: null,
-      user_id: partner.id,
+      user_id: partner.userId,
     });
     expect(audit.after).toMatchObject({ id: input.id, amount: "1250.50", category: "rent" });
   });
@@ -222,7 +229,7 @@ describe("server-action helper (task 3.1)", () => {
     const lastMonth = addMonths(thisMonth, -1);
     await sql`
       insert into month_closes (month, close_date, snapshot, closed_by)
-      values (${`${lastMonth}-01`}, ${today}, '{}', ${partner.id})`;
+      values (${`${lastMonth}-01`}, ${today}, '{}', ${partner.userId})`;
 
     expect(await create(expense({ date: addDays(today, 1) }))).toEqual({
       status: "invalid",
@@ -248,10 +255,15 @@ describe("server-action helper (task 3.1)", () => {
   });
 
   it("I3.1.5 no session or a non-partner → rejected, nothing written", async () => {
-    getUser.mockResolvedValueOnce(null);
-    await expect(create(expense())).rejects.toThrow("Not signed in");
-    getUser.mockResolvedValueOnce(investor);
-    await expect(create(expense())).rejects.toThrow("Only partners can do this");
+    const none = await request(app.getHttpServer()).put("/test-action").send(expense());
+    expect(none.status).toBe(401);
+    expect(none.body.message).toBe("Not signed in");
+    const other = await request(app.getHttpServer())
+      .put("/test-action")
+      .set({ Authorization: `Bearer ${investor.token}` })
+      .send(expense());
+    expect(other.status).toBe(403);
+    expect(other.body.message).toBe("Only partners can do this");
     expect(await counts()).toEqual({ entries: 0, audits: 0 });
   });
 });
