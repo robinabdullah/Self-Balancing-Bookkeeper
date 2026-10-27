@@ -7,7 +7,7 @@ import { QuickActions } from "@/components/accounts/quick-actions";
 import { Bills } from "@/components/accounts/bills";
 import { Statement } from "@/components/accounts/statement";
 import { StatementByModel } from "@/components/report/by-model";
-import { EntryOverlay } from "@/components/journal/entry-overlay";
+import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
 import { SegmentedNav } from "@/components/shell/segmented-nav";
 import { entryLabels } from "@mbl/domain/journal/labels";
 import { billProfit, statementLines, statementRange } from "@mbl/domain/accounts";
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { rowId } from "@mbl/domain/validation/fields";
 import { customerBills } from "@/server/accounts";
 import { loadBooks } from "@/server/books";
-import { loadJournal, preloadEntry } from "@/server/journal";
+import { loadJournal } from "@/server/journal";
 import { loadSetup } from "@/server/setup";
 
 // UIDD §4.8 (task 4.3.1): a customer's contact, balance (+ "Above target"), statement with a

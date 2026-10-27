@@ -6,7 +6,7 @@ import { RangeChip } from "@/components/accounts/range-chip";
 import { QuickActions } from "@/components/accounts/quick-actions";
 import { Statement } from "@/components/accounts/statement";
 import { Amount } from "@/components/amount";
-import { EntryOverlay } from "@/components/journal/entry-overlay";
+import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
 import { entryLabels, otherSide } from "@mbl/domain/journal/labels";
 import { Allocations, CardsSupplied, ProfitMoves } from "@/components/people/people-detail";
 import { Badge, kindText } from "@/components/people/people-list";
@@ -20,7 +20,7 @@ import { peopleRows, personDetail } from "@mbl/domain/people-view";
 import { setupNames } from "@mbl/domain/setup";
 import { rowId } from "@mbl/domain/validation/fields";
 import { loadBooks } from "@/server/books";
-import { loadJournal, preloadEntry } from "@/server/journal";
+import { loadJournal } from "@/server/journal";
 import { loadSetup } from "@/server/setup";
 
 // UIDD §4.8 (task 4.5): a person's capital history and current capital, the cards they supply

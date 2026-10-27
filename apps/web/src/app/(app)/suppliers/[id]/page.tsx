@@ -6,7 +6,7 @@ import { RangeChip } from "@/components/accounts/range-chip";
 import { QuickActions } from "@/components/accounts/quick-actions";
 import { Statement } from "@/components/accounts/statement";
 import { StatementByModel } from "@/components/report/by-model";
-import { EntryOverlay } from "@/components/journal/entry-overlay";
+import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
 import { entryLabels } from "@mbl/domain/journal/labels";
 import { statementLines, statementRange, supplierDueText } from "@mbl/domain/accounts";
 import { dhakaToday } from "@mbl/domain/dates";
@@ -14,7 +14,7 @@ import { withQuery } from "@mbl/domain/href";
 import { parseRange } from "@mbl/domain/journal-filter";
 import { rowId } from "@mbl/domain/validation/fields";
 import { loadBooks } from "@/server/books";
-import { loadJournal, preloadEntry } from "@/server/journal";
+import { loadJournal } from "@/server/journal";
 import { loadSetup } from "@/server/setup";
 
 // UIDD §4.8 (task 4.3.2): a supplier's phone, what we owe them and the statement with a running

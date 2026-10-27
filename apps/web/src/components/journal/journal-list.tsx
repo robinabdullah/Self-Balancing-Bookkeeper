@@ -32,7 +32,7 @@ import {
 } from "@mbl/domain/journal-filter";
 import { format } from "@mbl/domain/money";
 import { cn } from "@/lib/utils";
-import type { JournalRow } from "@/server/journal";
+import type { JournalRow } from "@/api/contract";
 import { TYPE_LABEL, entryTitle, whoOf } from "@mbl/domain/journal/labels";
 
 // UIDD §4.10 (task 3.8.1, D-032): every entry, newest first, as stacked cards on a phone and a

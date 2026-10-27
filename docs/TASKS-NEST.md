@@ -855,10 +855,43 @@ Screenshots: those screens, plus the parity report.
       - New I-N-4.1.1: `loadSetup` + `loadEntry` asked twice in one request make 11 queries.
         Mutation-checked: with the memo off it gets 22.
       - 2 files, 10 passed.
-- [ ] **N-4.2 Home, Journal, EntryOverlay**
+- [x] **N-4.2 Home, Journal, EntryOverlay**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/app/(app)/page.tsx`, `journal/page.tsx`,
     `src/components/journal/entry-overlay.tsx`
-  - **Tests:** [ ] the `home`, `journal` and `dashboard-totals` E2E; parity.
+  - **Tests:** [x] the `home`, `journal` and `dashboard-totals` E2E; parity.
+  - **Result (2026-10-27):**
+    - **The view pattern** (every N-4 step):
+      - `apps/api/src/views/<group>.controller.ts`: one `GET /views/…` per data-loading page or
+        overlay. It returns the page's old `Promise.all` values, trimmed to what the JSX reads.
+        The derivations over the whole books (`cardAlerts`, `topDues`, the units, …) run in the
+        api.
+      - `export type XView` per route; web imports it type-only.
+      - The page makes one `api<XView>()` call. Its elements and text are unchanged; only the
+        expressions read from the view. Pure `searchParams` logic (`parseFilter`, `cleanPrefill`,
+        `safeFrom`) stays in web.
+      - A missing entry is `null` (an empty body); a missing edit row is a 404.
+    - `apps/api/src/views/home.controller.ts`:
+      - `GET /views/home`: `asOf`, the six tile values under `books`, `units`, `dues`, `profit`,
+        `alerts`, `cards` (`{id, name}` for the bank badge), `topDues`, `recent` (10) and `names`;
+      - `GET /views/journal`: `rows`, `names`, `people` and `firstMonth` (`today` and the filter
+        stay in web);
+      - `GET /views/entry/:id`: `{ entry, names, posting, cards, billDates }` or null.
+    - **Web:**
+      - `entry-overlay.tsx` reads `/views/entry/:id` through a `cache()`d `entryView`, and
+        exports `preloadEntry`, which starts that read.
+      - All 8 pages that mount the overlay import `preloadEntry` from there, S8's six included.
+        Otherwise they would warm web's old `loadEntry`, which nothing reads any more.
+      - `journal-list` and `entry-detail` take `JournalRow` and `JournalEntry` from the contract.
+      - Home no longer loads the books in web (N-2.5's temporary note).
+    - **Tests:** `views-home.test.ts` (5):
+      - I-N-4.2.1: each view equals what web's page computed from web's loaders on the parity book
+        (a reversal's entry with its original; null for an unknown or malformed id), and the books
+        balance.
+      - I-N-4.2.2: `/views/shell` + `/views/home` + `/views/entry/:id` in one render make 1
+        `loadBooksData` and 1 `loadSetup`.
+      - I-N-4.2.3: 401 without a token.
+      - E2E home, journal, dashboard-totals: 22 passed, 1 skipped (viewport-only).
+    - **Parity:** MATCH (202 files); TTFB over 92 routes 9633 → 6249 ms (−35%).
 - [ ] **N-4.3 Entry form pages: sales, purchases, returns, money (new and edit)**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/app/(app)/{sales,purchases,returns,money}/**`,
     `src/server/returns.ts`

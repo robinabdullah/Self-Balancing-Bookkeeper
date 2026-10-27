@@ -4,7 +4,7 @@ import { ChevronLeftIcon } from "lucide-react";
 import { Statement } from "@/components/accounts/statement";
 import { DueTrendView } from "@/components/charts/due-trend";
 import { PeriodChips } from "@/components/charts/period-chips";
-import { EntryOverlay } from "@/components/journal/entry-overlay";
+import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
 import { entryLabels } from "@mbl/domain/journal/labels";
 import { ReportSheet } from "@/components/report/report-sheet";
 import { statementRange } from "@mbl/domain/accounts";
@@ -16,7 +16,7 @@ import { withQuery } from "@mbl/domain/href";
 import { rowId } from "@mbl/domain/validation/fields";
 import { loadBooks } from "@/server/books";
 import { loadChartPeriod } from "@/server/charts";
-import { loadJournal, preloadEntry } from "@/server/journal";
+import { loadJournal } from "@/server/journal";
 import { loadSetup } from "@/server/setup";
 
 // D-064 (UIDD §4.17): a customer's Due trend (`/customers/<id>/trend`; ⋯ → Due trend, or a

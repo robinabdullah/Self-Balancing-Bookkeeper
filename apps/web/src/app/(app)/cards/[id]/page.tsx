@@ -11,7 +11,7 @@ import { CardSecretsOverlay } from "@/components/cards/card-secrets-overlay";
 import { CardMoves, EmiPlans } from "@/components/cards/card-detail";
 import { StatusBadge } from "@/components/cards/card-list";
 import { InfoNote } from "@/components/info-note";
-import { EntryOverlay } from "@/components/journal/entry-overlay";
+import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
 import { entryLabels, otherSide } from "@mbl/domain/journal/labels";
 import { statementRange, statementRowsOf } from "@mbl/domain/accounts";
 import { cardDetail, cardRows, emiLabel, ordinal } from "@mbl/domain/card-view";
@@ -25,7 +25,7 @@ import { rowId } from "@mbl/domain/validation/fields";
 import { loadStatementExtras } from "@/server/account-reports";
 import { loadBooks } from "@/server/books";
 import { cardDetailData } from "@/server/cards";
-import { loadJournal, preloadEntry } from "@/server/journal";
+import { loadJournal } from "@/server/journal";
 import { loadSetup } from "@/server/setup";
 
 // UIDD §4.8 (task 4.4.2): a card's full summary row, then its statements (tap a bill to set its

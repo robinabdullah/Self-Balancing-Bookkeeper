@@ -1,23 +1,21 @@
 import Link from "next/link";
+import type { HomeView } from "@mbl/api/views/home.controller";
+import { api } from "@/api/client";
 import { Amount } from "@/components/amount";
 import { BankBadge } from "@/components/cards/bank-badge";
-import { EntryOverlay } from "@/components/journal/entry-overlay";
+import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
 import { entryLabel, whoOf } from "@mbl/domain/journal/labels";
 import { EmptyState } from "@/components/states";
-import { cardAlerts, cardDues, daysLeft, topDues } from "@mbl/domain/dashboard";
+import { daysLeft } from "@mbl/domain/dashboard";
 import { formatDate, formatMonth, monthOf } from "@mbl/domain/dates";
 import { entryHref } from "@mbl/domain/href";
-import { format, parse } from "@mbl/domain/money";
-import { setupNames } from "@mbl/domain/setup";
+import { format } from "@mbl/domain/money";
 import { cn } from "@/lib/utils";
-import { loadBooks } from "@/server/books";
-import { loadJournal, preloadEntry } from "@/server/journal";
-import { loadSetup } from "@/server/setup";
-import { stockLots } from "@/server/stock";
 
 // UIDD §4.2 (task 4.1.2–3): the engine's numbers as of today. Every amount comes from
 // `computeBooks` (via `loadBooks`); stock units from the lots' remaining qty. Tiles open their
 // pages, a card alert opens its card, and a recent entry opens over Home (`?entry=`, D-032).
+// N-4.2: one `/views/home` read; the reductions over the books run in the api.
 export default async function Home({
   searchParams,
 }: {
@@ -25,21 +23,10 @@ export default async function Home({
 }) {
   const { entry } = await searchParams;
   if (entry) preloadEntry(entry);
-  const [{ books, asOf }, setup, lots, journal] = await Promise.all([
-    loadBooks(),
-    loadSetup(),
-    stockLots(),
-    loadJournal(),
-  ]);
-  const names = setupNames(setup);
-  const cardById = new Map(setup.cards.map((c) => [c.id, c]));
+  const { asOf, books, units, dues, profit, alerts, cards, topDues, recent, names } =
+    await api<HomeView>("/views/home");
+  const cardById = new Map(cards.map((c) => [c.id, c]));
   const month = monthOf(asOf);
-  const units = lots.reduce((n, l) => n + l.remaining, 0);
-  const dues = cardDues(books.cards);
-  const profit = books.months.find((m) => m.month === month)?.profit ?? 0;
-  const targets = Object.fromEntries(
-    setup.customers.map((c) => [c.id, c.targetBalance == null ? null : parse(c.targetBalance)]),
-  );
 
   return (
     <>
@@ -93,7 +80,7 @@ export default async function Home({
           more={{ href: "/cards", label: "All cards" }}
           empty="No card bills to pay."
         >
-          {cardAlerts(books.cards, asOf).map((a) => (
+          {alerts.map((a) => (
             <Item key={a.cardId} href={`/cards/${a.cardId}`}>
               <span className="flex items-center gap-2 font-medium">
                 <BankBadge name={cardById.get(a.cardId)?.name ?? ""} />
@@ -117,7 +104,7 @@ export default async function Home({
           more={{ href: "/customers", label: "All customers" }}
           empty="No customer owes anything."
         >
-          {topDues(books.customers, targets).map((d) => (
+          {topDues.map((d) => (
             <Item key={d.customerId} href={`/customers/${d.customerId}`}>
               <span className="font-medium">{names[d.customerId] ?? "Customer"}</span>
               <span className="text-right font-medium">
@@ -144,7 +131,7 @@ export default async function Home({
           more={{ href: "/journal", label: "Journal" }}
           empty="No entries yet."
         >
-          {journal.slice(0, 10).map((row) => (
+          {recent.map((row) => (
             <Item key={row.id} href={entryHref("/", row.id)} scroll={false}>
               <span className="font-medium">{entryLabel(row)}</span>
               <Amount poisha={row.amount} className="text-right font-medium" />

@@ -35,6 +35,7 @@ import { SetupDataService } from "./setup/setup-data.service";
 import { SetupService } from "./setup/setup.service";
 import { ShellController } from "./shell/shell.controller";
 import { StockService } from "./stock/stock.service";
+import { HomeViewsController } from "./views/home.controller";
 
 @Module({
   imports: [ConfigModule, DbModule, AuthModule],
@@ -53,6 +54,7 @@ import { StockService } from "./stock/stock.service";
     BusinessController,
     CardSecretsController,
     PasskeysController,
+    HomeViewsController,
   ],
   providers: [
     Runner,

@@ -42,7 +42,7 @@ import { deletePurchase } from "@/server/actions/purchase";
 import { deleteReturn } from "@/server/actions/return";
 import { reverseEntry } from "@/server/actions/reverse";
 import { deleteSale } from "@/server/actions/sale";
-import type { JournalEntry, JournalRow } from "@/server/journal";
+import type { JournalEntry, JournalRow } from "@/api/contract";
 import { editPath, entryTitle, isOpening, whoOf } from "@mbl/domain/journal/labels";
 
 // UIDD §4.10 (task 3.8.2): an entry's detail, a bottom sheet on a phone. It opens over the page it

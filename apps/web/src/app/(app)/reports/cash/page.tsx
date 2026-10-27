@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { RangeChip } from "@/components/accounts/range-chip";
-import { EntryOverlay } from "@/components/journal/entry-overlay";
+import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
 import { Amount } from "@/components/amount";
 import { CashCount } from "@/components/report/cash-count";
 import { CashDayView, dayLabel } from "@/components/report/cash-book-view";
@@ -13,7 +13,6 @@ import { withQuery } from "@mbl/domain/href";
 import { parseRange } from "@mbl/domain/journal-filter";
 import { cn } from "@/lib/utils";
 import { cashBookText } from "@mbl/domain/whatsapp";
-import { preloadEntry } from "@/server/journal";
 import { cashLabel, loadCashBook } from "@/server/reports";
 
 // D-043 (UIDD §4.17): the Cash book. Today by default; `?day=` steps through the days (not past
