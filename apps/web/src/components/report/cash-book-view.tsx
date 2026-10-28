@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { Amount } from "@/components/amount";
 import { rowClass, rowLinkClass } from "@/components/tables/row-link";
-import type { CashDay } from "@mbl/domain/cash-book";
+import type { CashDay, CashLabel } from "@mbl/domain/cash-book";
 import { formatDate } from "@mbl/domain/dates";
 import { entryHref } from "@mbl/domain/href";
 import { cn } from "@/lib/utils";
-import type { CashLabel } from "@/server/reports";
 
 // D-043 (UIDD §4.17): one Cash book day: Opening, each entry that moved cash (in the order saved),
 // Closing. At ≥ 1024px a table (Entry · Who · In · Out · Balance); on a phone one row per entry:

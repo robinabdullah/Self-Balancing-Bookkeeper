@@ -41,11 +41,13 @@ import { SettingsController } from "./settings/settings.controller";
 import { SetupController } from "./setup/setup.controller";
 import { SetupDataService } from "./setup/setup-data.service";
 import { SetupService } from "./setup/setup.service";
+import { PackService } from "./reports/pack.service";
 import { ReportLinesService } from "./reports/report-lines.service";
 import { ReportsService } from "./reports/reports.service";
 import { ShellController } from "./shell/shell.controller";
 import { ReturnOptionsService } from "./returns/return-options.service";
 import { StockService } from "./stock/stock.service";
+import { ReportViewsController } from "./views/reports.controller";
 import { AdminViewsController } from "./views/admin.controller";
 import { AccountViewsController } from "./views/accounts.controller";
 import { FormViewsController } from "./views/forms.controller";
@@ -76,6 +78,7 @@ import { OverlayViewsController } from "./views/overlays.controller";
     AccountViewsController,
     OverlayViewsController,
     AdminViewsController,
+    ReportViewsController,
   ],
   providers: [
     Runner,
@@ -103,6 +106,7 @@ import { OverlayViewsController } from "./views/overlays.controller";
     CardSecretsDataService,
     ReportsService,
     ReportLinesService,
+    PackService,
     AccountReportsService,
     MessagesService,
     ChartsService,

@@ -7,12 +7,13 @@ import { dhakaToday, formatRange, monthOf } from "@mbl/domain/dates";
 import { salesPdfHref, salesXlsxHref, withQuery } from "@mbl/domain/href";
 import { parseRange, periodRange } from "@mbl/domain/journal-filter";
 import { salesText } from "@mbl/domain/whatsapp";
-import { loadJournal } from "@/server/journal";
-import { loadSales } from "@/server/reports";
+import type { SalesReportView } from "@mbl/api/views/reports.controller";
+import { api } from "@/api/client";
 
 // D-043 (UIDD §4.17): the Sales report, this month by default; `?from=&to=` (the Report sheet's
 // View on screen) shows another period, with its chip. `?report=1` opens the Report sheet (View ·
 // WhatsApp message · Share PDF · Download Excel), `?send=sales` the message for the period.
+// N-4.7: one `/views/reports/sales` read.
 export default async function SalesReportPage({
   searchParams,
 }: {
@@ -22,11 +23,9 @@ export default async function SalesReportPage({
   const today = dhakaToday();
   const asked = parseRange(sp);
   const range = asked ?? periodRange("this", today)!;
-  const [{ report, names }, journal] = await Promise.all([
-    loadSales(range.from, range.to),
-    loadJournal(),
-  ]);
-  const first = journal.at(-1)?.date ?? null;
+  const { report, names, first } = await api<SalesReportView>(
+    withQuery("/views/reports/sales", range),
+  );
   const base = withQuery("/reports/sales", asked ?? {});
 
   return (

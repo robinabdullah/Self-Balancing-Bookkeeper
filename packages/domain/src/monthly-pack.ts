@@ -1,7 +1,7 @@
 import { cashBook } from "./cash-book";
 import { profitsFor } from "./charts/profit";
 import { type Breakdown, breakdown } from "./dashboard";
-import { addMonths, clampDay } from "./dates";
+import { addMonths, clampDay, monthOf } from "./dates";
 import type { Books } from "./engine/index";
 import type { Allocation, MonthProfit } from "./engine/months";
 import { add, sub } from "./money";
@@ -192,4 +192,12 @@ export function topGroups(
       avg: null,
     },
   ];
+}
+
+/** The pack's default month: the latest closed month, else last month (D-045). */
+export function defaultPackMonth(closed: string[], first: string | null, thisMonth: string) {
+  const latest = closed.map(monthOf).sort().at(-1);
+  if (latest) return latest;
+  const last = addMonths(thisMonth, -1);
+  return first && last < first ? first : last;
 }

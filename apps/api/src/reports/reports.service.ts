@@ -3,7 +3,7 @@ import { and, eq, gte, lte } from "drizzle-orm";
 import type { Db } from "@mbl/db/client";
 import { purchaseLines, returnLines, returns, saleLines, sales } from "@mbl/db/schema";
 import { entryTitle, reversalLabel, whoOf } from "@mbl/domain/journal/labels";
-import { type CashBook, cashBook } from "@mbl/domain/cash-book";
+import { type CashBook, type CashLabel, cashBook } from "@mbl/domain/cash-book";
 import type { DatedLines } from "@mbl/domain/charts/profit";
 import { parse } from "@mbl/domain/money";
 import { type SalesReport, salesReport } from "@mbl/domain/sales-report";
@@ -18,8 +18,7 @@ import { SetupDataService } from "../setup/setup-data.service";
 // sale and customer-return lines, each joined to its lot for the model and the cost. Every figure
 // ties out to `computeBooks`.
 
-/** A Cash book row's entry ("Payment in MR-0017", "Reversal of Expense") and who. */
-export type CashLabel = { title: string; who: string };
+export type { CashLabel };
 
 export type CashBookView = {
   book: CashBook;

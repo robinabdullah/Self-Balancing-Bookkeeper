@@ -2,7 +2,13 @@ import "server-only";
 import { TYPE_LABEL } from "@mbl/domain/journal/labels";
 import { addMonths, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
-import { type MonthlyPack, OTHERS, monthlyPack, packDates } from "@mbl/domain/monthly-pack";
+import {
+  type MonthlyPack,
+  OTHERS,
+  defaultPackMonth,
+  monthlyPack,
+  packDates,
+} from "@mbl/domain/monthly-pack";
 import { setupNames } from "@mbl/domain/setup";
 import { booksOn, typeOfEntries } from "@/server/account-reports";
 import { loadBooks } from "@/server/books";
@@ -23,13 +29,7 @@ export async function packMonths() {
   return { first: first ? monthOf(first) : null, last: monthOf(asOf), closed: data.closed };
 }
 
-/** The pack's default month: the latest closed month, else last month (D-045). */
-export function defaultPackMonth(closed: string[], first: string | null, thisMonth: string) {
-  const latest = closed.map(monthOf).sort().at(-1);
-  if (latest) return latest;
-  const last = addMonths(thisMonth, -1);
-  return first && last < first ? first : last;
-}
+export { defaultPackMonth };
 
 /** `?month=` when it is a month with a pack (the opening month to this month), else null. */
 export async function packMonth(asked: string | undefined): Promise<string | null> {

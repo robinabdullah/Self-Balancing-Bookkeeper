@@ -11,18 +11,16 @@ import { EmptyState } from "@/components/states";
 import { clampDay, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { investorRoutes, withQuery } from "@mbl/domain/href";
 import { parseRange, periodRange } from "@mbl/domain/journal-filter";
-import { peopleRows } from "@mbl/domain/people-view";
 import { monthsLabel } from "@mbl/domain/report-text";
 import { rowId } from "@mbl/domain/validation/fields";
-import { loadInvestorReport } from "@/server/account-reports";
-import { loadBooks } from "@/server/books";
-import { loadJournal } from "@/server/journal";
-import { loadSetup } from "@/server/setup";
+import type { InvestorReportView } from "@mbl/api/views/reports.controller";
+import { api } from "@/api/client";
 
 // D-045 (UIDD §4.17): the Investor report. Without `?person=`, the list of investors and partners
 // (a row opens their report); with one, their report for whole months (this month by default;
 // `?from=&to=` from the Report sheet, widened to whole months). `?report=1` opens the Report sheet
 // (View · WhatsApp · Share PDF · Download Excel), `?send=investor` the message to the person.
+// N-4.7: one `/views/reports/investor` read.
 export default async function InvestorReportPage({
   searchParams,
 }: {
@@ -37,12 +35,11 @@ export default async function InvestorReportPage({
   const range = asked
     ? { from: `${monthOf(asked.from)}-01`, to: clampDay(monthOf(asked.to), 31) }
     : periodRange("this", today)!;
-  const [report, journal] = await Promise.all([
-    loadInvestorReport(person, range.from, range.to),
-    loadJournal(),
-  ]);
-  if (!report) notFound();
-  const first = journal.at(-1)?.date ?? null;
+  const view = await api<InvestorReportView>(
+    withQuery("/views/reports/investor", { person, ...range }),
+  );
+  if (view.kind !== "report") notFound();
+  const { report, first } = view;
   const base = withQuery("/reports/investor", { person, ...(asked && range) });
   const title = `${report.partner ? "Partner" : "Investor"} report — ${report.person.name}`;
   const routes = investorRoutes(person);
@@ -91,10 +88,8 @@ export default async function InvestorReportPage({
 
 /** The investors and partners: active, or still holding capital, profit owed or a difference. */
 async function InvestorList() {
-  const [{ books }, setup] = await Promise.all([loadBooks(), loadSetup()]);
-  const rows = peopleRows(setup.people, books).filter(
-    (p) => p.active || p.capital !== 0 || p.profitOwed !== 0 || p.openingDifference != null,
-  );
+  const view = await api<InvestorReportView>("/views/reports/investor");
+  const rows = view.kind === "list" ? view.rows : [];
   return (
     <>
       <h1 className="mb-3 text-xl font-semibold">Investor report</h1>

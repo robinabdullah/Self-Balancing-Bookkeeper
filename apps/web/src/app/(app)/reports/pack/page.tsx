@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { PackView } from "@/components/report/pack-view";
 import { ReportSheet } from "@/components/report/report-sheet";
 import { ReportTitle } from "@/components/report/report-title";
@@ -7,12 +6,13 @@ import { EmptyState } from "@/components/states";
 import { dhakaToday, formatDate, formatMonth } from "@mbl/domain/dates";
 import { packPdfHref, packXlsxHref, withQuery } from "@mbl/domain/href";
 import { packText } from "@mbl/domain/report-text";
-import { defaultPackMonth, loadPack, packMonth, packMonths } from "@/server/pack";
+import type { PackReportView } from "@mbl/api/views/reports.controller";
+import { api } from "@/api/client";
 
 // D-045 (UIDD §4.17): the Monthly partner pack, one month (`?month=`; the latest closed month by
 // default, else last month). `?report=1` opens the Report sheet (one month: View · WhatsApp ·
 // Share PDF · Download Excel), `?send=pack` the message. A month outside the opening…this month
-// is not found.
+// is not found. N-4.7: one `/views/reports/pack` read.
 export default async function PackPage({
   searchParams,
 }: {
@@ -20,8 +20,8 @@ export default async function PackPage({
 }) {
   const sp = await searchParams;
   const today = dhakaToday();
-  const { first, last, closed } = await packMonths();
-  if (!first) {
+  const view = await api<PackReportView>(withQuery("/views/reports/pack", { month: sp.month }));
+  if (view.empty) {
     return (
       <>
         <h1 className="mb-3 text-xl font-semibold">Monthly pack</h1>
@@ -29,9 +29,7 @@ export default async function PackPage({
       </>
     );
   }
-  const month = sp.month ? await packMonth(sp.month) : defaultPackMonth(closed, first, last);
-  if (!month) notFound();
-  const { pack, names } = await loadPack(month);
+  const { first, month, pack, names } = view;
   const base = withQuery("/reports/pack", { month });
 
   return (

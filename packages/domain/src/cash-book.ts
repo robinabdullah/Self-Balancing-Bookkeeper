@@ -49,3 +49,10 @@ export function cashBook(posted: Posted[], from: string, to: string): CashBook {
   }
   return { from, to, opening, days, closing: balance };
 }
+
+/** A Cash book row's entry ("Payment in MR-0017", "Reversal of Expense") and who. */
+export type CashLabel = { title: string; who: string };
+
+/** "Payment in MR-0017 Rahman Telecom (Karim)": a Cash book row as the day book message reads it. */
+export const cashLabel = (labels: Record<string, CashLabel>, id: string) =>
+  [labels[id]?.title ?? "Entry", labels[id]?.who].filter(Boolean).join(" ");

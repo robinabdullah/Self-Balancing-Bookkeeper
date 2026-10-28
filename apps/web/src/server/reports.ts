@@ -3,7 +3,7 @@ import { and, eq, gte, lte } from "drizzle-orm";
 import { db } from "@mbl/db";
 import { purchaseLines, returnLines, returns, saleLines, sales } from "@mbl/db/schema";
 import { entryTitle, reversalLabel, whoOf } from "@mbl/domain/journal/labels";
-import { type CashBook, cashBook } from "@mbl/domain/cash-book";
+import { type CashBook, type CashLabel, cashBook, cashLabel } from "@mbl/domain/cash-book";
 import type { DatedLines } from "@mbl/domain/charts/profit";
 import { parse } from "@mbl/domain/money";
 import { type SalesReport, salesReport } from "@mbl/domain/sales-report";
@@ -15,9 +15,6 @@ import { loadSetup } from "@/server/setup";
 // D-043 (UIDD §4.17): what the Reports read. The Cash book comes off the books' posted entries
 // (labelled from the Journal rows); the Sales report off the sale and customer-return lines, each
 // joined to its lot for the model and the cost. Every figure ties out to `computeBooks`.
-
-/** A Cash book row's entry ("Payment in MR-0017", "Reversal of Expense") and who. */
-export type CashLabel = { title: string; who: string };
 
 export type CashBookView = {
   book: CashBook;
@@ -40,9 +37,7 @@ export async function loadCashBook(from: string, to: string): Promise<CashBookVi
   return { book, labels, first: journal.at(-1)?.date ?? null };
 }
 
-/** "Payment in MR-0017 Rahman Telecom (Karim)": a Cash book row as the day book message reads it. */
-export const cashLabel = (labels: Record<string, CashLabel>, id: string) =>
-  [labels[id]?.title ?? "Entry", labels[id]?.who].filter(Boolean).join(" ");
+export { cashLabel, type CashLabel };
 
 const poisha = (text: string) => parse(text) as number;
 

@@ -1052,9 +1052,41 @@ Screenshots: those screens, plus the parity report.
         `business-actions`: 7 files, 42 passed.
       - E2E `month-close`, `settings`, `setup`, `export` and `card-secrets`: 35 passed.
     - **Parity:** MATCH (202 files); TTFB over 92 routes 9633 → 6957 ms (−28%).
-- [ ] **N-4.7 Reports: cash, sales, investor, pack**
+- [x] **N-4.7 Reports: cash, sales, investor, pack**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/{reports,pack}.ts`, `report-lines.ts`
-  - **Tests:** [ ] the `reports` E2E; parity.
+  - **Tests:** [x] the `reports` E2E; parity.
+  - **Result (2026-10-28):** (a Sonnet subagent wrote it; reviewed here)
+    - **api:** `reports/pack.service.ts` `PackService` (`packMonths`, `packMonth`, `loadPack`).
+      Reports and report-lines came in N-4.5.
+    - **Domain (one source):**
+      - `cashLabel` and `CashLabel` move to `@mbl/domain/cash-book`;
+      - `defaultPackMonth` moves to `@mbl/domain/monthly-pack`;
+      - web's `server/reports.ts` and `server/pack.ts` re-export them for the PDF and XLSX routes
+        (N-5).
+    - `apps/api/src/views/reports.controller.ts`:
+      - `GET /views/reports/cash?from&to` returns `{book, labels, first}`;
+      - `/views/reports/sales?from&to` returns `{report, names, first}`;
+      - `/views/reports/investor`:
+        - with no `person`: `{kind: "list", rows}`, using the page's filter;
+        - with `?person&from&to`: `{kind: "report", report, first}`;
+      - `/views/reports/pack?month` returns `{empty: true}`, or
+        `{empty: false, first, month, pack, names}`.
+      - A missing period, a malformed or unknown person, or a bad month is a 404.
+    - **Web:**
+      - The 4 pages make one read each.
+      - The day and range logic, and the text of the message and Report sheet, stay in the pages.
+      - `cash-book-view` takes `CashLabel` from the domain.
+    - **Tests:**
+      - `views-reports.test.ts`:
+        - I-N-4.7.1: each view equals web's loaders. It covers a cash day and a range, sales, the
+          investor list and reports, and the default and `2026-08` packs.
+        - I-N-4.7.2: 404s.
+        - I-N-4.7.3: 401 without a token.
+        - The books balance.
+      - With `reports`, `account-reports` and `pdf`: 20 passed.
+      - Unit: 721.
+      - E2E `reports` and `account-reports`: 15 passed.
+    - **Parity:** MATCH (202 files); TTFB over 92 routes 9633 → 6573 ms (−32%).
 - [ ] **N-4.8 Charts (tabs and `[chart]`)**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/charts.ts`
   - **Tests:** [ ] the `charts*` E2E specs; parity.

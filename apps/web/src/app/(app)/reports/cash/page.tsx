@@ -12,13 +12,16 @@ import { addDays, dhakaToday, formatDate, monthOf } from "@mbl/domain/dates";
 import { withQuery } from "@mbl/domain/href";
 import { parseRange } from "@mbl/domain/journal-filter";
 import { cn } from "@/lib/utils";
+import { cashLabel } from "@mbl/domain/cash-book";
 import { cashBookText } from "@mbl/domain/whatsapp";
-import { cashLabel, loadCashBook } from "@/server/reports";
+import type { CashReportView } from "@mbl/api/views/reports.controller";
+import { api } from "@/api/client";
 
 // D-043 (UIDD §4.17): the Cash book. Today by default; `?day=` steps through the days (not past
 // today, not before the first entry); `?from=&to=` (the Report sheet's View on screen) shows a
 // range, each day with cash moves. Count cash on today's page only. `?report=1` opens the Report
 // sheet, `?send=cash` the day book message for the period, `?entry=` an entry over the page.
+// N-4.7: one `/views/reports/cash` read.
 export default async function CashBookPage({
   searchParams,
 }: {
@@ -32,7 +35,9 @@ export default async function CashBookPage({
   const day = pickedDay && pickedDay <= today ? pickedDay : today;
   if (sp.entry) preloadEntry(sp.entry);
 
-  const { book, labels, first } = await loadCashBook(range?.from ?? day, range?.to ?? day);
+  const { book, labels, first } = await api<CashReportView>(
+    withQuery("/views/reports/cash", { from: range?.from ?? day, to: range?.to ?? day }),
+  );
   const dayHref = (d: string) => withQuery("/reports/cash", { day: d === today ? null : d });
   const base = range ? withQuery("/reports/cash", range) : dayHref(day);
   const quiet = { date: day, opening: book.opening, rows: [], closing: book.closing };
