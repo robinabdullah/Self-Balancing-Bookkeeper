@@ -1007,10 +1007,51 @@ Screenshots: those screens, plus the parity report.
       - E2E (`card-page`, `account-reports`, `messages`, `quick-actions`, `business`,
         `card-secrets`, `charts-customers`): 58 passed, 1 skipped.
     - **Parity:** MATCH (202 files); TTFB over 92 routes 9633 → 7685 ms (−20%).
-- [ ] **N-4.6 Months (and `[month]`), setup, saved, settings (passkey dates), export page**
+- [x] **N-4.6 Months (and `[month]`), setup, saved, settings (passkey dates), export page**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/months.ts`, `settings/page.tsx`,
     `saved/page.tsx`
-  - **Tests:** [ ] the `month-close` and `settings` E2E; the Date leaks typecheck clean; parity.
+  - **Tests:** [x] the `month-close` and `settings` E2E; the Date leaks typecheck clean; parity.
+  - **Result (2026-10-28):** (a Sonnet subagent wrote it; reviewed here)
+    - **api services:**
+      - `months/months-data.service.ts`: `MonthsDataService` with `loadCloses`, `loadClose`,
+        `loadSnapshots` and `profitSinceClose`. `git diff -w` against the Ref shows only the
+        wrapper. The writes stay in `months.service.ts`.
+      - `export/export.service.ts`: `lastExport` only; the workbook moves in N-5.2.
+    - `apps/api/src/views/admin.controller.ts`:
+      - `GET /views/months` returns `{rows, first}`.
+      - `GET /views/months/:month` returns one of three kinds:
+        - `closed`: the snapshot's lines and total, `allocations`, `names` as a record (the page
+          rebuilds `ClosedAllocations`' Map), `latest`, `close` and `paid`;
+        - `open`: `next`, the lines and the total;
+        - `close`: the lines and the total, `warning`, `investors`, `partners` and `reminders`
+          with the customer's name already in.
+
+        Any other month is a 404, by the page's own rules.
+      - `/views/setup` returns `{data, banks, cardDetails}`.
+      - `/views/saved?tab=` returns the bank tab (`accounts`, `owners`) or the cards tab
+        (`items`, `addable`, `hasPasskey`).
+      - `/views/settings` returns `{profile, business, logo, devices}`.
+      - `/views/export` returns `{last}`.
+    - **Date leaks:**
+      - The Settings device rows (`added`, `updatedAt`) and the profile's `updatedAt` are built as
+        text in the view, so no view type holds a `Date`.
+      - The N-4.3 cast (Setup) and the N-4.5 cast (Saved) are gone.
+      - `reopen-month` and `business-settings` take `PaidSince` and `Business` from the contract.
+    - **Web:** the 6 pages make one read each. Their JSX is unchanged apart from reading the view.
+      The reminders `<li>` shows `r.name`, which is the same text as before.
+    - **Tests:**
+      - `views-admin.test.ts`:
+        - I-N-4.6.1: each view equals web's loaders. It covers the months `2026-08` (closed),
+          `2026-09` (the close screen) and `2026-10` (open), both Saved tabs, and Settings with and
+          without a passkey row.
+        - I-N-4.6.2: `2027-01`, `2026-13`, `2026-1`, `not-a-month`, `2026-11` and `2026-07` are
+          404s.
+        - I-N-4.6.3: 401 without a token.
+        - The books balance.
+      - With `reopen-actions`, `settings-actions`, `export`, `setup-actions`, `card-secrets` and
+        `business-actions`: 7 files, 42 passed.
+      - E2E `month-close`, `settings`, `setup`, `export` and `card-secrets`: 35 passed.
+    - **Parity:** MATCH (202 files); TTFB over 92 routes 9633 → 6957 ms (−28%).
 - [ ] **N-4.7 Reports: cash, sales, investor, pack**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/{reports,pack}.ts`, `report-lines.ts`
   - **Tests:** [ ] the `reports` E2E; parity.

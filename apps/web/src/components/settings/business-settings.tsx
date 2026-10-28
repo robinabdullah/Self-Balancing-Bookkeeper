@@ -9,7 +9,7 @@ import { NavSheet } from "@/components/shell/nav-sheets";
 import { MESSAGE_LABEL, MESSAGE_TYPES, type MessageType, template } from "@mbl/domain/business";
 import { TERMS_MAX } from "@mbl/domain/validation/business";
 import { saveBusinessDetails, savePdfTerms, saveTemplate } from "@/server/actions/business";
-import type { Business } from "@/server/business";
+import type { Business } from "@/api/contract";
 import { LogoForm } from "./logo-form";
 
 // UIDD §4.13 (D-039, D-049): Settings → Business in four short parts: Details · Logo · Messages ·

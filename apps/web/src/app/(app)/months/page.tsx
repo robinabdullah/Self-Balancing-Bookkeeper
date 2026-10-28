@@ -2,32 +2,24 @@ import { MonthList } from "@/components/months/month-list";
 import { ReportSheet } from "@/components/report/report-sheet";
 import { ReportTitle } from "@/components/report/report-title";
 import { dhakaToday, monthOf } from "@mbl/domain/dates";
-import { nextToClose } from "@mbl/domain/engine/months";
 import { packPdfHref, packXlsxHref } from "@mbl/domain/href";
-import { monthList } from "@mbl/domain/months-view";
-import { loadBooks } from "@/server/books";
-import { loadCloses } from "@/server/months";
+import type { MonthsView } from "@mbl/api/views/admin.controller";
+import { api } from "@/api/client";
 
 // UIDD §4.9 (task 5.1, CR-024): every month from the opening to this month with its profit and
 // status; the next month to close links to the close screen, the others to their page (D-044).
 // D-045: the title's ⤴ Share opens the Report sheet for the Monthly pack (`?report=1`); its
-// outputs open the pack page.
+// outputs open the pack page. N-4.6: one `/views/months` read.
 export default async function MonthsPage({
   searchParams,
 }: {
   searchParams: Promise<{ report?: string }>;
 }) {
-  const [{ data, books, asOf }, closes, sp] = await Promise.all([
-    loadBooks(),
-    loadCloses(),
-    searchParams,
-  ]);
-  const first = data.entries[0]?.date ?? null;
-  const next = nextToClose(data.closed, first, asOf);
+  const [{ rows, first }, sp] = await Promise.all([api<MonthsView>("/views/months"), searchParams]);
   return (
     <>
       <ReportTitle title="Months" base="/months" />
-      <MonthList rows={monthList(books.months, closes, next, monthOf(asOf))} />
+      <MonthList rows={rows} />
       {sp.report && (
         <ReportSheet
           base="/months"

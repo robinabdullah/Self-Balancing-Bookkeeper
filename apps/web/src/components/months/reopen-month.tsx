@@ -8,13 +8,13 @@ import { LABEL } from "@mbl/domain/money/types";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatMonth } from "@mbl/domain/dates";
 import { reopenMonth } from "@/server/actions/months";
-import type { profitSinceClose } from "@/server/months";
+import type { PaidSince } from "@/api/contract";
 
 // UIDD §4.9 step 5 (task 5.4): the latest closed month's Re-open → a confirm that lists (as a
 // warning) the profit paid / reinvested entries made since the close → `reopenMonth`. The page
 // then shows the month's close screen again.
 
-type Paid = Awaited<ReturnType<typeof profitSinceClose>>;
+type Paid = PaidSince;
 
 export function ReopenMonth({
   month,

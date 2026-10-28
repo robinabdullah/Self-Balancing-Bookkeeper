@@ -3,6 +3,7 @@ import type {
   BankAccount as ApiBankAccount,
   Owner as ApiOwner,
 } from "@mbl/api/business/business.service";
+import type { Business as ApiBusiness } from "@mbl/api/business/business.service";
 import type { CardSecret as ApiCardSecret } from "@mbl/api/card-secrets/card-secrets-data.service";
 import type { BillDatesRow as ApiBillDatesRow } from "@mbl/api/cards/card-detail.service";
 import type { EditValues as ApiEditValues } from "@mbl/api/entries/entries.service";
@@ -11,6 +12,7 @@ import type {
   JournalRow as ApiJournalRow,
 } from "@mbl/api/journal/journal.service";
 import type { Draft as ApiDraft } from "@mbl/api/messages/messages.service";
+import type { PaidSince as ApiPaidSince } from "@mbl/api/months/months-data.service";
 import type {
   BillLine as ApiBillLine,
   ReturnLot as ApiReturnLot,
@@ -36,3 +38,6 @@ export type Owner = Jsonify<ApiOwner>;
 export type BankAccount = Jsonify<ApiBankAccount>;
 export type CardSecret = Jsonify<ApiCardSecret>;
 export type Draft = Jsonify<ApiDraft>;
+// N-4.6: Settings' business and Re-open's warning.
+export type Business = Jsonify<ApiBusiness>;
+export type PaidSince = Jsonify<ApiPaidSince>;

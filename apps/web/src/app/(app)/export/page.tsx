@@ -1,11 +1,13 @@
 import { ExportButton } from "@/components/export/export-button";
 import { formatStamp } from "@mbl/domain/dates";
-import { lastExport } from "@/server/export";
+import type { ExportView } from "@mbl/api/views/admin.controller";
+import { api } from "@/api/client";
 
 // UIDD §4.12 (task 6.4.2): the download, the last export (time and who, from the audit log,
-// D-017) and the weekly-download note (PRD §4.7: the export is the backup).
+// D-017) and the weekly-download note (PRD §4.7: the export is the backup). N-4.6: one
+// `/views/export` read.
 export default async function ExportPage() {
-  const last = await lastExport();
+  const { last } = await api<ExportView>("/views/export");
   return (
     <>
       <h1 className="mb-3 text-xl font-semibold">Export</h1>

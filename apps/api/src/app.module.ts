@@ -13,6 +13,7 @@ import { CardSecretsService } from "./card-secrets/card-secrets.service";
 import { BillDatesController } from "./cards/bill-dates.controller";
 import { CardDetailService } from "./cards/card-detail.service";
 import { ChartsService } from "./charts/charts.service";
+import { ExportService } from "./export/export.service";
 import { BillDatesService } from "./cards/bill-dates.service";
 import { ConfigModule } from "./config.module";
 import { DbModule } from "./db/db.module";
@@ -23,6 +24,7 @@ import { MessagesService } from "./messages/messages.service";
 import { MoneyController } from "./money/money.controller";
 import { MoneyService } from "./money/money.service";
 import { MonthsController } from "./months/months.controller";
+import { MonthsDataService } from "./months/months-data.service";
 import { MonthsService } from "./months/months.service";
 import { Passkeys } from "./passkeys/passkeys";
 import { PasskeysController } from "./passkeys/passkeys.controller";
@@ -44,6 +46,7 @@ import { ReportsService } from "./reports/reports.service";
 import { ShellController } from "./shell/shell.controller";
 import { ReturnOptionsService } from "./returns/return-options.service";
 import { StockService } from "./stock/stock.service";
+import { AdminViewsController } from "./views/admin.controller";
 import { AccountViewsController } from "./views/accounts.controller";
 import { FormViewsController } from "./views/forms.controller";
 import { HomeViewsController } from "./views/home.controller";
@@ -72,6 +75,7 @@ import { OverlayViewsController } from "./views/overlays.controller";
     FormViewsController,
     AccountViewsController,
     OverlayViewsController,
+    AdminViewsController,
   ],
   providers: [
     Runner,
@@ -102,6 +106,8 @@ import { OverlayViewsController } from "./views/overlays.controller";
     AccountReportsService,
     MessagesService,
     ChartsService,
+    MonthsDataService,
+    ExportService,
   ],
 })
 export class AppModule {}

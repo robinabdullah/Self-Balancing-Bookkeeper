@@ -1,15 +1,14 @@
 import Link from "next/link";
-import type { SetupData } from "@/api/contract";
 import { SetupSection } from "@/components/setup/setup-section";
 import { type SetupKind, setupKinds } from "@mbl/domain/setup";
 import { safeFrom } from "@mbl/domain/href";
 import { cn } from "@/lib/utils";
-import { bankCounts } from "@/server/business";
-import { loadCardSecrets } from "@/server/card-secrets";
-import { loadSetup } from "@/server/setup";
+import type { SetupView } from "@mbl/api/views/admin.controller";
+import { api } from "@/api/client";
 
 // UIDD §4.11: Setup lists for People, Cards, Customers, Suppliers and Models. `?edit=<id>` opens
 // that row's form and `from` is where closing it goes back to (a detail page's Edit, D-032).
+// N-4.6: one `/views/setup` read.
 const tabs: Record<SetupKind, string> = {
   person: "People",
   card: "Cards",
@@ -25,7 +24,7 @@ export default async function SetupPage({
 }) {
   const { tab, edit, from } = await searchParams;
   const kind = setupKinds.find((k) => k === tab) ?? "person";
-  const [data, banks, secrets] = await Promise.all([loadSetup(), bankCounts(), loadCardSecrets()]);
+  const { data, banks, cardDetails } = await api<SetupView>("/views/setup");
   return (
     <>
       <h1 className="mb-3 text-xl font-semibold">Setup</h1>
@@ -47,11 +46,9 @@ export default async function SetupPage({
       <SetupSection
         key={edit}
         kind={kind}
-        // Until N-4.6 reads `/views/setup`: the RSC sends the rows' `createdAt` as a Date, which the
-        // Setup forms never read; their props now take the api's JSON shape (contract.ts).
-        data={data as unknown as SetupData}
+        data={data}
         banks={banks}
-        cardDetails={secrets.map((s) => s.cardId)}
+        cardDetails={cardDetails}
         edit={edit}
         from={safeFrom(from)}
       />
