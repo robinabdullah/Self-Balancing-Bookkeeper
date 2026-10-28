@@ -4,8 +4,8 @@ import { type DocumentProps, Text } from "@react-pdf/renderer";
 import { extractText } from "unpdf";
 import { describe, expect, it } from "vitest";
 import { businessDetailsSchema, pdfTermsSchema, TERMS_MAX } from "@mbl/domain/validation/business";
-import { PdfDocument, renderPdf } from "@/pdf/document";
-import { type PdfBusiness, type PdfKind, pdfFrame } from "@/pdf/layout";
+import { PdfDocument, renderPdf } from "../../apps/api/src/pdf/document";
+import { type PdfBusiness, type PdfKind, pdfFrame } from "../../apps/api/src/pdf/layout";
 
 // CR-029 (D-049, D-050; UIDD §4.13, §4.16): each customer document prints only its own terms,
 // then the footer line apart; the Sales report prints neither. Each box is multi-line, at most

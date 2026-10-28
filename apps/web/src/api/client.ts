@@ -1,5 +1,4 @@
 import "server-only";
-import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
@@ -16,7 +15,7 @@ import type { Jsonify } from "./jsonify";
 // Anything else throws, which a form shows as "Not saved — tap Save again". Nothing is retried.
 
 const TIMEOUT_MS = 15_000;
-const renderId = cache(() => randomUUID());
+const renderId = cache(() => crypto.randomUUID());
 
 /** The session's access token, or null when signed out (once per request). */
 export const accessToken = cache(async () => {
@@ -24,7 +23,19 @@ export const accessToken = cache(async () => {
   return data.session?.access_token ?? null;
 });
 
-async function send(method: string, path: string, body?: unknown) {
+type SendOptions = {
+  body?: unknown;
+  /** N-5.3: the one browser cookie the api reads (`card_reveal`), as a `Cookie` header. */
+  cookie?: string;
+  timeoutMs?: number;
+};
+
+/** The api's raw answer; the file routes forward it as it is (`./files.ts`). */
+export async function send(
+  method: string,
+  path: string,
+  { body, cookie, timeoutMs = TIMEOUT_MS }: SendOptions = {},
+) {
   await cookies(); // request-time only: `next build` never calls the api (design rule 11)
   const [h, token] = await Promise.all([headers(), accessToken()]);
   // Only what the browser's request had: the api applies the reference's own defaults.
@@ -39,12 +50,13 @@ async function send(method: string, path: string, body?: unknown) {
   if (token) forwarded.Authorization = `Bearer ${token}`;
   if (method === "GET") forwarded["X-Render-Id"] = renderId();
   if (body !== undefined) forwarded["Content-Type"] = "application/json";
+  if (cookie) forwarded.Cookie = cookie;
   return fetch(`${process.env.API_URL}${path}`, {
     method,
     headers: forwarded,
     body: body === undefined ? undefined : JSON.stringify(body),
     cache: "no-store",
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeoutMs),
   });
 }
 
@@ -70,7 +82,7 @@ async function body(res: Response, path: string) {
 
 /** A write's `Result` (200/409/422), without revalidating (e.g. passkey options; null when empty). */
 export async function call<T = Result>(method: string, path: string, body?: unknown): Promise<T> {
-  const res = await send(method, path, body);
+  const res = await send(method, path, { body });
   if (![200, 409, 422].includes(res.status))
     throw new Error(`api ${method} ${path}: ${res.status}`);
   const text = await res.text(); // the api sends null as an empty body

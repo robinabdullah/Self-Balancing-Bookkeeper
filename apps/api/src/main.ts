@@ -1,4 +1,3 @@
-import "./env";
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { setupApp } from "./app";

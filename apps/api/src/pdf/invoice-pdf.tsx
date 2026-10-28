@@ -1,4 +1,3 @@
-import "server-only";
 import { Text, View } from "@react-pdf/renderer";
 import { PdfDocument, pdf, renderPdf } from "./document";
 import type { DocPdf } from "./invoice";

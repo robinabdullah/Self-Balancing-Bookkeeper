@@ -4,9 +4,9 @@ import { billProfit, duesAround } from "@mbl/domain/accounts";
 import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
 import type { Entry, MoneyEntry } from "@mbl/domain/engine/post";
 import { format } from "@mbl/domain/money";
-import { invoicePdf, receiptPdf } from "@/pdf/invoice";
-import { renderDocPdf } from "@/pdf/invoice-pdf";
-import { pdfFileName, pdfFrame } from "@/pdf/layout";
+import { invoicePdf, receiptPdf } from "../../apps/api/src/pdf/invoice";
+import { renderDocPdf } from "../../apps/api/src/pdf/invoice-pdf";
+import { pdfFileName, pdfFrame } from "../../apps/api/src/pdf/layout";
 import { expectBalanced, PARTNERS } from "./invariant";
 
 // CR-022 (D-042; UIDD §4.16): the invoice and the money receipt. Synthetic ids and figures only.

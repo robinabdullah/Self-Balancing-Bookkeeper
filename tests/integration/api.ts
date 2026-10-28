@@ -177,6 +177,35 @@ export function as(app: INestApplication, user: TestUser, headers: Record<string
   };
 }
 
+/** N-5: web's file URL (`/pdf/<kind>?…`, `/reports/<report>/xlsx?…`) as its api path. */
+export const filePath = (href: string) =>
+  href.replace(/^\/pdf\//, "/files/pdf/").replace(/^\/reports\/(\w+)\/xlsx/, "/files/xlsx/$1");
+
+/**
+ * N-5: a `/files/*` answer as a fetch `Response` (the body as bytes), sent as web's forwarder
+ * sends it: as `user` (null: no token), with `cookie` (N-5.3: `card_reveal`) and a JSON body.
+ */
+export async function fileAs(
+  app: INestApplication,
+  user: TestUser | null,
+  href: string,
+  { method = "get", body, cookie }: { method?: "get" | "post"; body?: unknown; cookie?: string } = {},
+): Promise<Response> {
+  const req = request(app.getHttpServer())[method](filePath(href));
+  if (user) void req.set("Authorization", `Bearer ${user.token}`);
+  if (cookie) void req.set("Cookie", cookie);
+  if (body !== undefined) void req.send(body as object);
+  const res = await req.buffer(true).parse((stream, done) => {
+    const chunks: Buffer[] = [];
+    stream.on("data", (c: Buffer) => chunks.push(c));
+    stream.on("end", () => done(null, Buffer.concat(chunks)));
+  });
+  const headers = new Headers();
+  for (const [name, value] of Object.entries(res.headers as Record<string, string | string[]>))
+    for (const v of [value].flat()) headers.append(name, v);
+  return new Response(new Uint8Array(res.body as Buffer), { status: res.status, headers });
+}
+
 /**
  * N-3.1: an in-process api and a signed-in partner, with the old names bound to them; for files
  * that only need writes to make their data. `close()` stops the api and removes the user.

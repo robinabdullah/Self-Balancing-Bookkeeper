@@ -12,10 +12,10 @@ import { cardExtrasText, investorText, modelText, packText } from "@mbl/domain/r
 import { salesReport, salesSheets } from "@mbl/domain/sales-report";
 import { stockTotal } from "@mbl/domain/stock-movement";
 import { salesText, statementText } from "@mbl/domain/whatsapp";
-import { cardPdf, investorPdf, modelSection } from "@/pdf/account-reports";
-import { packPdf } from "@/pdf/pack";
-import { pdfText } from "@/pdf/report";
-import { salesPdf } from "@/pdf/sales";
+import { cardPdf, investorPdf, modelSection } from "../../apps/api/src/pdf/account-reports";
+import { packPdf } from "../../apps/api/src/pdf/pack";
+import { pdfText } from "../../apps/api/src/pdf/report";
+import { salesPdf } from "../../apps/api/src/pdf/sales";
 import {
   CARD,
   ARIF,

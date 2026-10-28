@@ -39,7 +39,7 @@ const swc = {
   },
 };
 
-const FONTS = path.join(__dirname, "../web/src/pdf/fonts");
+const FONTS = path.join(__dirname, "src/pdf/fonts");
 
 const config = {
   target: "node",

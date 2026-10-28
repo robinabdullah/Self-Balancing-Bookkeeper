@@ -5,9 +5,9 @@ import { billProfit } from "@mbl/domain/accounts";
 import { type BooksData, type StoredEntry, computeBooks } from "@mbl/domain/engine/index";
 import type { Entry, MoneyEntry } from "@mbl/domain/engine/post";
 import { add, format } from "@mbl/domain/money";
-import { pdfFileName, pdfFrame } from "@/pdf/layout";
-import { closingLine, statementPdf } from "@/pdf/statement";
-import { renderStatementPdf } from "@/pdf/statement-pdf";
+import { pdfFileName, pdfFrame } from "../../apps/api/src/pdf/layout";
+import { closingLine, statementPdf } from "../../apps/api/src/pdf/statement";
+import { renderStatementPdf } from "../../apps/api/src/pdf/statement-pdf";
 import { expectBalanced, PARTNERS } from "./invariant";
 
 // CR-021 (D-041; UIDD §4.16): the due statement PDF. Synthetic ids and figures only (D-014).

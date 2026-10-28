@@ -10,7 +10,7 @@ import { DB } from "../db/db.module";
 
 // Ref: src/server/business.ts (D-039): the business profile (Settings → Business, the app name)
 // and the saved bank accounts (More → Saved details, an owner's ⋯ → Bank accounts; N-4.5). The
-// logo itself is read only by `/logo` (N-5.3).
+// logo itself is read only by `/logo` and the PDFs' header (N-5).
 
 const columns = getTableColumns(businessProfile);
 const withoutLogo = Object.fromEntries(
@@ -34,6 +34,15 @@ export class BusinessService {
         .limit(1);
       return row ? { ...row, updatedAt: row.updatedAt.toISOString() } : null;
     });
+  }
+
+  /** `/logo` and the PDFs' header: the stored data URL. */
+  async getLogo() {
+    const [row] = await this.db
+      .select({ logo: businessProfile.logo })
+      .from(businessProfile)
+      .limit(1);
+    return row?.logo ?? null;
   }
 
   /** All saved accounts, the business's first, then by owner and bank. */
