@@ -1,29 +1,37 @@
 import type { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
 import { logoSrc } from "@mbl/domain/business";
 import { profitsFor } from "@mbl/domain/charts/profit";
 import { dhakaToday, formatDate, monthOf } from "@mbl/domain/dates";
 import { nextToClose } from "@mbl/domain/engine/months";
 import { breakdownLines, closeScreen, monthList } from "@mbl/domain/months-view";
 import { partnerWarning } from "@mbl/domain/setup";
-import { loadBooks } from "@/server/books";
-import { bankCounts, getBusiness, loadBankAccounts } from "@/server/business";
-import { loadCardSecrets } from "@/server/card-secrets";
-import { lastExport } from "@/server/export";
-import { loadClose, loadCloses, profitSinceClose } from "@/server/months";
-import { loadPasskeys } from "@/server/passkeys";
-import { loadSetup } from "@/server/setup";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { SetupDataService } from "../../apps/api/src/setup/setup-data.service";
+import { BusinessService } from "../../apps/api/src/business/business.service";
+import { CardSecretsDataService } from "../../apps/api/src/card-secrets/card-secrets-data.service";
+import { MonthsDataService } from "../../apps/api/src/months/months-data.service";
+import { ExportService } from "../../apps/api/src/export/export.service";
+import { Passkeys } from "../../apps/api/src/passkeys/passkeys";
 import { seedParity } from "../../scripts/parity/seed";
 import { type TestUser, deleteUsers, signedInUser, startApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // N-4.6: the admin pages (Months and a month, Setup, Saved details, Settings, Export) each read one
 // `/views/*`. Each view holds what web's page computed from web's own loaders (Ref: the six pages),
-// after the JSON round trip. Fictional book (D-069).
+// after the JSON round trip. Since N-6.1 the expected values come from the api's own services.
+// Fictional book (D-069).
 const sql = localSql();
 let app: INestApplication;
+const booksSvc = () => service(app, BooksService);
+const setupDataSvc = () => service(app, SetupDataService);
+const businessSvc = () => service(app, BusinessService);
+const secretsSvc = () => service(app, CardSecretsDataService);
+const monthsDataSvc = () => service(app, MonthsDataService);
+const exportsSvc = () => service(app, ExportService);
+const passkeysSvc = () => service(app, Passkeys);
 let partner: TestUser;
 
 beforeAll(async () => {
@@ -36,7 +44,6 @@ afterAll(async () => {
   await app.close();
   await deleteUsers(sql);
   await sql.end();
-  await db.$client.end();
 });
 
 const get = (path: string) =>
@@ -48,11 +55,11 @@ const json = (value: unknown) => JSON.parse(JSON.stringify(value));
 
 /** The month page as web computed it (a closed month, an open one, or the close screen). */
 async function monthPage(month: string) {
-  const [{ data, books, asOf }, setup] = await Promise.all([loadBooks(), loadSetup()]);
+  const [{ data, books, asOf }, setup] = await Promise.all([booksSvc().loadBooks(), setupDataSvc().loadSetup()]);
   const nameOf = new Map(setup.people.map((p) => [p.id, p.name]));
   const profitOf = (snapshots = {}) => profitsFor([month], snapshots, books.posted, asOf)[month];
   if (data.closed.some((c) => monthOf(c) === month)) {
-    const close = (await loadClose(month))!;
+    const close = (await monthsDataSvc().loadClose(month))!;
     const latest = data.closed.map(monthOf).sort().at(-1) === month;
     const profit = profitOf({ [month]: close.snapshot });
     return {
@@ -65,7 +72,7 @@ async function monthPage(month: string) {
       names: Object.fromEntries(nameOf),
       latest,
       close: { id: close.id, updatedAt: close.updatedAt },
-      paid: latest ? await profitSinceClose(month) : [],
+      paid: latest ? await monthsDataSvc().profitSinceClose(month) : [],
     };
   }
   const next = nextToClose(data.closed, data.entries[0]?.date ?? null, asOf);
@@ -88,7 +95,7 @@ async function monthPage(month: string) {
 
 describe("I-N-4.6.1 each admin view has what web's page computed", () => {
   it("/views/months", async () => {
-    const [{ data, books, asOf }, closes] = await Promise.all([loadBooks(), loadCloses()]);
+    const [{ data, books, asOf }, closes] = await Promise.all([booksSvc().loadBooks(), monthsDataSvc().loadCloses()]);
     const first = data.entries[0]?.date ?? null;
     const next = nextToClose(data.closed, first, asOf);
     const { body } = await get("/views/months").expect(200);
@@ -111,18 +118,18 @@ describe("I-N-4.6.1 each admin view has what web's page computed", () => {
   it("/views/setup", async () => {
     const { body } = await get("/views/setup").expect(200);
     const [data, banks, secrets] = await Promise.all([
-      loadSetup(),
-      bankCounts(),
-      loadCardSecrets(),
+      setupDataSvc().loadSetup(),
+      businessSvc().bankCounts(),
+      secretsSvc().loadCardSecrets(),
     ]);
     expect(body).toEqual(json({ data, banks, cardDetails: secrets.map((s) => s.cardId) }));
   });
 
   it("/views/saved, the bank tab and the cards tab", async () => {
     const [accounts, setup, items] = await Promise.all([
-      loadBankAccounts(),
-      loadSetup(),
-      loadCardSecrets(),
+      businessSvc().loadBankAccounts(),
+      setupDataSvc().loadSetup(),
+      secretsSvc().loadCardSecrets(),
     ]);
     const has = new Set(accounts.map((a) => a.owner.id));
     const pickable = (r: { id: string; active: boolean }) => r.active || has.has(r.id);
@@ -144,7 +151,7 @@ describe("I-N-4.6.1 each admin view has what web's page computed", () => {
   });
 
   it("/views/settings, with no passkey and with one (its dates arrive as text)", async () => {
-    const business = await getBusiness();
+    const business = await businessSvc().getBusiness();
     const [row] = await sql`
       select id, theme, updated_at from profiles where user_id = ${partner.userId}`;
     const profile = { id: row.id, theme: row.theme, updatedAt: row.updated_at.toISOString() };
@@ -158,7 +165,7 @@ describe("I-N-4.6.1 each admin view has what web's page computed", () => {
       values (${partner.userId}, 'cred-n46', 'key', 'Test phone',
         '2026-10-27T20:30:00Z', '2026-10-27T21:00:00Z')`;
     try {
-      const keys = await loadPasskeys(partner.userId);
+      const keys = await passkeysSvc().loadPasskeys(partner.userId);
       const devices = keys.map((k) => ({
         id: k.id,
         name: k.deviceName ?? "This device",
@@ -179,7 +186,7 @@ describe("I-N-4.6.1 each admin view has what web's page computed", () => {
 
   it("/views/export", async () => {
     const { body } = await get("/views/export").expect(200);
-    expect(body).toEqual(json({ last: await lastExport() }));
+    expect(body).toEqual(json({ last: await exportsSvc().lastExport() }));
     // The books balance.
     expect((await get("/views/shell").expect(200)).body.balance.difference).toBe(0);
   });

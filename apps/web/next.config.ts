@@ -1,16 +1,22 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { parseEnv } from "node:util";
 import type { NextConfig } from "next";
 
 // N-1.2: the app lives in apps/web of an npm-workspaces repo; the repo root holds the lockfile,
 // the hoisted node_modules and the one `.env.local` (D-066).
 const root = path.join(__dirname, "../..");
 
-// Next loads env files from apps/web only. Node's loader never overrides a variable already set,
-// so E2E's and the parity harness's own env still win. The standalone server doesn't run this
-// file: deploy.sh copies `.env.local` next to its server.js.
+// Next loads env files from apps/web only, so web's own values are taken from the root one. A
+// variable already set is never overridden, so E2E's and the parity harness's own env still win.
+// N-6.1 (D-068): only these; the database URL and the card key are the api's alone. The
+// standalone server doesn't run this file: it gets its own env file at deploy (N-7).
+const WEB_ENV = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "API_URL"];
 const envFile = path.join(root, ".env.local");
-if (existsSync(envFile)) process.loadEnvFile(envFile);
+if (existsSync(envFile)) {
+  const env = parseEnv(readFileSync(envFile, "utf8"));
+  for (const key of WEB_ENV) if (env[key] !== undefined) process.env[key] ??= env[key];
+}
 
 const nextConfig: NextConfig = {
   // A self-contained `server.js` that scripts/deploy.sh copies to the VPS (D-031).
@@ -23,9 +29,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: root,
   turbopack: { root },
   // The shared packages ship TypeScript source; Next compiles them with the app (N-1.3).
-  transpilePackages: ["@mbl/domain", "@mbl/db"],
-  // The PDF fonts are read from disk at run time, so the standalone build must ship them (D-041).
-  outputFileTracingIncludes: { "/pdf/**": ["./src/pdf/fonts/**"] },
+  transpilePackages: ["@mbl/domain"],
 };
 
 export default nextConfig;

@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
 import { dhakaToday } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
 import type { Result } from "@mbl/domain/result";
-import { loadBooksData } from "@/server/books";
+import { BooksService } from "../../apps/api/src/books/books.service";
 import { expectBalanced } from "../engine/invariant";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // CR-016.2 (D-036): invoice and receipt numbers, given at save to new sales and customer payments
 // (including "Received now"), never to a reversal; an edit keeps its number; Undo leaves a gap and
@@ -17,6 +17,7 @@ import { localSql } from "./local-db";
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const books = () => service(api.app, BooksService);
 const reverseEntry = (input: unknown) => api.reverseEntry(input);
 const saveSale = (input: unknown) => api.saveSale(input);
 const deleteSale = (input: unknown) => api.deleteSale(input);
@@ -51,7 +52,6 @@ afterAll(async () => {
   await sql`delete from customers where not is_system`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 function ok(result: Result) {
@@ -86,7 +86,7 @@ const receiptNo = async (id: string) =>
   (await sql`select receipt_no from money_entries where id = ${id}`)[0].receipt_no as number | null;
 
 async function expectBooksBalanced() {
-  const facts = await loadBooksData();
+  const facts = await books().loadBooksData();
   expectBalanced(computeBooks(facts, today).posted, today, facts.allocations, facts.closed);
 }
 

@@ -2,13 +2,18 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { billProfit } from "@mbl/domain/accounts";
 import { dhakaToday } from "@mbl/domain/dates";
-import { customerBills } from "@/server/accounts";
-import { loadBooks } from "@/server/books";
+import type { INestApplication } from "@nestjs/common";
+import { AccountsService } from "../../apps/api/src/accounts/accounts.service";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { startApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
-// Task 4.3.1 (UIDD §4.8): a customer's Bills tab from the DB. Synthetic data (D-014).
+// Task 4.3.1 (UIDD §4.8): a customer's Bills tab from the DB. N-6.1: the expected values
+// come from the api's own services. Synthetic data (D-014).
 
 const sql = localSql();
+let app: INestApplication;
 const today = dhakaToday();
 const ids = {
   jamal: randomUUID(),
@@ -35,6 +40,7 @@ async function sale(id: string, customerId: string, reversesId: string | null, l
 }
 
 beforeAll(async () => {
+  app = await startApi();
   await sql`insert into customers (id, proprietor_name, shop_name)
     values (${ids.jamal}, 'Jamal', 'Test Telecom'), (${ids.other}, 'Karim', null)`;
   await sql`insert into models (id, name) values (${ids.model}, 'Model V'), (${ids.model2}, 'Model O')`;
@@ -52,11 +58,14 @@ beforeAll(async () => {
   await sale(ids.otherBill, ids.other, null, [[ids.lot, "1", "18500.00"]]);
 });
 
-afterAll(() => sql.end());
+afterAll(async () => {
+  await app.close();
+  await sql.end();
+});
 
 describe("4.3 customerBills", () => {
   it("I4.3.1 a customer's bills, newest first, with lines; a reversal is not a bill", async () => {
-    const bills = await customerBills(ids.jamal);
+    const bills = await service(app, AccountsService).customerBills(ids.jamal);
     expect(bills.map((b) => [b.id, b.reversedBy])).toEqual([
       [ids.reversed, ids.reversal],
       [ids.bill, null],
@@ -68,7 +77,7 @@ describe("4.3 customerBills", () => {
   });
 
   it("I4.3.2 each bill's profit is read off the books; the books balance", async () => {
-    const { books } = await loadBooks();
+    const { books } = await service(app, BooksService).loadBooks();
     expect(books.invariant.difference).toBe(0);
     const profitOf = (id: string) => billProfit(books.posted.find((p) => p.id === id));
     expect(profitOf(ids.bill)).toBe(2 * 130_000 + 49_950);

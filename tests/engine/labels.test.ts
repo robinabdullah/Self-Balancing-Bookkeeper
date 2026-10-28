@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { entryLabels, entryTitle, reversalLabel } from "@mbl/domain/journal/labels";
-import type { JournalRow } from "@/server/journal";
+import type { JournalRow } from "../../apps/api/src/journal/journal.service";
 
 // CR-034 (D-043, D-058): one naming rule for a reversal on the Cash book and every statement.
 const row = (id: string, more: Partial<JournalRow>): JournalRow =>

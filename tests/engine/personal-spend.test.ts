@@ -12,8 +12,8 @@ import { entryConfirm } from "@mbl/domain/confirms";
 import { investorSheets } from "@mbl/domain/report-sheets";
 import { investorText } from "@mbl/domain/report-text";
 import { moneyEntrySchema } from "@mbl/domain/validation/money-entry";
-import type { JournalRow } from "@/server/journal";
-import type { SetupData } from "@/server/setup";
+import type { JournalRow } from "../../apps/api/src/journal/journal.service";
+import type { SetupData } from "../../apps/api/src/setup/setup-data.service";
 import { CARD, SUMON, ARIF, NADIM, TODAY, data, person, setupCards } from "./report-fixture";
 import { PARTNERS, expectBalanced, imbalance, posted } from "./invariant";
 

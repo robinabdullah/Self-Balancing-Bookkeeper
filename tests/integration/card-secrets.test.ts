@@ -2,9 +2,8 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { verifyAuthenticationResponse, verifyRegistrationResponse } from "@simplewebauthn/server";
 import type { INestApplication } from "@nestjs/common";
+import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "@mbl/db";
-import { POST } from "@/app/(app)/cards/[id]/reveal/route";
 import { rowId } from "@mbl/domain/validation/fields";
 import {
   DUPLICATE_NUMBER,
@@ -13,34 +12,29 @@ import {
   REVEAL_FIRST,
   USE_FINGERPRINT,
 } from "@mbl/domain/card-secrets";
-import { loadBooks } from "@/server/books";
-import { signRevealWindow } from "@/server/card-crypto";
-import { loadCardSecrets } from "@/server/card-secrets";
 import {
   LOCKED,
   WRONG_PASSWORD,
   resetPasswordTries,
 } from "../../apps/api/src/passkeys/password-check";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { signRevealWindow } from "../../apps/api/src/card-secrets/card-crypto";
+import { CardSecretsDataService } from "../../apps/api/src/card-secrets/card-secrets-data.service";
 import { localSupabase } from "../e2e/local-supabase";
-import { type TestUser, as, startApi } from "./api";
+import { type TestUser, as, deleteUsers, signedInUser, startApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // CR-026 (D-046, D-052; SRS §11; UIDD §4.13, §4.14): card details are stored encrypted and leave
 // the server only through the `no-store` reveal route, after a fresh one-time fingerprint
 // challenge of your own; never for a password. The password (checked against local Supabase Auth)
-// gates only fingerprint set-up. No audit row holds a value. The session, `revalidatePath`, the
-// request headers and the WebAuthn signature checks are stood in for; the challenge handling
-// around them is real. N-3.1: deleting a card goes through the api (the facade), signed in as the
+// gates only fingerprint set-up. No audit row holds a value. The WebAuthn signature checks are
+// stood in for; the challenge handling around them is real. N-3.1: deleting a card goes through
+// the api (the facade), signed in as the
 // same partner; N-3.8: the card details and passkey actions too, with the browser's host and user
-// agent forwarded as web sends them (the reveal route is still web's until N-5.3). Synthetic test
-// numbers only.
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("next/headers", () => ({
-  headers: async () =>
-    new Headers({ host: "localhost:3000", "user-agent": "Mozilla/5.0 (Linux; Android 14)" }),
-}));
+// agent forwarded as web sends them; N-5.3: and the reveal (`/cards/<id>/reveal`, which web's
+// route forwards with only the `card_reveal` cookie). N-6.1: the expected values come from the api's
+// own services. Synthetic test numbers only.
 vi.mock("@simplewebauthn/server", async (original) => ({
   ...(await original<typeof import("@simplewebauthn/server")>()),
   verifyAuthenticationResponse: vi.fn(),
@@ -56,15 +50,18 @@ const CVV = "987";
 const HOLDER = "Test Holder";
 let user = { id: "", email: "" };
 let other = "";
+let otherSignedIn: TestUser;
 let cardA = "";
 let cardB = "";
 let app: INestApplication;
 let signedIn: TestUser;
-/** What web forwards from the browser (the reveal route's `next/headers` stand-in above). */
+/** What web forwards from the browser. */
 const FORWARDED = {
   "X-Forwarded-Host": "localhost:3000",
   "User-Agent": "Mozilla/5.0 (Linux; Android 14)",
 };
+const booksOf = () => service(app, BooksService);
+const cardSecretsOf = () => service(app, CardSecretsDataService);
 const api = () => as(app, signedIn, FORWARDED);
 const removeRow: ReturnType<typeof as>["removeRow"] = (kind, input) => api().removeRow(kind, input);
 const saveCardDetails = (input: unknown) => api().saveCardDetails(input);
@@ -86,27 +83,26 @@ async function newUser(name: string, password = randomUUID()) {
   return { id: data.user.id, email };
 }
 
+/** A real token for this user, as web forwards it. */
+async function signIn(u: { id: string; email: string }, password: string): Promise<TestUser> {
+  const anon = createClient(url, anonKey, { auth: { persistSession: false } });
+  const { data, error } = await anon.auth.signInWithPassword({ email: u.email, password });
+  if (error) throw error;
+  return { userId: u.id, profileId: null, email: u.email, token: data.session.access_token };
+}
+
 beforeAll(async () => {
   process.env.CARD_SECRET_KEY = randomBytes(32).toString("base64");
   user = await newUser("Partner A", PASSWORD);
-  other = (await newUser("Partner B")).id;
+  const otherPassword = randomUUID();
+  const otherUser = await newUser("Partner B", otherPassword);
+  other = otherUser.id;
   app = await startApi();
-  const anon = createClient(url, anonKey, { auth: { persistSession: false } });
-  const { data, error } = await anon.auth.signInWithPassword({
-    email: user.email,
-    password: PASSWORD,
-  });
-  if (error) throw error;
-  signedIn = {
-    userId: user.id,
-    profileId: null,
-    email: user.email,
-    token: data.session.access_token,
-  };
+  signedIn = await signIn(user, PASSWORD);
+  otherSignedIn = await signIn(otherUser, otherPassword);
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue(user);
   resetPasswordTries();
   vi.mocked(verifyAuthenticationResponse).mockReset();
   vi.mocked(verifyRegistrationResponse).mockReset();
@@ -122,8 +118,8 @@ beforeEach(async () => {
 afterAll(async () => {
   await app.close();
   for (const id of [user.id, other]) await admin.auth.admin.deleteUser(id);
+  await deleteUsers(sql);
   await sql.end();
-  await db.$client.end();
 });
 
 const ok = (r: { status: string }) => expect(r).toMatchObject({ status: "ok" });
@@ -145,8 +141,16 @@ async function add(cardId = cardA, extra: Record<string, string> = {}) {
   return row;
 }
 
-/** Reveals one saved number; without a `secretId`, the card's primary (CR-026 had one per card). */
-async function reveal(cardId: string, body: unknown, cookie?: string) {
+/**
+ * Reveals one saved number as `who` (null: no token); without a `secretId`, the card's primary
+ * (CR-026 had one per card). The body goes as web's route sends it: a non-object as `{}`.
+ */
+async function reveal(
+  cardId: string,
+  body: unknown,
+  cookie?: string,
+  who: TestUser | null = signedIn,
+) {
   if (
     body &&
     typeof body === "object" &&
@@ -157,19 +161,15 @@ async function reveal(cardId: string, body: unknown, cookie?: string) {
       where card_id = ${cardId} and not supplementary`;
     body = { ...body, secretId: primary?.id };
   }
-  const res = await POST(
-    new Request(`http://localhost:3000/cards/${cardId}/reveal`, {
-      method: "POST",
-      body: JSON.stringify(body),
-      headers: cookie ? { cookie } : {},
-    }),
-    { params: Promise.resolve({ id: cardId }) },
-  );
+  const req = request(app.getHttpServer()).post(`/cards/${cardId}/reveal`).set(FORWARDED);
+  if (who) void req.set("Authorization", `Bearer ${who.token}`);
+  if (cookie) void req.set("Cookie", cookie);
+  const res = await req.send(typeof body === "object" && body !== null ? body : {});
   return {
     status: res.status,
-    cache: res.headers.get("cache-control"),
-    setCookie: res.headers.get("set-cookie"),
-    body: await res.json(),
+    cache: (res.headers["cache-control"] as string | undefined) ?? null,
+    setCookie: [res.headers["set-cookie"] ?? []].flat()[0] ?? null,
+    body: res.body as unknown,
   };
 }
 
@@ -222,7 +222,7 @@ describe("CR-026 card details", () => {
       expect(row[c]).not.toContain(NUMBER);
     }
     expect(row.last4).toBe("4242");
-    expect(await loadCardSecrets()).toMatchObject([
+    expect(await cardSecretsOf().loadCardSecrets()).toMatchObject([
       { cardId: cardA, last4: "4242", display: "Arif · EBL Visa" },
     ]);
     expect(await sql`select action, before, after from audit_log`).toEqual([
@@ -255,10 +255,8 @@ describe("CR-026 card details", () => {
     });
 
     // … and so is someone else's reveal.
-    getUser.mockResolvedValue({ id: other, email: "" });
     await sql`insert into audit_log ("table", row_id, action, after, user_id)
       values ('card_secrets', ${row.id}, 'reveal', ${sql.json({ card: cardA })}, ${other})`;
-    getUser.mockResolvedValue(user);
     expect(await saveCardDetails(edit)).toMatchObject({ errors: { form: REVEAL_FIRST } });
 
     // An old reveal (over 10 minutes) doesn't count either.
@@ -293,7 +291,7 @@ describe("CR-026 card details", () => {
     ]);
     await auditHasNoValues();
 
-    const { books } = await loadBooks();
+    const { books } = await booksOf().loadBooks();
     expect(books.invariant.difference).toBe(0);
   });
 
@@ -355,9 +353,18 @@ describe("CR-026 card details", () => {
       expect(res).toMatchObject({ status, cache: "no-store" });
       expect(JSON.stringify(res.body)).not.toContain(NUMBER);
     }
-    getUser.mockResolvedValue(null);
-    expect(await reveal(cardA, { passkey: answer("x") })).toMatchObject({ status: 403 });
-    getUser.mockResolvedValue(user);
+    // N-5.3: signed out, the api's guard answers 401 (the browser gets proxy.ts's /login);
+    // signed in but not a partner, the reference's 403.
+    expect(await reveal(cardA, { passkey: answer("x") }, undefined, null)).toMatchObject({
+      status: 401,
+    });
+    const investor = await signedInUser(sql, "investor");
+    expect(await reveal(cardA, { passkey: answer("x") }, undefined, investor)).toEqual({
+      status: 403,
+      cache: "no-store",
+      setCookie: null,
+      body: { error: "Only partners can see card details" },
+    });
     expect(await sql`select id from audit_log where action = 'reveal'`).toHaveLength(1);
     await auditHasNoValues();
   });
@@ -519,7 +526,12 @@ describe("CR-031 supplementary numbers and the reveal window", () => {
     const s1 = await add(cardA, supp(SUPP));
     const s2 = await add(cardA, supp(SUPP2));
     expect(
-      (await loadCardSecrets()).map((r) => [r.cardId, r.supplementary, r.last4, r.display]),
+      (await cardSecretsOf().loadCardSecrets()).map((r) => [
+        r.cardId,
+        r.supplementary,
+        r.last4,
+        r.display,
+      ]),
     ).toEqual([
       [cardA, false, "4242", "Arif · EBL Visa"],
       [cardA, true, "4444", "Arif · EBL Visa"],
@@ -580,7 +592,7 @@ describe("CR-031 supplementary numbers and the reveal window", () => {
     expect(await sql`select id from card_secrets where card_id = ${cardA}`).toHaveLength(0);
     expect(await sql`select id from card_secrets where card_id = ${cardB}`).toHaveLength(1);
     await auditHasNoValues();
-    const { books } = await loadBooks();
+    const { books } = await booksOf().loadBooks();
     expect(books.invariant.difference).toBe(0);
   });
 
@@ -648,9 +660,9 @@ describe("CR-031 supplementary numbers and the reveal window", () => {
       status: 404,
     });
     // Another partner can't use this one's window.
-    getUser.mockResolvedValue({ id: other, email: "" });
-    expect((await reveal(cardB, { secretId: b1.id, window: true }, cookie)).status).toBe(401);
-    getUser.mockResolvedValue(user);
+    expect(
+      (await reveal(cardB, { secretId: b1.id, window: true }, cookie, otherSignedIn)).status,
+    ).toBe(401);
     expect(await sql`select id from audit_log where action = 'reveal'`).toHaveLength(3);
     await auditHasNoValues();
   });
@@ -710,7 +722,7 @@ describe("CR-045 a card number is saved on one card only (D-067)", () => {
     ).toMatchObject({ errors: { number: `${DUPLICATE_NUMBER} Arif · City Amex` } });
 
     await auditHasNoValues();
-    const { books } = await loadBooks();
+    const { books } = await booksOf().loadBooks();
     expect(books.invariant.difference).toBe(0);
   });
 });

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import ExcelJS from "exceljs";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getTableName, is } from "drizzle-orm";
 import { PgTable } from "drizzle-orm/pg-core";
 import * as schema from "@mbl/db/schema";
@@ -8,23 +8,23 @@ import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { add, avgUnit, sub } from "@mbl/domain/money";
 import { type Books, computeBooks } from "@mbl/domain/engine/index";
 import type { Result } from "@mbl/domain/result";
-import { loadBooksData } from "@/server/books";
-import { exportWorkbook, lastExport } from "@/server/export";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { ExportService } from "../../apps/api/src/export/export.service";
 import { expectBalanced } from "../engine/invariant";
-import { partnerApi } from "./api";
+import { fileAs, partnerApi, signedInUser } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // Task 6.4 (PRD §4.7, SRS §10, D-017): the export workbook has a sheet per table plus the summary
 // sheets; amounts are numbers; each summary total equals `computeBooks`; each export writes an
-// `export` audit row. The export's session is stood in for as in action.test.ts; N-3.6: the
-// close goes through the api (the facade), as the same partner. Synthetic data only (D-014).
+// `export` audit row. N-3.6: the close goes through the api (the facade), as the same partner;
+// N-5.2: so does the export (`POST /files/export`, web's `/export/download`). N-6.1: the expected values
+// come from the api's own services. Synthetic data only (D-014).
 // Amounts in SQL are taka, as the DB stores them.
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const booksOf = () => service(api.app, BooksService);
 const closeMonth = (input: unknown) => api.closeMonth(input);
 let userId = "";
 
@@ -84,7 +84,6 @@ const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
 beforeAll(async () => {
   api = await partnerApi(sql, "Partner A");
   userId = api.user.userId;
-  getUser.mockResolvedValue({ id: userId });
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50),
     (${ids.ivy}, 'Ivy', 'investor', null)`;
@@ -132,12 +131,21 @@ beforeAll(async () => {
   await sql`insert into money_entries (type, date, amount, person_id) values
     ('capital_in', ${today}, 50000, ${ids.ivy})`;
 
-  const facts = await loadBooksData();
+  const facts = await booksOf().loadBooksData();
   books = computeBooks(facts, today);
   expectBalanced(books.posted, today, facts.allocations, facts.closed);
 
+  const res = await fileAs(api.app, api.user, "/files/export", { method: "post" });
+  expect(res.status).toBe(200);
+  expect(res.headers.get("content-type")).toBe(
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  );
+  expect(res.headers.get("cache-control")).toBe("no-store");
+  expect(res.headers.get("content-disposition")).toBe(
+    `attachment; filename="demo-business-shop-${today}.xlsx"`,
+  );
   wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(await exportWorkbook(userId, today));
+  await wb.xlsx.load(await res.arrayBuffer());
 });
 
 afterAll(async () => {
@@ -253,7 +261,17 @@ describe("I6.4.1 export workbook", () => {
   it("I6.4.1 records the export in the audit log (D-017)", async () => {
     const audit = await sql`select row_id, user_id from audit_log where action = 'export'`;
     expect(audit).toEqual([{ row_id: null, user_id: userId }]);
-    const last = await lastExport();
+    const last = await service(api.app, ExportService).lastExport();
     expect(last?.by).toBe("Partner A");
+  });
+
+  it("I-N-5.2.1 a signed-out or investor export is refused and records nothing", async () => {
+    const post = { method: "post" } as const;
+    expect((await fileAs(api.app, null, "/files/export", post)).status).toBe(401);
+    const investor = await signedInUser(sql, "investor");
+    const refused = await fileAs(api.app, investor, "/files/export", post);
+    expect([refused.status, await refused.text()]).toEqual([403, "Only partners can export"]);
+    const [{ n }] = await sql`select count(*)::int as n from audit_log where action = 'export'`;
+    expect(n).toBe(1);
   });
 });

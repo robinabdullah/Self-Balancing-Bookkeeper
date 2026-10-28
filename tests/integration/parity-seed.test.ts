@@ -1,27 +1,34 @@
-import { afterAll, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
+import type { INestApplication } from "@nestjs/common";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { computeBooks } from "@mbl/domain/engine/index";
 import { parse } from "@mbl/domain/money";
-import { loadBooksData } from "@/server/books";
+import { BooksService } from "../../apps/api/src/books/books.service";
 import { PARITY_TODAY } from "../../scripts/parity/config";
 import { ids, seedParity } from "../../scripts/parity/seed";
 import { expectBalanced } from "../engine/invariant";
+import { startApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
-// N-1.1 (D-068): the parity harness's fictional book loads through the one loader and balances,
+// N-1.1 (D-068): the parity harness's fictional book loads through the api's one loader and balances,
 // so the dumps both builds make are of a valid set of books. Fictional data only (D-069).
 const sql = localSql();
+let app: INestApplication;
 const tk = (taka: string) => parse(taka) as number;
 
+beforeAll(async () => {
+  app = await startApi();
+});
+
 afterAll(async () => {
+  await app.close();
   await sql.end();
-  await db.$client.end();
 });
 
 describe("Parity seed (N-1.1)", () => {
   it("I-N-1.1.1 the parity book loads, balances and has the hand-checked totals", async () => {
     const seeded = await seedParity(sql);
-    const data = await loadBooksData();
+    const data = await service(app, BooksService).loadBooksData();
     expect(data.entries.map((e) => e.id)).toEqual(seeded.entries.map((e) => e.id));
     expect(data.closed).toEqual(["2026-08-01"]);
 

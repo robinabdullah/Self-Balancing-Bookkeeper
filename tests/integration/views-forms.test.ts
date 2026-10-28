@@ -2,22 +2,32 @@ import { randomUUID } from "node:crypto";
 import type { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
-import { loadCalendar } from "@/server/action";
-import { customerDues, loadBooks, moneyFormBalances } from "@/server/books";
-import { editValues } from "@/server/entries";
-import { returnOptions } from "@/server/returns";
-import { loadSetup } from "@/server/setup";
-import { lastSaleCustomerId, stockLots } from "@/server/stock";
+import type { Db } from "@mbl/db/client";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { SetupDataService } from "../../apps/api/src/setup/setup-data.service";
+import { StockService } from "../../apps/api/src/stock/stock.service";
+import { EntriesService } from "../../apps/api/src/entries/entries.service";
+import { ReturnOptionsService } from "../../apps/api/src/returns/return-options.service";
+import { stockLots } from "../../apps/api/src/stock/lots";
+import { loadCalendar } from "../../apps/api/src/action/runner";
+import { DB } from "../../apps/api/src/db/db.module";
 import { type Seeded, seedParity } from "../../scripts/parity/seed";
 import { type TestUser, deleteUsers, signedInUser, startApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // N-4.3: the entry form pages each read one `/views/*`. Each view holds what web's page computed
 // from web's own loaders (Ref: src/app/(app)/{sales,purchases,returns,money}/**,
-// src/server/returns.ts), after the JSON round trip. Fictional book (D-069).
+// src/server/returns.ts), after the JSON round trip. Since N-6.1 the expected values come from the
+// api's own services. Fictional book (D-069).
 const sql = localSql();
 let app: INestApplication;
+const booksSvc = () => service(app, BooksService);
+const setupDataSvc = () => service(app, SetupDataService);
+const stockSvc = () => service(app, StockService);
+const entriesSvc = () => service(app, EntriesService);
+const returnOptionsSvc = () => service(app, ReturnOptionsService);
+const db = () => app.get<Db>(DB);
 let partner: TestUser;
 let seeded: Seeded;
 
@@ -31,7 +41,6 @@ afterAll(async () => {
   await app.close();
   await deleteUsers(sql);
   await sql.end();
-  await db.$client.end();
 });
 
 const get = (path: string) =>
@@ -44,10 +53,10 @@ const json = (value: unknown) => JSON.parse(JSON.stringify(value));
 describe("I-N-4.3.1 each form view has what web's page computed", () => {
   it("/views/sales/new", async () => {
     const [data, dues, lots, lastCustomerId] = await Promise.all([
-      loadSetup(),
-      customerDues(),
-      stockLots(),
-      lastSaleCustomerId(),
+      setupDataSvc().loadSetup(),
+      booksSvc().customerDues(),
+      stockLots(db()),
+      stockSvc().lastSaleCustomerId(),
     ]);
     const { body } = await get("/views/sales/new").expect(200);
     expect(body).toEqual(
@@ -61,11 +70,11 @@ describe("I-N-4.3.1 each form view has what web's page computed", () => {
 
   it("/views/sales/:id/edit", async () => {
     const id = seeded.refs.sale;
-    const edit = await editValues("sale", id);
+    const edit = await entriesSvc().editValues("sale", id);
     const [data, dues, lots] = await Promise.all([
-      loadSetup(),
-      customerDues(),
-      stockLots(db, { exceptSaleId: id }),
+      setupDataSvc().loadSetup(),
+      booksSvc().customerDues(),
+      stockLots(db(), { exceptSaleId: id }),
     ]);
     const { body } = await get(`/views/sales/${id}/edit`).expect(200);
     expect(body).toEqual(json({ edit, data, dues, lots: lots.filter((l) => l.remaining > 0) }));
@@ -74,9 +83,9 @@ describe("I-N-4.3.1 each form view has what web's page computed", () => {
 
   it("/views/purchases/new", async () => {
     const [data, dues, { data: books }] = await Promise.all([
-      loadSetup(),
-      customerDues(),
-      loadBooks(),
+      setupDataSvc().loadSetup(),
+      booksSvc().customerDues(),
+      booksSvc().loadBooks(),
     ]);
     const { body } = await get("/views/purchases/new").expect(200);
     expect(body).toEqual(json({ data, dues, billDates: books.billDates }));
@@ -84,11 +93,11 @@ describe("I-N-4.3.1 each form view has what web's page computed", () => {
 
   it("/views/purchases/:id/edit", async () => {
     const id = seeded.refs.purchase;
-    const edit = await editValues("purchase", id);
+    const edit = await entriesSvc().editValues("purchase", id);
     const [data, dues, { data: books }] = await Promise.all([
-      loadSetup(),
-      customerDues(),
-      loadBooks(),
+      setupDataSvc().loadSetup(),
+      booksSvc().customerDues(),
+      booksSvc().loadBooks(),
     ]);
     const { body } = await get(`/views/purchases/${id}/edit`).expect(200);
     expect(body).toEqual(json({ edit, data, dues, billDates: books.billDates }));
@@ -96,7 +105,7 @@ describe("I-N-4.3.1 each form view has what web's page computed", () => {
   });
 
   it("/views/returns/new", async () => {
-    const [data, options] = await Promise.all([loadSetup(), returnOptions()]);
+    const [data, options] = await Promise.all([setupDataSvc().loadSetup(), returnOptionsSvc().returnOptions()]);
     const { body } = await get("/views/returns/new").expect(200);
     expect(body).toEqual(json({ data, ...options }));
     expect(body.lines.length).toBeGreaterThan(0);
@@ -104,8 +113,8 @@ describe("I-N-4.3.1 each form view has what web's page computed", () => {
 
   it("/views/returns/:id/edit", async () => {
     const id = seeded.refs.return;
-    const edit = await editValues("return", id);
-    const [data, options] = await Promise.all([loadSetup(), returnOptions(id)]);
+    const edit = await entriesSvc().editValues("return", id);
+    const [data, options] = await Promise.all([setupDataSvc().loadSetup(), returnOptionsSvc().returnOptions(id)]);
     const { body } = await get(`/views/returns/${id}/edit`).expect(200);
     expect(body).toEqual(json({ edit, data, ...options }));
     expect(body.edit.id).toBe(id);
@@ -113,9 +122,9 @@ describe("I-N-4.3.1 each form view has what web's page computed", () => {
 
   it("/views/money/new", async () => {
     const [data, { dues, owed, billDates }, calendar] = await Promise.all([
-      loadSetup(),
-      moneyFormBalances(),
-      loadCalendar(),
+      setupDataSvc().loadSetup(),
+      booksSvc().moneyFormBalances(),
+      loadCalendar(db()),
     ]);
     const { body } = await get("/views/money/new").expect(200);
     expect(body).toEqual(json({ data, dues, owed, billDates, calendar }));
@@ -123,11 +132,11 @@ describe("I-N-4.3.1 each form view has what web's page computed", () => {
 
   it("/views/money/:id/edit", async () => {
     for (const id of [seeded.refs.expense, seeded.refs.receipt]) {
-      const edit = await editValues("money", id);
+      const edit = await entriesSvc().editValues("money", id);
       const [data, { dues, owed, billDates }, calendar] = await Promise.all([
-        loadSetup(),
-        moneyFormBalances(),
-        loadCalendar(),
+        setupDataSvc().loadSetup(),
+        booksSvc().moneyFormBalances(),
+        loadCalendar(db()),
       ]);
       const { body } = await get(`/views/money/${id}/edit`).expect(200);
       expect(body).toEqual(json({ edit, data, dues, owed, billDates, calendar }));

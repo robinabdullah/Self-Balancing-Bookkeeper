@@ -7,7 +7,7 @@ import { TextField } from "@/components/forms/field";
 import { FormModal } from "@/components/forms/form-modal";
 import { useHydrated } from "@/components/forms/use-hydrated";
 import { Button } from "@/components/ui/button";
-import type { Result } from "@/server/action";
+import type { Result } from "@mbl/domain/result";
 import {
   fingerprintSetupOptions,
   registerFingerprint,

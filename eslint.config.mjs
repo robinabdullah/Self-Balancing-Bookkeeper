@@ -33,6 +33,63 @@ const eslintConfig = [
     },
   },
   {
+    // N-6.1 (D-068): web is the UI over the api. It holds no database, crypto or file code, and
+    // takes the api's types only (`import type`), never its code.
+    files: ["apps/web/src/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          paths: ["postgres", "crypto", "node:crypto", "exceljs", "@simplewebauthn/server"].map(
+            (name) => ({ name, message: "Server code lives in apps/api (D-068)." }),
+          ),
+          patterns: [
+            {
+              group: ["@mbl/db", "@mbl/db/*", "drizzle-orm", "drizzle-orm/*", "@react-pdf/*"],
+              message: "Server code lives in apps/api (D-068).",
+            },
+            {
+              group: ["@mbl/api", "@mbl/api/*", "**/apps/api/**"],
+              allowTypeImports: true,
+              message: "Web imports the api's types only (`import type`, D-068).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // N-6.1 (D-068): domain is pure and shared by both apps: no UI, framework or database.
+    files: ["packages/domain/src/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "react",
+                "react/*",
+                "react-dom",
+                "react-dom/*",
+                "next",
+                "next/*",
+                "@mbl/db",
+                "@mbl/db/*",
+                "drizzle-orm",
+                "drizzle-orm/*",
+                "@nestjs/*",
+                "@mbl/api",
+                "@mbl/api/*",
+              ],
+              message: "Domain stays pure: no React, Next, Nest or database (D-068).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // Generated files are exempt (D-013).
     ignores: [
       "node_modules/**",

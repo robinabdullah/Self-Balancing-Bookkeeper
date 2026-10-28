@@ -1,16 +1,18 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
+import type { Db } from "@mbl/db/client";
 import { auditChanges } from "@mbl/domain/audit";
 import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { type Effect, type Entry, type Partner, postEntry } from "@mbl/domain/engine/post";
 import { parse } from "@mbl/domain/money";
-import type { Result } from "@/server/action";
-import { loadEntry, loadJournal } from "@/server/journal";
-import { stockLots } from "@/server/stock";
+import type { Result } from "@mbl/domain/result";
+import { DB } from "../../apps/api/src/db/db.module";
+import { JournalService } from "../../apps/api/src/journal/journal.service";
+import { stockLots } from "../../apps/api/src/stock/lots";
 import { expectBalanced, posted } from "../engine/invariant";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // Task 3.8 + CR-007 (PRD §4.5; SRS §8; UIDD §4.10; D-003, D-008, D-026): Journal delete, reverse
 // and edit. N-3.2–N-3.6: every write goes through the api (the facade), as a signed-in partner.
@@ -18,6 +20,8 @@ import { localSql } from "./local-db";
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const journal = () => service(api.app, JournalService);
+const appDb = () => api.app.get<Db>(DB);
 const reverseEntry = (input: unknown) => api.reverseEntry(input);
 const savePurchase = (input: unknown) => api.savePurchase(input);
 const deletePurchase = (input: unknown) => api.deletePurchase(input);
@@ -65,7 +69,6 @@ afterAll(async () => {
   await sql`delete from customers where not is_system`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 function ok(result: Result) {
@@ -120,7 +123,8 @@ async function giveBack(saleLineId: string, qty = 1) {
 const reverse = (table: string, reversesId: string, over: object = {}) =>
   reverseEntry({ id: randomUUID(), table, reversesId, date: today, ...over });
 
-const remaining = async (lotId: string) => (await stockLots(db, { lotIds: [lotId] }))[0]?.remaining;
+const remaining = async (lotId: string) =>
+  (await stockLots(appDb(), { lotIds: [lotId] }))[0]?.remaining;
 
 /** Everything stored, as engine entries (the mapping the 4.1 loader will do). */
 async function stored(): Promise<(Entry & { id: string })[]> {
@@ -279,7 +283,7 @@ describe("Journal: delete, reverse, edit (task 3.8, CR-007)", () => {
     const purchaseReversal = ok(await reverse("purchase", purchase.id));
     expect(await remaining(purchase.lotId)).toBe(0);
     // Its copied lines are not lots: nothing new to sell.
-    expect(await stockLots()).toEqual([expect.objectContaining({ id: purchase.lotId })]);
+    expect(await stockLots(appDb())).toEqual([expect.objectContaining({ id: purchase.lotId })]);
     expect(await effectsOf(purchaseReversal.id)).toEqual([
       { account: "stock", amount: -parse("45,000")! },
       { account: "cash", amount: parse("45,000")! },
@@ -292,7 +296,7 @@ describe("Journal: delete, reverse, edit (task 3.8, CR-007)", () => {
     expect(audit.after.lines).toHaveLength(1);
 
     // The Journal shows the links.
-    const rows = await loadJournal();
+    const rows = await journal().loadJournal();
     expect(rows.find((r) => r.id === purchase.id)).toMatchObject({
       reversedBy: purchaseReversal.id,
       amount: parse("45,000"),
@@ -315,7 +319,7 @@ describe("Journal: delete, reverse, edit (task 3.8, CR-007)", () => {
     );
     await sql`insert into month_closes (month, close_date, snapshot, closed_by)
       values (${`${lastMonth}-01`}, ${today}, '{}', ${userId})`;
-    expect((await loadJournal())[0].locked).toBe(true);
+    expect((await journal().loadJournal())[0].locked).toBe(true);
     // A date in the closed month is rejected; today with this month is the default.
     expect(
       await reverse("money", expense.id, { date: `${lastMonth}-20`, forMonth: lastMonth }),
@@ -369,7 +373,7 @@ describe("Journal: delete, reverse, edit (task 3.8, CR-007)", () => {
     );
 
     // The detail's History has the add and the edit, who and when.
-    const entry = await loadEntry(pay.id);
+    const entry = await journal().loadEntry(pay.id);
     expect(entry?.history.map((h) => [h.action, h.by])).toEqual([
       ["insert", "Partner A"],
       ["update", "Partner A"],

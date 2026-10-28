@@ -1,19 +1,20 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
 import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
 import type { Result } from "@mbl/domain/result";
-import { loadBooksData } from "@/server/books";
+import { BooksService } from "../../apps/api/src/books/books.service";
 import { expectBalanced } from "../engine/invariant";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // Task 5.2 + CR-009 (SRS §4 month close tables, §7; D-023, D-028): closing a month through the
-// action. N-3.6: the close goes through the api (the facade), as a signed-in partner. Synthetic
-// data only (D-014).
+// action. N-3.6: the close goes through the api (the facade), as a signed-in partner. N-6.1: the
+// expected values come from the api's own services. Synthetic data only (D-014).
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const booksOf = () => service(api.app, BooksService);
 const closeMonth = (input: unknown) => api.closeMonth(input);
 let userId = "";
 
@@ -62,7 +63,7 @@ const rowsOf = (month: string) => sql`
 
 /** The invariant over the stored facts, with the closes and allocations (the shared helper). */
 async function expectBooksBalanced() {
-  const data = await loadBooksData();
+  const data = await booksOf().loadBooksData();
   expectBalanced(computeBooks(data, today).posted, today, data.allocations, data.closed);
 }
 
@@ -97,7 +98,6 @@ afterAll(async () => {
   await sql`delete from people`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 describe("5.2 Close action", () => {
@@ -133,7 +133,7 @@ describe("5.2 Close action", () => {
     const s9 = await rowsOf(M2);
     expect(s9.map((r) => r.amount)).toEqual(["2000.00", "-6000.00", "-6000.00"]);
 
-    const data = await loadBooksData();
+    const data = await booksOf().loadBooksData();
     const months = computeBooks(data, today).months;
     expect(months.find((m) => m.month === M1)).toMatchObject({ profit: 10_000_000, closed: true });
     expect(months.find((m) => m.month === M2)).toMatchObject({ profit: -1_000_000, closed: true });
@@ -176,7 +176,7 @@ describe("5.2 Close action", () => {
     expect(await rowsOf(M1)).toEqual(before);
     const [after] = await sql`select snapshot from month_closes where id = ${closed.id}`;
     expect(after.snapshot).toEqual(snapshot);
-    const months = computeBooks(await loadBooksData(), today).months;
+    const months = computeBooks(await booksOf().loadBooksData(), today).months;
     expect(months.find((m) => m.month === M1)?.profit).toBe(10_000_000);
     expect(months.find((m) => m.month === M2)?.profit).toBe(-1_000_000 + 700_000);
     await expectBooksBalanced();

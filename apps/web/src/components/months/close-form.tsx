@@ -12,7 +12,7 @@ import type { Partner } from "@mbl/domain/engine/post";
 import type { Errors } from "@mbl/domain/guards";
 import { add, parse, pct, plain, sub } from "@mbl/domain/money";
 import { type InvestorLine, parseRate, readLine } from "@mbl/domain/months-view";
-import type { Result } from "@/server/action";
+import type { Result } from "@mbl/domain/result";
 import { closeMonth } from "@/server/actions/months";
 
 // UIDD §4.9 steps 2–3, 5 (tasks 5.1, 5.2): the investor allocations (basis × rate % = amount; the

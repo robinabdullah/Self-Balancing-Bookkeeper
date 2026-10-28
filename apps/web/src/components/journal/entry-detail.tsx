@@ -36,7 +36,7 @@ import { format } from "@mbl/domain/money";
 import { forMonthChoices } from "@mbl/domain/month-choices";
 import { cn } from "@/lib/utils";
 import { SEND_TYPES } from "@mbl/domain/whatsapp";
-import type { Result } from "@/server/action";
+import type { Result } from "@mbl/domain/result";
 import { deleteMoneyEntry } from "@/server/actions/money";
 import { deletePurchase } from "@/server/actions/purchase";
 import { deleteReturn } from "@/server/actions/return";

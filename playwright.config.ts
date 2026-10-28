@@ -118,14 +118,12 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 300_000,
       // Process env beats .env.local in Next (also for the NEXT_PUBLIC_ values baked in at build),
-      // so the app talks to local Supabase only.
+      // so the app talks to local Supabase only. N-6.1 (D-068): web gets no database URL and no
+      // card key; only the api has them.
       env: {
         NEXT_DIST_DIR: DIST,
-        DATABASE_URL: supabase.dbUrl,
         NEXT_PUBLIC_SUPABASE_URL: supabase.url,
         NEXT_PUBLIC_SUPABASE_ANON_KEY: supabase.anonKey,
-        // A test-only key for saved card details (D-046); the real one is only on the VPS.
-        CARD_SECRET_KEY: E2E_CARD_KEY,
         API_URL: `http://127.0.0.1:${API_PORT}`,
       },
     },

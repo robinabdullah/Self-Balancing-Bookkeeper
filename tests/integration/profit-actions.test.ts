@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
 import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
 import type { Result } from "@mbl/domain/result";
-import { loadBooksData, moneyFormBalances } from "@/server/books";
+import { BooksService } from "../../apps/api/src/books/books.service";
 import { expectBalanced } from "../engine/invariant";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // Task 5.5 (PRD §4.2, SRS §5, §7): profit paid / reinvested moves a person's profit owed, which the
 // money form shows; an amount above it is only a warning, so the action saves it. N-3.2/N-3.6:
@@ -16,6 +16,7 @@ import { localSql } from "./local-db";
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const bookSvc = () => service(api.app, BooksService);
 const closeMonth = (input: unknown) => api.closeMonth(input);
 let userId = "";
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
@@ -39,7 +40,7 @@ const profit = (type: "profit_paid" | "profit_reinvested", amount: string) => ({
 });
 
 async function books() {
-  const data = await loadBooksData();
+  const data = await bookSvc().loadBooksData();
   const books = computeBooks(data, today);
   expectBalanced(books.posted, today, data.allocations, data.closed);
   return books;
@@ -69,14 +70,13 @@ afterAll(async () => {
   await sql`delete from people`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 describe("5.5 Profit paid / reinvested", () => {
   it("I5.5.1 S10: a partner reinvests 30,000 of profit owed → owed −30,000, capital +30,000, cash unchanged", async () => {
     const before = await books();
     expect(before.profitOwed[ids.arif]).toBe(5_000_000);
-    expect((await moneyFormBalances()).owed[ids.arif]).toBe(5_000_000);
+    expect((await bookSvc().moneyFormBalances()).owed[ids.arif]).toBe(5_000_000);
 
     ok(await saveMoneyEntry(profit("profit_reinvested", "30,000")));
 
@@ -85,7 +85,7 @@ describe("5.5 Profit paid / reinvested", () => {
     expect(after.capital[ids.arif]).toBe(before.capital[ids.arif] + 3_000_000);
     expect(after.cash).toBe(before.cash);
     // The form shows the new profit owed.
-    expect((await moneyFormBalances()).owed[ids.arif]).toBe(2_000_000);
+    expect((await bookSvc().moneyFormBalances()).owed[ids.arif]).toBe(2_000_000);
   });
 
   it("I5.5.1 More than the profit owed is a warning, not a block: the action saves it", async () => {

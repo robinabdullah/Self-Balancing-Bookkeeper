@@ -2,28 +2,31 @@ import { randomUUID } from "node:crypto";
 import type { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { db } from "@mbl/db";
 import type { Db } from "@mbl/db/client";
 import { cardAlerts, cardDues, topDues } from "@mbl/domain/dashboard";
 import { monthOf } from "@mbl/domain/dates";
 import { parse } from "@mbl/domain/money";
 import { setupNames } from "@mbl/domain/setup";
-import { loadBooks } from "@/server/books";
-import { loadEntry, loadJournal } from "@/server/journal";
-import { loadSetup } from "@/server/setup";
-import { stockLots } from "@/server/stock";
 import { BooksService } from "../../apps/api/src/books/books.service";
 import { DB } from "../../apps/api/src/db/db.module";
+import { SetupDataService } from "../../apps/api/src/setup/setup-data.service";
+import { JournalService } from "../../apps/api/src/journal/journal.service";
+import { stockLots } from "../../apps/api/src/stock/lots";
 import { type Seeded, seedParity } from "../../scripts/parity/seed";
 import { type TestUser, deleteUsers, signedInUser, startApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // N-4.2: Home, the Journal and the entry sheet each read one `/views/*`. Each view holds what
 // web's page computed from web's own loaders (Ref: src/app/(app)/page.tsx, journal/page.tsx,
 // components/journal/entry-overlay.tsx), after the JSON round trip; the books load once per page
-// render. Fictional book (D-069).
+// render. Since N-6.1 the expected values come from the api's own services. Fictional book (D-069).
 const sql = localSql();
 let app: INestApplication;
+const booksSvc = () => service(app, BooksService);
+const setupDataSvc = () => service(app, SetupDataService);
+const journalSvc = () => service(app, JournalService);
+const db = () => app.get<Db>(DB);
 let partner: TestUser;
 let seeded: Seeded;
 
@@ -37,7 +40,6 @@ afterAll(async () => {
   await app.close();
   await deleteUsers(sql);
   await sql.end();
-  await db.$client.end();
 });
 
 const get = (path: string, renderId?: string) =>
@@ -53,10 +55,10 @@ const json = (value: unknown) => JSON.parse(JSON.stringify(value));
 describe("I-N-4.2.1 each view has what web's page computed", () => {
   it("/views/home", async () => {
     const [{ books, asOf }, setup, lots, journal] = await Promise.all([
-      loadBooks(),
-      loadSetup(),
-      stockLots(),
-      loadJournal(),
+      booksSvc().loadBooks(),
+      setupDataSvc().loadSetup(),
+      stockLots(db()),
+      journalSvc().loadJournal(),
     ]);
     const month = monthOf(asOf);
     const targets = Object.fromEntries(
@@ -94,7 +96,7 @@ describe("I-N-4.2.1 each view has what web's page computed", () => {
   });
 
   it("/views/journal", async () => {
-    const [rows, data] = await Promise.all([loadJournal(), loadSetup()]);
+    const [rows, data] = await Promise.all([journalSvc().loadJournal(), setupDataSvc().loadSetup()]);
     const oldest = rows.at(-1)?.date;
     const { body } = await get("/views/journal").expect(200);
     expect(body).toEqual(
@@ -115,7 +117,7 @@ describe("I-N-4.2.1 each view has what web's page computed", () => {
 
   it("/views/entry/:id: a reversal with its original; null when it doesn't exist", async () => {
     const id = seeded.refs.reversal;
-    const [entry, setup, { data }] = await Promise.all([loadEntry(id), loadSetup(), loadBooks()]);
+    const [entry, setup, { data }] = await Promise.all([journalSvc().loadEntry(id), setupDataSvc().loadSetup(), booksSvc().loadBooks()]);
     const stored = data.entries.find((e) => e.id === id)!;
     const original = data.entries.find((e) => e.id === stored.reversesId)!;
     const { body } = await get(`/views/entry/${id}`).expect(200);

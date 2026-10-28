@@ -1,20 +1,25 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
 import { addDays, addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { format } from "@mbl/domain/money";
 import { invoiceLabel, receiptLabel } from "@mbl/domain/whatsapp";
-import { loadBooks } from "@/server/books";
-import { loadDraft } from "@/server/messages";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { MessagesService } from "../../apps/api/src/messages/messages.service";
 import { expectBalanced } from "../engine/invariant";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // CR-020 (D-040): message drafts from real saves, tied out to the books. N-3.2–N-3.5: the saves go
-// through the api (the facade), as a signed-in partner. Synthetic data only (D-014).
+// through the api (the facade), as a signed-in partner; N-6.1: the books and drafts come from the
+// api's own services. Synthetic data only (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const books = () => service(api.app, BooksService);
+const loadBooks = () => books().loadBooks();
+const loadDraft = (source: Parameters<MessagesService["loadDraft"]>[0]) =>
+  service(api.app, MessagesService).loadDraft(source);
 const saveSale = (input: unknown) => api.saveSale(input);
 const saveReturn = (input: unknown) => api.saveReturn(input);
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
@@ -53,7 +58,6 @@ afterAll(async () => {
   await sql`delete from customers where not is_system`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 function ok<R extends { status: string }>(result: R) {

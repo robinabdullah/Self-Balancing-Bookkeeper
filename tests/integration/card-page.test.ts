@@ -1,23 +1,26 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
 import { billToPay, cardDetail, visibleBills } from "@mbl/domain/card-view";
 import { cardAlerts } from "@mbl/domain/dashboard";
 import { addMonths } from "@mbl/domain/dates";
 import { parse } from "@mbl/domain/money";
 import { cleanPrefill } from "@mbl/domain/prefill";
 import { emiPreview } from "@mbl/domain/preview";
-import { loadBooks } from "@/server/books";
-import { loadSetup } from "@/server/setup";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { SetupDataService } from "../../apps/api/src/setup/setup-data.service";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // I-CR-013.4 / I-CR-013.5 (D-032): pre-fill against real Setup rows, and an EMI card purchase saved
 // as the card page and Home read it. N-3.3: the purchase goes through the api (the facade), as a
-// signed-in partner. Synthetic data only (D-014).
+// signed-in partner. N-6.1: the expected values come from the api's own services. Synthetic data
+// only (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const booksOf = () => service(api.app, BooksService);
+const setupOf = () => service(api.app, SetupDataService);
 const savePurchase = (input: unknown) => api.savePurchase(input);
 const ids = {
   person: randomUUID(),
@@ -51,12 +54,11 @@ afterAll(async () => {
   await sql`delete from people`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 describe("I-CR-013.4 pre-fill against the real Setup rows", () => {
   it("keeps active rows; drops inactive, unknown and Walk-in where not allowed", async () => {
-    const setup = await loadSetup();
+    const setup = await setupOf().loadSetup();
     const walkIn = setup.customers.find((c) => c.isSystem)!.id;
     const keep = (form: string, params: Record<string, string>) =>
       cleanPrefill(form, params, setup).prefill;
@@ -76,7 +78,7 @@ describe("I-CR-013.4 pre-fill against the real Setup rows", () => {
 
 describe("I-CR-013.5 an EMI card purchase on the card page and Home", () => {
   it("bills, the default statements, Pay, one alert per card and the preview all agree", async () => {
-    const before = await loadBooks();
+    const before = await booksOf().loadBooks();
     const date = before.asOf;
     const total = parse("21,736.65")!;
     const result = await savePurchase({
@@ -90,14 +92,14 @@ describe("I-CR-013.5 an EMI card purchase on the card page and Home", () => {
     });
     expect(result.status).toBe("ok");
 
-    const { books, asOf } = await loadBooks();
+    const { books, asOf } = await booksOf().loadBooks();
     expect(books.invariant.difference).toBe(0);
     const summary = books.cards[ids.card];
     expect(summary.balance).toBe(total); // the full amount at once (SRS §6.4)
     expect(summary.bills).toHaveLength(5);
 
     // The form's preview names the same first bill and parts the engine billed.
-    const card = (await loadSetup()).cards.find((c) => c.id === ids.card)!;
+    const card = (await setupOf().loadSetup()).cards.find((c) => c.id === ids.card)!;
     const preview = emiPreview(card, date, total, 5, null, [])!;
     expect(summary.bills.map((b) => [b.month, b.amount])).toEqual(
       preview.parts.map((part, k) => [addMonths(preview.firstBill, k), part]),

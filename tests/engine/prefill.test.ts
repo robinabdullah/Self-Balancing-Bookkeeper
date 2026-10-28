@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { TYPES } from "@mbl/domain/money/types";
 import { quickActions } from "@/components/shell/nav";
 import { cleanPrefill } from "@mbl/domain/prefill";
-import type { SetupData } from "@/server/setup";
+import type { SetupData } from "../../apps/api/src/setup/setup-data.service";
 
 // U-CR-013.7 / U-CR-013.8 (D-032): forms opened from a page. Synthetic ids.
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;

@@ -17,7 +17,7 @@ import { dirname, join, resolve } from "node:path";
 import { type Browser, type BrowserContext, chromium, devices } from "@playwright/test";
 import ExcelJS from "exceljs";
 import { extractText } from "unpdf";
-import { E2E_CARD_KEY, loginAsPartner } from "../../tests/e2e/helpers";
+import { E2E_CARD_KEY, PARTNER, loginAsPartner } from "../../tests/e2e/helpers";
 import { localSupabase } from "../../tests/e2e/local-supabase";
 import { localSql, migrateLocal } from "../../tests/integration/local-db";
 import { compareDumps, readDump, ttfbReport } from "./compare";
@@ -35,7 +35,7 @@ import {
 import { pages, pdfs, slug, workbooks } from "./manifest";
 import { aliasIds, maskGenerated, maskTimestamps } from "./normalize";
 import { refCopy } from "./ref-copy";
-import { seedParity } from "./seed";
+import { ids, seedParity } from "./seed";
 import { writeSequence } from "./writes";
 
 type Target = { name: "ref" | "self"; dir: string; appFiles: string[] };
@@ -70,16 +70,18 @@ function newest(path: string): number {
   return Math.max(stat.mtimeMs, ...readdirSync(path).map((name) => newest(join(path, name))));
 }
 
+/** Web's build and server env. N-6.1 (D-068): no database URL or card key (the api's alone). */
 function appEnv() {
   const supabase = localSupabase();
+  const env = { ...process.env };
+  delete env.DATABASE_URL;
+  delete env.CARD_SECRET_KEY;
   return {
-    ...process.env,
+    ...env,
     NEXT_DIST_DIR: DIST,
     NEXT_TELEMETRY_DISABLED: "1",
-    DATABASE_URL: supabase.dbUrl,
     NEXT_PUBLIC_SUPABASE_URL: supabase.url,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: supabase.anonKey,
-    CARD_SECRET_KEY: E2E_CARD_KEY,
     API_URL: API_BASE_URL,
   };
 }
@@ -209,9 +211,6 @@ async function dumpRoutes(
     save(dir, `routes/${vp}/${slug(route)}.txt`, head + text);
     const timing = response?.request().timing();
     if (timing) ttfb[route] = timing.responseStart - timing.requestStart;
-    const shots = process.env.PARITY_SHOTS;
-    if (shots && (route === "/" || route === "/stock"))
-      await page.screenshot({ path: join(shots, `${slug(route)}-${vp}.png`), fullPage: true });
   }
   await page.close();
   return ttfb;
@@ -235,6 +234,47 @@ async function dumpFiles(context: BrowserContext, dir: string, refs: Record<stri
       ws.eachRow((row) => row.eachCell((c) => cells.push(`${c.address}\t${c.text}`)));
     });
     save(dir, `files/${slug(route)}.txt`, `${res.status()} ${name}\n\n${cells.join("\n")}`);
+  }
+}
+
+/** N-6.3: the screens the final gate shows, one per main area (fictional book, D-069). */
+const SCREENS = [
+  "/",
+  "/stock",
+  "/journal",
+  `/customers/${ids.rahman}`,
+  `/cards/${ids.visa}`,
+  "/reports/sales",
+  "/months",
+  "/settings",
+];
+
+/**
+ * `PARITY_SHOTS=<folder>`: a full-page screenshot of each screen in every theme at both widths,
+ * as `<screen>-<theme>-<width>.png`. It runs before the write sequence and changes only the
+ * partner's theme (back to night_owl after), so the dump is the same with or without it.
+ */
+async function shootScreens(browser: Browser, state: string, folder: string) {
+  const sql = localSql();
+  const setTheme = (theme: string) => sql`update profiles set theme = ${theme}
+    where user_id = (select id from auth.users where email = ${PARTNER.email})`;
+  try {
+    for (const theme of ["light", "dark", "night_owl"]) {
+      await setTheme(theme);
+      for (const vp of VIEWPORTS) {
+        const context = await newContext(browser, vp, state);
+        const page = await context.newPage();
+        for (const route of SCREENS) {
+          await page.goto(route, { waitUntil: "networkidle" });
+          const path = join(folder, `${slug(route)}-${theme}-${vp.name}.png`);
+          await page.screenshot({ path, fullPage: true });
+        }
+        await context.close();
+      }
+    }
+  } finally {
+    await setTheme("night_owl");
+    await sql.end();
   }
 }
 
@@ -272,6 +312,7 @@ export async function dump(t: Target, outName: string) {
       if (vp.name === "1280") await dumpFiles(context, dir, refs);
       await context.close();
     }
+    if (process.env.PARITY_SHOTS) await shootScreens(browser, state, process.env.PARITY_SHOTS);
     const context = await newContext(browser, VIEWPORTS[1], state);
     const exported = await writeSequence(await context.newPage());
     save(dir, "files/export.txt", aliasIds(maskTimestamps(exported)));

@@ -1,7 +1,6 @@
 import type { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
 import {
   billProfit,
   statementLines,
@@ -17,26 +16,38 @@ import { entryLabels, otherSide } from "@mbl/domain/journal/labels";
 import { parse } from "@mbl/domain/money";
 import { peopleRows, personDetail } from "@mbl/domain/people-view";
 import { setupNames } from "@mbl/domain/setup";
-import { loadStatementExtras } from "@/server/account-reports";
-import { customerBills } from "@/server/accounts";
-import { loadBooks } from "@/server/books";
-import { getBusiness, loadBankAccounts, payAccounts } from "@/server/business";
-import { loadCardSecrets } from "@/server/card-secrets";
-import { cardDetailData } from "@/server/cards";
-import { loadChartPeriod } from "@/server/charts";
-import { loadJournal } from "@/server/journal";
-import { type DraftSource, loadDraft } from "@/server/messages";
-import { loadSetup } from "@/server/setup";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { SetupDataService } from "../../apps/api/src/setup/setup-data.service";
+import { JournalService } from "../../apps/api/src/journal/journal.service";
+import { BusinessService } from "../../apps/api/src/business/business.service";
+import { CardSecretsDataService } from "../../apps/api/src/card-secrets/card-secrets-data.service";
+import { CardDetailService } from "../../apps/api/src/cards/card-detail.service";
+import { AccountsService } from "../../apps/api/src/accounts/accounts.service";
+import { AccountReportsService } from "../../apps/api/src/account-reports/account-reports.service";
+import { ChartsService } from "../../apps/api/src/charts/charts.service";
+import { type DraftSource, MessagesService } from "../../apps/api/src/messages/messages.service";
 import { ids, pid, seedParity } from "../../scripts/parity/seed";
 import { type TestUser, deleteUsers, signedInUser, startApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // N-4.5: the account pages and the overlays they open each read one `/views/*`. Each view holds
 // what web's page or overlay computed from web's own loaders (Ref: the `[id]/page.tsx` of
 // customers, suppliers, people and cards, customers/[id]/trend, and the bank, account, send,
-// by-model and card-secrets overlays), after the JSON round trip. Fictional book (D-069).
+// by-model and card-secrets overlays), after the JSON round trip. Since N-6.1 the expected values
+// come from the api's own services, as web's loaders are gone. Fictional book (D-069).
 const sql = localSql();
 let app: INestApplication;
+const booksSvc = () => service(app, BooksService);
+const setupDataSvc = () => service(app, SetupDataService);
+const journalSvc = () => service(app, JournalService);
+const businessSvc = () => service(app, BusinessService);
+const secretsSvc = () => service(app, CardSecretsDataService);
+const cardDetailSvc = () => service(app, CardDetailService);
+const accountsSvc = () => service(app, AccountsService);
+const accountReportsSvc = () => service(app, AccountReportsService);
+const chartsSvc = () => service(app, ChartsService);
+const messagesSvc = () => service(app, MessagesService);
 let partner: TestUser;
 let refs: Record<string, string>;
 
@@ -50,7 +61,6 @@ afterAll(async () => {
   await app.close();
   await deleteUsers(sql);
   await sql.end();
-  await db.$client.end();
 });
 
 const get = (path: string) =>
@@ -76,10 +86,10 @@ describe("I-N-4.5.1 each account view has what web's page computed", () => {
   it("/views/customers/:id, with and without a period", async () => {
     const id = ids.rahman;
     const [{ books }, setup, journal, bills] = await Promise.all([
-      loadBooks(),
-      loadSetup(),
-      loadJournal(),
-      customerBills(id),
+      booksSvc().loadBooks(),
+      setupDataSvc().loadSetup(),
+      journalSvc().loadJournal(),
+      accountsSvc().customerBills(id),
     ]);
     const customer = setup.customers.find((c) => c.id === id)!;
     const balance = books.customers[id]?.balance ?? 0;
@@ -118,10 +128,10 @@ describe("I-N-4.5.1 each account view has what web's page computed", () => {
   it("/views/customers/:id/trend", async () => {
     const id = ids.rahman;
     const [base, { data, books }, setup, journal] = await Promise.all([
-      loadChartPeriod({}),
-      loadBooks(),
-      loadSetup(),
-      loadJournal(),
+      chartsSvc().loadChartPeriod({}),
+      booksSvc().loadBooks(),
+      setupDataSvc().loadSetup(),
+      journalSvc().loadJournal(),
     ]);
     const { today, period } = base;
     const rows = books.customers[id]?.rows ?? [];
@@ -143,7 +153,7 @@ describe("I-N-4.5.1 each account view has what web's page computed", () => {
 
   it("/views/suppliers/:id, with and without a period", async () => {
     const id = ids.alpha;
-    const [{ books }, setup, journal] = await Promise.all([loadBooks(), loadSetup(), loadJournal()]);
+    const [{ books }, setup, journal] = await Promise.all([booksSvc().loadBooks(), setupDataSvc().loadSetup(), journalSvc().loadJournal()]);
     const labels = entryLabels(journal);
     const common = {
       supplier: setup.suppliers.find((s) => s.id === id),
@@ -168,9 +178,9 @@ describe("I-N-4.5.1 each account view has what web's page computed", () => {
   it("/views/people/:id, with and without a period", async () => {
     for (const id of [ids.arif, ids.kamal]) {
       const [{ data, books, asOf }, setup, journal] = await Promise.all([
-        loadBooks(),
-        loadSetup(),
-        loadJournal(),
+        booksSvc().loadBooks(),
+        setupDataSvc().loadSetup(),
+        journalSvc().loadJournal(),
       ]);
       const person = setup.people.find((p) => p.id === id)!;
       const byId = new Map(journal.map((r) => [r.id, r]));
@@ -217,11 +227,11 @@ describe("I-N-4.5.1 each account view has what web's page computed", () => {
   it("/views/cards/:id, with and without a period", async () => {
     for (const id of [ids.visa, ids.amex]) {
       const [{ books, asOf }, setup, journal, extra, cardReport] = await Promise.all([
-        loadBooks(),
-        loadSetup(),
-        loadJournal(),
-        cardDetailData(id),
-        loadStatementExtras("card", id, SEP.from, SEP.to),
+        booksSvc().loadBooks(),
+        setupDataSvc().loadSetup(),
+        journalSvc().loadJournal(),
+        cardDetailSvc().cardDetailData(id),
+        accountReportsSvc().loadStatementExtras("card", id, SEP.from, SEP.to),
       ]);
       const card = setup.cards.find((c) => c.id === id)!;
       const summary = books.cards[id];
@@ -270,13 +280,13 @@ describe("I-N-4.5.1 each account view has what web's page computed", () => {
 
 describe("I-N-4.5.1 each overlay view has what web's overlay computed", () => {
   it("/views/bank-accounts and /views/pay-accounts", async () => {
-    const all = await loadBankAccounts();
+    const all = await businessSvc().loadBankAccounts();
     const { body } = await get(`/views/bank-accounts?kind=customer&id=${ids.rahman}`).expect(200);
     expect(body).toEqual(
       json(all.filter((a) => a.owner.kind === "customer" && a.owner.id === ids.rahman)),
     );
     expect(body.length).toBe(1);
-    expect((await get("/views/pay-accounts").expect(200)).body).toEqual(json(await payAccounts()));
+    expect((await get("/views/pay-accounts").expect(200)).body).toEqual(json(await businessSvc().payAccounts()));
   });
 
   it("/views/send: an entry, a reminder, a statement of each kind and an investor report", async () => {
@@ -290,9 +300,9 @@ describe("I-N-4.5.1 each overlay view has what web's overlay computed", () => {
       { kind: "statement", account: "person", id: ids.nadim, ...SEP },
       { kind: "investor", personId: ids.kamal, from: "2026-08-01", to: "2026-09-30" },
     ];
-    const [business, accounts] = await Promise.all([getBusiness(), payAccounts()]);
+    const [business, accounts] = await Promise.all([businessSvc().getBusiness(), businessSvc().payAccounts()]);
     for (const source of sources) {
-      const draft = (await loadDraft(source))!;
+      const draft = (await messagesSvc().loadDraft(source))!;
       const t = template(business?.templates, draft.type);
       const values = {
         name: draft.name,
@@ -325,14 +335,14 @@ describe("I-N-4.5.1 each overlay view has what web's overlay computed", () => {
       ["card", ids.visa],
     ] as const) {
       const { body } = await get(`/views/statement-extras/${kind}/${id}?${sep}`).expect(200);
-      expect(body).toEqual(json(await loadStatementExtras(kind, id, SEP.from, SEP.to)));
+      expect(body).toEqual(json(await accountReportsSvc().loadStatementExtras(kind, id, SEP.from, SEP.to)));
       expect(body.kind).toBe(kind);
     }
   });
 
   it("/views/card-secrets/:cardId", async () => {
     const { body } = await get(`/views/card-secrets/${ids.visa}`).expect(200);
-    const items = (await loadCardSecrets()).filter((s) => s.cardId === ids.visa);
+    const items = (await secretsSvc().loadCardSecrets()).filter((s) => s.cardId === ids.visa);
     expect(body).toEqual(json({ items, hasPasskey: false }));
     expect(body.items.length).toBeGreaterThan(0);
     // The books balance.
@@ -348,7 +358,7 @@ describe("I-N-4.5.2 an unknown or malformed id", () => {
       await get(`/views/${path}/not-an-id`).expect(404);
     }
     await get(`/views/customers/${unknown}/trend`).expect(404);
-    const walkIn = (await loadSetup()).customers.find((c) => c.isSystem)!;
+    const walkIn = (await setupDataSvc().loadSetup()).customers.find((c) => c.isSystem)!;
     await get(`/views/customers/${walkIn.id}/trend`).expect(404);
     await get(`/views/statement-extras/other/${ids.rahman}?${sep}`).expect(404);
     await get(`/views/statement-extras/customer/not-an-id?${sep}`).expect(404);

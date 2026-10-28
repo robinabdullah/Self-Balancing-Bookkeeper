@@ -1,14 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
 import { addMonths, dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
 import type { Result } from "@mbl/domain/result";
-import { loadBooksData } from "@/server/books";
-import { profitSinceClose } from "@/server/months";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { MonthsDataService } from "../../apps/api/src/months/months-data.service";
 import { expectBalanced } from "../engine/invariant";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // Task 5.4 (PRD §4.4, SRS §7 re-open): only the latest closed month re-opens; its allocations and
 // `month_closes` row go (kept in the `reopen` audit row) and the month unlocks. The confirm lists
@@ -17,6 +17,8 @@ import { localSql } from "./local-db";
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const books = () => service(api.app, BooksService);
+const months = () => service(api.app, MonthsDataService);
 const closeMonth = (input: unknown) => api.closeMonth(input);
 const reopenMonth = (input: unknown) => api.reopenMonth(input);
 let userId = "";
@@ -52,7 +54,7 @@ const profitPaid = (date: string, amount: string) => ({
 });
 
 async function expectBooksBalanced() {
-  const data = await loadBooksData();
+  const data = await books().loadBooksData();
   expectBalanced(computeBooks(data, today).posted, today, data.allocations, data.closed);
 }
 
@@ -77,7 +79,6 @@ afterAll(async () => {
   await sql`delete from people`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 describe("5.4 Re-open", () => {
@@ -109,7 +110,7 @@ describe("5.4 Re-open", () => {
     await close(M1);
     const paid = ok(await saveMoneyEntry(profitPaid(today, "50,000")));
 
-    expect(await profitSinceClose(M1)).toEqual([
+    expect(await months().profitSinceClose(M1)).toEqual([
       { id: paid.id, type: "profit_paid", date: today, person: "Arif", amount: 5_000_000 },
     ]);
 
@@ -132,7 +133,7 @@ describe("5.4 Re-open", () => {
     // Unlocked: an entry dated in M1 saves again; the paid entry stays (only the warning).
     ok(await saveMoneyEntry(profitPaid(`${M1}-20`, "500")));
     expect(await sql`select 1 from money_entries where type = 'profit_paid'`).toHaveLength(3);
-    expect(await profitSinceClose(M1)).toEqual([]);
+    expect(await months().profitSinceClose(M1)).toEqual([]);
     await expectBooksBalanced();
   });
 });

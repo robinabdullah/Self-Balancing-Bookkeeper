@@ -1,17 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
+import type { Db } from "@mbl/db/client";
 import { addMonths, dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
 import { computeBooks } from "@mbl/domain/engine/index";
 import { defaultReversal } from "@mbl/domain/guards";
 import { parse } from "@mbl/domain/money";
 import type { Result } from "@mbl/domain/result";
-import { loadCalendar } from "@/server/action";
-import { loadBooksData } from "@/server/books";
-import { loadJournal } from "@/server/journal";
+import { loadCalendar } from "../../apps/api/src/action/runner";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { DB } from "../../apps/api/src/db/db.module";
+import { JournalService } from "../../apps/api/src/journal/journal.service";
 import { expectBalanced } from "../engine/invariant";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // Task 5.3 (SRS §7 lock rule, §8): every create/edit/delete path rejects a closed month, and a
 // locked entry is reversed into an open month (S18). Months are closed through the action.
@@ -20,6 +22,8 @@ import { localSql } from "./local-db";
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const books = () => service(api.app, BooksService);
+const journal = () => service(api.app, JournalService);
 const closeMonth = (input: unknown) => api.closeMonth(input);
 const reverseEntry = (input: unknown) => api.reverseEntry(input);
 const savePurchase = (input: unknown) => api.savePurchase(input);
@@ -63,7 +67,6 @@ afterAll(async () => {
   await sql`delete from customers where not is_system`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 function ok(result: Result) {
@@ -75,7 +78,7 @@ function ok(result: Result) {
 const close = async (m: string) => ok(await closeMonth({ id: randomUUID(), month: m }));
 
 async function expectBooksBalanced() {
-  const data = await loadBooksData();
+  const data = await books().loadBooksData();
   expectBalanced(computeBooks(data, today).posted, today, data.allocations, data.closed);
 }
 
@@ -146,7 +149,13 @@ describe("5.3 Locks everywhere", () => {
     await close(lastMonth);
 
     // The Journal shows every one of them 🔒.
-    expect((await loadJournal()).map((r) => r.locked)).toEqual([true, true, true, true, true]);
+    expect((await journal().loadJournal()).map((r) => r.locked)).toEqual([
+      true,
+      true,
+      true,
+      true,
+      true,
+    ]);
     const before = await count();
 
     // Create: dated in the closed month, or for it.
@@ -201,14 +210,15 @@ describe("5.3 Locks everywhere", () => {
     const closed = await close(lastMonth);
     const [{ snapshot }] = await sql`select snapshot from month_closes where id = ${closed.id}`;
     const profitOf = async (m: string) =>
-      computeBooks(await loadBooksData(), today).months.find((x) => x.month === m)?.profit ?? 0;
+      computeBooks(await books().loadBooksData(), today).months.find((x) => x.month === m)
+        ?.profit ?? 0;
     const novemberBefore = await profitOf(month);
 
     // The reverse dialog's default (SRS §8): today, for this month.
     const [stored] = await sql`select date::text, for_month::text from money_entries`;
     const at = defaultReversal(
       { date: stored.date, forMonth: stored.for_month },
-      await loadCalendar(),
+      await loadCalendar(api.app.get<Db>(DB)),
     );
     expect(at).toEqual({ date: today, forMonth: month });
     const r = ok(
@@ -227,7 +237,7 @@ describe("5.3 Locks everywhere", () => {
     expect(await profitOf(lastMonth)).toBe(-parse("5,000")!);
     const [after] = await sql`select snapshot from month_closes where id = ${closed.id}`;
     expect(after.snapshot).toEqual(snapshot);
-    expect((await loadJournal()).find((row) => row.id === r.id)?.locked).toBe(false);
+    expect((await journal().loadJournal()).find((row) => row.id === r.id)?.locked).toBe(false);
     await expectBooksBalanced();
   });
 });

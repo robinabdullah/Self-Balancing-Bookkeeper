@@ -1,12 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { NextRequest } from "next/server";
 import { extractText } from "unpdf";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "@mbl/db";
-import { GET as invoiceGet } from "@/app/pdf/invoice/route";
-import { GET as receiptGet } from "@/app/pdf/receipt/route";
-import { GET as salesGet } from "@/app/pdf/sales/route";
-import { GET } from "@/app/pdf/statement/route";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { docLabel } from "@mbl/domain/journal/labels";
 import { addDays, dhakaToday, monthOf } from "@mbl/domain/dates";
 import {
@@ -18,28 +12,32 @@ import {
 } from "@mbl/domain/href";
 import { format } from "@mbl/domain/money";
 import { invoiceLabel, receiptLabel } from "@mbl/domain/whatsapp";
-import { customerBills } from "@/server/accounts";
-import { loadBooks } from "@/server/books";
-import { loadJournal } from "@/server/journal";
-import { loadDraft } from "@/server/messages";
+import { AccountsService } from "../../apps/api/src/accounts/accounts.service";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { JournalService } from "../../apps/api/src/journal/journal.service";
+import { MessagesService } from "../../apps/api/src/messages/messages.service";
 import { expectBalanced } from "../engine/invariant";
-import { partnerApi } from "./api";
+import { type TestUser, fileAs, partnerApi, signedInUser } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // CR-021 (D-041; UIDD §4.16), CR-022 (D-042) and CR-029 (D-049, per-document terms): the due
 // statement, invoice and receipt PDF routes on real saves: partner-only, its figures tie out to the
-// books, How to pay only on customers, never cost or profit, each with its own terms. The session
-// and `revalidatePath` are stood in for as in action.test.ts. N-3.2: money entries go through the
+// books, How to pay only on customers, never cost or profit, each with its own terms. N-6.1: the expected
+// values come from the api's own services. N-3.2: money entries go through the
 // api (the facade), as the same partner. Synthetic data only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const loadBooks = () => service(api.app, BooksService).loadBooks();
+const loadJournal = () => service(api.app, JournalService).loadJournal();
+const customerBills = (customerId: string) =>
+  service(api.app, AccountsService).customerBills(customerId);
+const loadDraft = (source: Parameters<MessagesService["loadDraft"]>[0]) =>
+  service(api.app, MessagesService).loadDraft(source);
 const reverseEntry = (input: unknown) => api.reverseEntry(input);
 const saveSale = (input: unknown) => api.saveSale(input);
-let userId = "";
+let investor: TestUser;
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 let walkIn = "";
 
@@ -57,7 +55,7 @@ const TABLES = "purchases, purchase_lines, sales, sale_lines, returns, return_li
 
 beforeAll(async () => {
   api = await partnerApi(sql, "Partner A");
-  userId = api.user.userId;
+  investor = await signedInUser(sql, "investor");
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50)`;
   await sql`insert into customers (id, proprietor_name, shop_name)
@@ -70,7 +68,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql.unsafe(`truncate ${TABLES}, audit_log`);
 });
 
@@ -80,19 +77,11 @@ afterAll(async () => {
   await sql`delete from customers where not is_system`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
-const ROUTES = {
-  "/pdf/invoice": invoiceGet,
-  "/pdf/receipt": receiptGet,
-  "/pdf/statement": GET,
-  "/pdf/sales": salesGet,
-};
-const get = (href: string) => {
-  const req = new NextRequest(new URL(href, "http://localhost"));
-  return ROUTES[req.nextUrl.pathname as keyof typeof ROUTES](req);
-};
+// N-5.1: the api's `/files/pdf/*`, as web's `/pdf/[kind]` forwards it (signed out: 401 there,
+// a 307 to /login in the browser, from proxy.ts).
+const get = (href: string, user: TestUser | null = api.user) => fileAs(api.app, user, href);
 async function text(res: Response) {
   expect(res.status).toBe(200);
   return (await extractText(new Uint8Array(await res.arrayBuffer()), { mergePages: true })).text;
@@ -100,11 +89,10 @@ async function text(res: Response) {
 
 describe("CR-021 due statement PDF route", () => {
   it("I-CR-021.1 partner-only; bad, Walk-in and unknown requests are refused", async () => {
-    getUser.mockResolvedValue(null);
-    expect(
-      (await get(statementPdfHref("customer", ids.customer, range.from, range.to))).status,
-    ).toBe(403);
-    getUser.mockResolvedValue({ id: userId });
+    const href = statementPdfHref("customer", ids.customer, range.from, range.to);
+    expect((await get(href, null)).status).toBe(401);
+    const refused = await get(href, investor);
+    expect([refused.status, await refused.text()]).toEqual([403, "Only partners can make PDFs"]);
     expect(
       (await get(`/pdf/statement?kind=card&id=${ids.customer}&from=${range.from}&to=${range.to}`))
         .status,
@@ -210,10 +198,9 @@ async function sell() {
 describe("CR-022 invoice and money receipt PDF routes", () => {
   it("I-CR-022.1 partner-only; bad ids, other kinds and reversals are refused", async () => {
     const { saleId, paymentId } = await sell();
-    getUser.mockResolvedValue(null);
-    expect((await get(invoicePdfHref(saleId))).status).toBe(403);
-    expect((await get(receiptPdfHref(paymentId))).status).toBe(403);
-    getUser.mockResolvedValue({ id: userId });
+    expect((await get(invoicePdfHref(saleId), null)).status).toBe(401);
+    expect((await get(invoicePdfHref(saleId), investor)).status).toBe(403);
+    expect((await get(receiptPdfHref(paymentId), investor)).status).toBe(403);
     expect((await get("/pdf/invoice?id=nope")).status).toBe(400);
     expect((await get(invoicePdfHref(randomUUID()))).status).toBe(404);
     // A payment has no invoice, a sale no receipt.
@@ -396,5 +383,19 @@ describe("CR-029 per-document PDF terms", () => {
         receipt_terms = ${seeded.receipt_terms}, statement_terms = ${seeded.statement_terms},
         footer = ${seeded.footer}`;
     }
+  });
+});
+
+describe("N-5.1 the PDFs in the api", () => {
+  it("I-N-5.1.1 an unknown kind is a 404; a PDF carries the reference's three headers", async () => {
+    expect((await get("/pdf/nope")).status).toBe(404);
+    expect((await get("/pdf/nope", investor)).status).toBe(404);
+    const res = await get(withQuery(salesPdfHref, range));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("application/pdf");
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(res.headers.get("content-disposition")).toMatch(
+      /^attachment; filename="[a-z0-9-]+-sales-[\d-]+-to-[\d-]+\.pdf"$/,
+    );
   });
 });

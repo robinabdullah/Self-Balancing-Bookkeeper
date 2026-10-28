@@ -1,35 +1,34 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
 import { addDays, addMonths, clampDay, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { breakdown } from "@mbl/domain/dashboard";
 import { computeBooks } from "@mbl/domain/engine/index";
 import type { MonthProfit } from "@mbl/domain/engine/months";
 import { add, mul, parse } from "@mbl/domain/money";
-import { loadBooksData } from "@/server/books";
 import { entryKinds } from "@mbl/domain/charts/kinds";
-import {
-  loadChartPeriod,
-  loadCustomerCharts,
-  loadMoneyCharts,
-  loadProfitCharts,
-  loadStockCharts,
-} from "@/server/charts";
-import { loadSales } from "@/server/reports";
-import { stockLots } from "@/server/stock";
+import type { Db } from "@mbl/db/client";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { ChartsService } from "../../apps/api/src/charts/charts.service";
+import { DB } from "../../apps/api/src/db/db.module";
+import { ReportsService } from "../../apps/api/src/reports/reports.service";
+import { stockLots } from "../../apps/api/src/stock/lots";
 import { expectBalanced } from "../engine/invariant";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // CR-041 … CR-044 (D-064; UIDD §4.17): the Profit tab's loader on real saves ties out to the Sales
 // report and to a closed month's stored snapshot; the Money tab's today = the Books balance sheet;
 // the Customers tab's total dues = the books and its Given sales (+ Walk-in's) = the Sales report;
 // the Stock tab's stock age = the books' stock and the Stock page.
-// N-3.2/N-3.6: every write goes through the api (the facade), as a signed-in partner. Synthetic
-// data only (D-014).
+// N-3.2/N-3.6: every write goes through the api (the facade), as a signed-in partner. N-6.1: the
+// expected values come from the api's own services. Synthetic data only (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const booksOf = () => service(api.app, BooksService);
+const chartsOf = () => service(api.app, ChartsService);
+const reports = () => service(api.app, ReportsService);
 const closeMonth = (input: unknown) => api.closeMonth(input);
 const reverseEntry = (input: unknown) => api.reverseEntry(input);
 const savePurchase = (input: unknown) => api.savePurchase(input);
@@ -102,7 +101,6 @@ afterAll(async () => {
   await sql`delete from customers where not is_system`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 describe("CR-041 Profit tab loader", () => {
@@ -125,14 +123,14 @@ describe("CR-041 Profit tab loader", () => {
     ok(await expense(`${M2}-04`, "delivery", "700"));
     ok(await closeMonth({ id: randomUUID(), month: M1 }));
 
-    const base = await loadChartPeriod({ from: opening, to: today });
+    const base = await chartsOf().loadChartPeriod({ from: opening, to: today });
     expect(base.period.view).toBe("month");
-    const { charts, window } = await loadProfitCharts(base);
+    const { charts, window } = await chartsOf().loadProfitCharts(base);
     expect(window.months.slice(0, 2)).toEqual([M1, M2]);
 
     // Sales & margin per month = the Sales report for that month.
     for (const m of [M1, M2]) {
-      const { report } = await loadSales(`${m}-01`, clampDay(m, 31));
+      const { report } = await reports().loadSales(`${m}-01`, clampDay(m, 31));
       const point = charts.sales.points.find((p) => p.key === m)!;
       expect([point.sales, point.cost, point.gross, point.margin]).toEqual([
         report.sales,
@@ -141,7 +139,7 @@ describe("CR-041 Profit tab loader", () => {
         report.margin,
       ]);
     }
-    const whole = (await loadSales(opening, today)).report;
+    const whole = (await reports().loadSales(opening, today)).report;
     expect(charts.sales.total.amount).toBe(whole.sales);
     expect(charts.sales.margin).toBe(whole.margin);
 
@@ -158,7 +156,7 @@ describe("CR-041 Profit tab loader", () => {
     expect(charts.profit.points.find((p) => p.key === M1)!.amount).toBe(parse(sum));
     expect(charts.expenses.categories.map((c) => c.label)).toEqual(["Salary", "Rent", "Delivery"]);
 
-    const data = await loadBooksData();
+    const data = await booksOf().loadBooksData();
     expectBalanced(computeBooks(data, today).posted, today, data.allocations, data.closed);
   });
 });
@@ -190,9 +188,9 @@ describe("CR-042 Money tab loader", () => {
     ok(await sale(`${M2}-03`, "3", "13,000"));
     ok(await closeMonth({ id: randomUUID(), month: M1 }));
 
-    const base = await loadChartPeriod({ from: opening, to: today });
-    const { charts } = await loadMoneyCharts(base);
-    const data = await loadBooksData();
+    const base = await chartsOf().loadChartPeriod({ from: opening, to: today });
+    const { charts } = await chartsOf().loadMoneyCharts(base);
+    const data = await booksOf().loadBooksData();
     const books = computeBooks(data, today);
     const sheet = breakdown(books);
 
@@ -246,9 +244,9 @@ describe("CR-043 Customers tab loader", () => {
     );
     ok(await sale(`${M2}-03`, "3", "13,000"));
 
-    const base = await loadChartPeriod({ from: opening, to: today });
-    const { charts, names } = await loadCustomerCharts(base);
-    const data = await loadBooksData();
+    const base = await chartsOf().loadChartPeriod({ from: opening, to: today });
+    const { charts, names } = await chartsOf().loadCustomerCharts(base);
+    const data = await booksOf().loadBooksData();
     const books = computeBooks(data, today);
 
     expect(charts.dues.at(-1)!.amount).toBe(books.customerDues);
@@ -261,7 +259,7 @@ describe("CR-043 Customers tab loader", () => {
       .reduce((n, e) => add(n, e.amount), 0);
     expect(walkInSales).toBe(parse("13,000"));
     const given = charts.flows.buckets.reduce((n, b) => add(n, b.given), 0);
-    const { report } = await loadSales(opening, today);
+    const { report } = await reports().loadSales(opening, today);
     expect(add(given, walkInSales)).toBe(report.sales);
     expect(charts.flows.buckets.reduce((n, b) => add(n, b.collected), 0)).toBe(parse("10,000"));
 
@@ -312,11 +310,11 @@ describe("CR-044 Stock tab loader", () => {
       }),
     );
 
-    const base = await loadChartPeriod({ from: opening, to: today });
-    const { charts, names } = await loadStockCharts(base);
-    const data = await loadBooksData();
+    const base = await chartsOf().loadChartPeriod({ from: opening, to: today });
+    const { charts, names } = await chartsOf().loadStockCharts(base);
+    const data = await booksOf().loadBooksData();
     const books = computeBooks(data, today);
-    const lots = await stockLots();
+    const lots = await stockLots(api.app.get<Db>(DB));
     const stockPage = lots.reduce((n, l) => add(n, mul(l.unitCost, l.remaining)), 0);
 
     expect(charts.total).toBe(books.stock);
@@ -326,7 +324,7 @@ describe("CR-044 Stock tab loader", () => {
     // The opening's units are all sold, so no opening note.
     expect(charts.opening).toBe(false);
 
-    const { report } = await loadSales(opening, today);
+    const { report } = await reports().loadSales(opening, today);
     expect(charts.top.map((g) => [g.id, g.pieces])).toEqual(
       report.byModel.map((g) => [g.id, g.pieces]),
     );

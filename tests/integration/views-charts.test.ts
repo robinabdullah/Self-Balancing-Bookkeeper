@@ -1,22 +1,18 @@
 import type { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
-import {
-  loadChartPeriod,
-  loadCustomerCharts,
-  loadMoneyCharts,
-  loadProfitCharts,
-  loadStockCharts,
-} from "@/server/charts";
+import { ChartsService } from "../../apps/api/src/charts/charts.service";
 import { seedParity } from "../../scripts/parity/seed";
 import { type TestUser, deleteUsers, signedInUser, startApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // N-4.8: the Charts pages read one `/views/charts/<tab>` each. Each view holds what web's own
-// loaders return for the same window, after the JSON round trip. Fictional book (D-069).
+// loaders return for the same window, after the JSON round trip. Since N-6.1 the expected values
+// come from the api's own services. Fictional book (D-069).
 const sql = localSql();
 let app: INestApplication;
+const chartsSvc = () => service(app, ChartsService);
 let partner: TestUser;
 
 beforeAll(async () => {
@@ -29,7 +25,6 @@ afterAll(async () => {
   await app.close();
   await deleteUsers(sql);
   await sql.end();
-  await db.$client.end();
 });
 
 const get = (path: string) =>
@@ -47,50 +42,50 @@ const params = (w: string) => Object.fromEntries(new URLSearchParams(w.slice(1))
 describe("I-N-4.8.1 each tab view has what web's loaders return", () => {
   it("/views/charts/profit: each window, and an expense category", async () => {
     for (const w of WINDOWS) {
-      const base = await loadChartPeriod(params(w));
+      const base = await chartsSvc().loadChartPeriod(params(w));
       const res = await get(`/views/charts/profit${w}`).expect(200);
-      expect(res.body).toEqual(json(await loadProfitCharts(base)));
+      expect(res.body).toEqual(json(await chartsSvc().loadProfitCharts(base)));
     }
-    const base = await loadChartPeriod({});
+    const base = await chartsSvc().loadChartPeriod({});
     for (const cat of ["salary", "delivery", "card-fees", "bogus"]) {
       const res = await get(`/views/charts/profit?cat=${cat}`).expect(200);
-      const want = await loadProfitCharts(base, cat === "bogus" ? undefined : cat);
+      const want = await chartsSvc().loadProfitCharts(base, cat === "bogus" ? undefined : cat);
       expect(res.body).toEqual(json(want));
     }
   });
 
   it("/views/charts/money: each window", async () => {
     for (const w of WINDOWS) {
-      const base = await loadChartPeriod(params(w));
+      const base = await chartsSvc().loadChartPeriod(params(w));
       const res = await get(`/views/charts/money${w}`).expect(200);
-      expect(res.body).toEqual(json(await loadMoneyCharts(base)));
+      expect(res.body).toEqual(json(await chartsSvc().loadMoneyCharts(base)));
     }
   });
 
   it("/views/charts/customers: each window and each `by`", async () => {
     for (const w of WINDOWS) {
-      const base = await loadChartPeriod(params(w));
+      const base = await chartsSvc().loadChartPeriod(params(w));
       for (const by of ["sales", "profit"] as const) {
         const res = await get(`/views/charts/customers${join(w, `by=${by}`)}`).expect(200);
-        expect(res.body).toEqual(json(await loadCustomerCharts(base, by)));
+        expect(res.body).toEqual(json(await chartsSvc().loadCustomerCharts(base, by)));
       }
     }
-    const base = await loadChartPeriod({});
+    const base = await chartsSvc().loadChartPeriod({});
     const res = await get("/views/charts/customers?by=bogus").expect(200);
-    expect(res.body).toEqual(json(await loadCustomerCharts(base, "sales")));
+    expect(res.body).toEqual(json(await chartsSvc().loadCustomerCharts(base, "sales")));
   });
 
   it("/views/charts/stock: each window and each `by`", async () => {
     for (const w of WINDOWS) {
-      const base = await loadChartPeriod(params(w));
+      const base = await chartsSvc().loadChartPeriod(params(w));
       for (const by of ["pieces", "profit"] as const) {
         const res = await get(`/views/charts/stock${join(w, `by=${by}`)}`).expect(200);
-        expect(res.body).toEqual(json(await loadStockCharts(base, by)));
+        expect(res.body).toEqual(json(await chartsSvc().loadStockCharts(base, by)));
       }
     }
-    const base = await loadChartPeriod({});
+    const base = await chartsSvc().loadChartPeriod({});
     const res = await get("/views/charts/stock?by=bogus").expect(200);
-    expect(res.body).toEqual(json(await loadStockCharts(base, "pieces")));
+    expect(res.body).toEqual(json(await chartsSvc().loadStockCharts(base, "pieces")));
   });
 });
 

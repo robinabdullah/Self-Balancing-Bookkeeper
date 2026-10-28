@@ -1,21 +1,24 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
 import { LOGO_MAX } from "@mbl/domain/validation/business";
-import { loadBooks } from "@/server/books";
-import { bankCounts, getBusiness, getLogo, loadBankAccounts } from "@/server/business";
-import { loadSetup } from "@/server/setup";
-import { partnerApi } from "./api";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { BusinessService } from "../../apps/api/src/business/business.service";
+import { SetupDataService } from "../../apps/api/src/setup/setup-data.service";
+import { fileAs, partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // CR-019 (D-039; UIDD §4.11, §4.13, §4.14): the business profile, message templates, contacts in
 // Setup and the saved bank accounts; CR-029 (D-049): the PDF terms; each saved with an audit row.
 // N-3.1/N-3.7: every write goes through the api (the facade), as a signed-in partner. Synthetic
 // data only; none of this posts anything, so the books stay balanced. The seeded profile is
-// restored afterwards.
+// restored afterwards. N-6.1: the expected values come from the api's own services.
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const biz = () => service(api.app, BusinessService);
+const booksOf = () => service(api.app, BooksService);
+const setupOf = () => service(api.app, SetupDataService);
 const savePerson = (input: unknown) => api.savePerson(input);
 const saveCustomer = (input: unknown) => api.saveCustomer(input);
 const saveSupplier = (input: unknown) => api.saveSupplier(input);
@@ -58,7 +61,6 @@ afterAll(async () => {
   await sql`delete from customers where not is_system`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 type Audit = { table: string; action: string; before: unknown; after: unknown };
@@ -66,7 +68,7 @@ const audits = () => sql<Audit[]>`select "table", action, before, after from aud
 
 /** The profile's id and current `updatedAt`, as the Settings page sends them. */
 const meta = async () => {
-  const b = (await getBusiness())!;
+  const b = (await biz().getBusiness())!;
   return { id: b.id, updatedAt: b.updatedAt };
 };
 
@@ -90,7 +92,7 @@ const details = {
 describe("CR-019 business profile", () => {
   it("I-CR-019.1 details are saved and audited; a stale updatedAt is a conflict", async () => {
     const result = await ok(await saveBusinessDetails({ ...(await meta()), ...details }));
-    const b = (await getBusiness())!;
+    const b = (await biz().getBusiness())!;
     expect(b).toMatchObject(details);
     expect(b.updatedAt).toBe(result.updatedAt);
 
@@ -118,21 +120,21 @@ describe("CR-019 business profile", () => {
       status: "invalid",
       errors: { name: "Enter the business name", email: "Enter a valid email" },
     });
-    expect((await getBusiness())!.name).toBe("Test Phones Ltd");
+    expect((await biz().getBusiness())!.name).toBe("Test Phones Ltd");
 
-    const { books } = await loadBooks();
+    const { books } = await booksOf().loadBooks();
     expect(books.invariant.difference).toBe(0);
   });
 
   it("I-CR-019.2 the logo is saved; the audit says changed / removed, never the image", async () => {
     await ok(await saveLogo({ ...(await meta()), logo: PNG }));
-    expect(await getLogo()).toBe(PNG);
-    const version = (await getBusiness())!.logoVersion;
+    expect(await biz().getLogo()).toBe(PNG);
+    const version = (await biz().getBusiness())!.logoVersion;
     expect(version).toMatch(/^[0-9a-f]{8}$/);
 
     await ok(await saveLogo({ ...(await meta()), logo: "" }));
-    expect(await getLogo()).toBeNull();
-    expect((await getBusiness())!.logoVersion).toBeNull();
+    expect(await biz().getLogo()).toBeNull();
+    expect((await biz().getBusiness())!.logoVersion).toBeNull();
 
     const rows = await audits();
     expect(rows.map((r) => [r.before, r.after])).toEqual([
@@ -146,11 +148,24 @@ describe("CR-019 business profile", () => {
     );
   });
 
+  it("I-N-5.3.1 /files/logo serves the saved image to anyone, cached for a year; else 404", async () => {
+    await ok(await saveLogo({ ...(await meta()), logo: PNG }));
+    const logo = await fileAs(api.app, null, "/files/logo");
+    expect(logo.status).toBe(200);
+    expect(logo.headers.get("content-type")).toBe("image/png");
+    expect(logo.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    expect(Buffer.from(await logo.arrayBuffer()).toString("base64")).toBe(PNG.split(",")[1]);
+
+    await ok(await saveLogo({ ...(await meta()), logo: "" }));
+    const none = await fileAs(api.app, null, "/files/logo");
+    expect([none.status, await none.text()]).toEqual([404, "No logo"]);
+  });
+
   it("I-N-3.7.1 a logo of LOGO_MAX characters fits the api's body limit; one more is refused", async () => {
     const prefix = "data:image/png;base64,";
     const largest = prefix + "A".repeat(LOGO_MAX - prefix.length);
     await ok(await saveLogo({ ...(await meta()), logo: largest }));
-    expect(await getLogo()).toBe(largest);
+    expect(await biz().getLogo()).toBe(largest);
     expect(await saveLogo({ ...(await meta()), logo: `${largest}A` })).toEqual({
       status: "invalid",
       errors: { logo: "The image is too large" },
@@ -167,7 +182,7 @@ describe("CR-019 business profile", () => {
       }),
     );
     await ok(await saveTemplate({ ...(await meta()), type: "sale", greeting: "", signOff: "Bye" }));
-    expect((await getBusiness())!.templates).toEqual({
+    expect((await biz().getBusiness())!.templates).toEqual({
       reminder: { greeting: "Dear {name},", signOff: "— {shop}" },
       sale: { greeting: "", signOff: "Bye" },
     });
@@ -191,7 +206,7 @@ describe("CR-029 PDF terms", () => {
     await sql`update business_profile set invoice_terms = 'Old terms', receipt_terms = null,
       statement_terms = null, footer = null`;
     await ok(await savePdfTerms({ ...(await meta()), ...terms }));
-    expect(await getBusiness()).toMatchObject(terms);
+    expect(await biz().getBusiness()).toMatchObject(terms);
     const [audit] = await audits();
     expect(audit).toEqual({
       table: "business_profile",
@@ -204,16 +219,16 @@ describe("CR-029 PDF terms", () => {
     await ok(
       await saveBusinessDetails({ ...(await meta()), ...details, invoiceTerms: "", footer: "" }),
     );
-    expect(await getBusiness()).toMatchObject({ ...terms, name: details.name });
+    expect(await biz().getBusiness()).toMatchObject({ ...terms, name: details.name });
 
     // At most 1,000 characters; blank clears one box.
     expect(
       await savePdfTerms({ ...(await meta()), ...terms, receiptTerms: "x".repeat(1001) }),
     ).toMatchObject({ status: "invalid", errors: { receiptTerms: "At most 1,000 characters" } });
     await ok(await savePdfTerms({ ...(await meta()), ...terms, receiptTerms: " " }));
-    expect((await getBusiness())!.receiptTerms).toBeNull();
+    expect((await biz().getBusiness())!.receiptTerms).toBeNull();
 
-    const { books } = await loadBooks();
+    const { books } = await booksOf().loadBooks();
     expect(books.invariant.difference).toBe(0);
   });
 });
@@ -237,7 +252,7 @@ describe("CR-019 contacts and bank accounts", () => {
     );
     await ok(await saveCustomer({ id: randomUUID(), proprietorName: "Karim", ...contact }));
     await ok(await saveSupplier({ id: randomUUID(), name: "Wholesale", ...contact }));
-    const setup = await loadSetup();
+    const setup = await setupOf().loadSetup();
     for (const row of [
       setup.people[0],
       setup.customers.find((c) => !c.isSystem)!,
@@ -274,14 +289,14 @@ describe("CR-019 contacts and bank accounts", () => {
     });
     const saved = await ok(await saveBankAccount(sup));
 
-    const all = await loadBankAccounts();
+    const all = await biz().loadBankAccounts();
     expect(all.map((a) => [a.owner.kind, a.owner.label, a.bankName])).toEqual([
       ["business", "The business", "EBL"],
       ["person", "Nadim", "City"],
       ["customer", "Karim", "BRAC"],
       ["supplier", "Wholesale", "UCB"],
     ]);
-    expect(await bankCounts()).toEqual({ [nadim]: 1, [karim]: 1, [supplier]: 1 });
+    expect(await biz().bankCounts()).toEqual({ [nadim]: 1, [karim]: 1, [supplier]: 1 });
 
     // Edit: another number; the owner moves to the business.
     await ok(
@@ -293,17 +308,17 @@ describe("CR-019 contacts and bank accounts", () => {
         updatedAt: saved.updatedAt,
       }),
     );
-    const edited = (await loadBankAccounts()).find((a) => a.id === sup.id)!;
+    const edited = (await biz().loadBankAccounts()).find((a) => a.id === sup.id)!;
     expect(edited).toMatchObject({ accountNumber: "999", supplierId: null, note: "cash" });
     expect(edited.owner.kind).toBe("business");
 
     await ok(
       await deleteBankAccount({
         id: business.id,
-        updatedAt: (await loadBankAccounts())[0].updatedAt,
+        updatedAt: (await biz().loadBankAccounts())[0].updatedAt,
       }),
     );
-    expect((await loadBankAccounts()).map((a) => a.id)).not.toContain(business.id);
+    expect((await biz().loadBankAccounts()).map((a) => a.id)).not.toContain(business.id);
 
     const rows = await audits();
     expect(rows.map((r) => [r.table, r.action])).toEqual([
@@ -333,7 +348,7 @@ describe("CR-019 contacts and bank accounts", () => {
       "conflict",
     );
 
-    const { books } = await loadBooks();
+    const { books } = await booksOf().loadBooks();
     expect(books.invariant.difference).toBe(0);
   });
 
@@ -349,7 +364,7 @@ describe("CR-019 contacts and bank accounts", () => {
 
     // Not "used": the delete goes through.
     await ok(await removeRow("customer", { id: karim, updatedAt: c.updatedAt }));
-    expect((await loadBankAccounts()).map((a) => a.bankName)).toEqual(["Business bank"]);
+    expect((await biz().loadBankAccounts()).map((a) => a.bankName)).toEqual(["Business bank"]);
 
     const [audit] = await audits();
     expect(audit).toMatchObject({ table: "customers", action: "delete", after: null });

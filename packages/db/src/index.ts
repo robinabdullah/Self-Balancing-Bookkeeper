@@ -2,11 +2,9 @@ import "server-only";
 import type postgres from "postgres";
 import { createDb, pgClient } from "./client";
 
-// Server-only DB client (SRS §2.4). Next loads this module more than once per server (in dev
-// each compiled route; in production the pages and the route handlers each), and each copy would
-// open its own pool of 10. Production's session pooler allows 15 clients, so a PDF route was
-// refused while the pages' pool was busy (CR-030). One client on globalThis keeps the whole
-// server to one pool.
+// A shared DB client on DATABASE_URL, one pool per process (globalThis: a module loaded twice
+// still opens one pool; CR-030). N-6.1 (D-068): web no longer has a database; the api owns its
+// pool (apps/api/src/db/db.module.ts), and the integration tests use this one.
 const cache = globalThis as unknown as { pg?: postgres.Sql };
 
 export const db = createDb((cache.pg ??= pgClient(process.env.DATABASE_URL!)));

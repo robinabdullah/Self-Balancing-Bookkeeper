@@ -1,44 +1,38 @@
 import { randomUUID } from "node:crypto";
 import ExcelJS from "exceljs";
-import { NextRequest } from "next/server";
 import { extractText } from "unpdf";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "@mbl/db";
-import { GET as investorXlsx } from "@/app/(app)/reports/investor/xlsx/route";
-import { GET as packXlsx } from "@/app/(app)/reports/pack/xlsx/route";
-import { GET as statementXlsx } from "@/app/(app)/reports/statement/xlsx/route";
-import { GET as cardPdfGet } from "@/app/pdf/card/route";
-import { GET as investorPdfGet } from "@/app/pdf/investor/route";
-import { GET as packPdfGet } from "@/app/pdf/pack/route";
-import { GET as statementPdfGet } from "@/app/pdf/statement/route";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { modelTotal } from "@mbl/domain/by-model";
 import { clampDay, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { owedBySum } from "@mbl/domain/investor-report";
 import { add, format, mul, toDecimal } from "@mbl/domain/money";
 import { stockTotal } from "@mbl/domain/stock-movement";
-import { loadInvestorReport, loadStatementExtras } from "@/server/account-reports";
-import { loadBooks } from "@/server/books";
-import { loadPack } from "@/server/pack";
-import { loadCashBook, loadSales } from "@/server/reports";
-import { stockLots } from "@/server/stock";
+import type { Db } from "@mbl/db/client";
+import { AccountReportsService } from "../../apps/api/src/account-reports/account-reports.service";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { DB } from "../../apps/api/src/db/db.module";
+import { PackService } from "../../apps/api/src/reports/pack.service";
+import { ReportsService } from "../../apps/api/src/reports/reports.service";
+import { stockLots } from "../../apps/api/src/stock/lots";
 import { expectBalanced } from "../engine/invariant";
-import { partnerApi } from "./api";
+import { type TestUser, fileAs, partnerApi, signedInUser } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // CR-025 (D-045): the per-account reports and the Monthly pack on real saves tie out to the books
 // and to the screens that already show each figure (Cash book, Sales report, Stock), and their PDF
-// / Excel routes are partner-only with no audit row. The session and `revalidatePath` are stood in
-// for as in action.test.ts. N-3.2: money entries go through the api (the facade), as the same
-// partner. Synthetic data only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// / Excel routes are partner-only with no audit row. N-3.2: money entries go through the api (the
+// facade), as the same partner. N-6.1: the expected values come from the api's own services. Synthetic data only (D-014).
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const booksOf = () => service(api.app, BooksService);
+const accountReports = () => service(api.app, AccountReportsService);
+const packOf = () => service(api.app, PackService);
+const reports = () => service(api.app, ReportsService);
 const saveSale = (input: unknown) => api.saveSale(input);
 const saveReturn = (input: unknown) => api.saveReturn(input);
-let userId = "";
+let investorUser: TestUser;
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 
 const today = dhakaToday();
@@ -58,7 +52,7 @@ const TABLES = "purchases, purchase_lines, sales, sale_lines, returns, return_li
 
 beforeAll(async () => {
   api = await partnerApi(sql, "Partner A");
-  userId = api.user.userId;
+  investorUser = await signedInUser(sql, "investor");
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50),
     (${ids.nadim}, 'Nadim', 'investor', null)`;
@@ -71,7 +65,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql.unsafe(`truncate ${TABLES}, audit_log`);
 });
 
@@ -81,7 +74,6 @@ afterAll(async () => {
   await sql`delete from customers where not is_system`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 const ok = (r: { status: string }) => expect(r.status, JSON.stringify(r)).toBe("ok");
@@ -146,11 +138,11 @@ async function trade() {
 describe("CR-025 report loaders", () => {
   it("I-CR-025.1 each report ties out to the books and to the other screens", async () => {
     await trade();
-    const { books, asOf } = await loadBooks();
+    const { books, asOf } = await booksOf().loadBooks();
     expectBalanced(books.posted, asOf);
 
     // Investor report: capital closing, the roll-forward and the card payments.
-    const r = (await loadInvestorReport(ids.nadim, range.from, range.to))!;
+    const r = (await accountReports().loadInvestorReport(ids.nadim, range.from, range.to))!;
     expect(r.capital.closing).toBe(books.capital[ids.nadim]);
     expect(owedBySum(r.profit)).toBe(books.profitOwed[ids.nadim] ?? 0);
     expect(r.months).toEqual([{ month, rows: null, basisNote: false }]);
@@ -159,22 +151,32 @@ describe("CR-025 report loaders", () => {
 
     // Supplier By model: every purchase naming them, less the cash-refunded one at its refund;
     // the write-off is not "sent back".
-    const supplier = await loadStatementExtras("supplier", ids.supplier, range.from, range.to);
+    const supplier = await accountReports().loadStatementExtras(
+      "supplier",
+      ids.supplier,
+      range.from,
+      range.to,
+    );
     expect(supplier?.kind === "supplier" && supplier.byModel).toEqual([
       { id: ids.v, pieces: 5, amount: 5_000_000, avgPieces: 5, avg: 1_000_000 },
       // D-056: the average stays at the price paid (3 bought; one sent back, one written off)
       { id: ids.w, pieces: 2, amount: add(mul(500_000, 3), -450_000), avgPieces: 3, avg: 500_000 },
     ]);
     // Customer By model = the Sales report's figures for them.
-    const customer = await loadStatementExtras("customer", ids.customer, range.from, range.to);
-    const { report: sales } = await loadSales(range.from, range.to);
+    const customer = await accountReports().loadStatementExtras(
+      "customer",
+      ids.customer,
+      range.from,
+      range.to,
+    );
+    const { report: sales } = await reports().loadSales(range.from, range.to);
     const row = sales.byCustomer.find((g) => g.id === ids.customer)!;
     expect(customer?.kind === "customer" && modelTotal(customer.byModel)).toEqual({
       pieces: row.pieces,
       amount: row.sales,
     });
     // Card: the period's split, read as on its last day (today).
-    const card = await loadStatementExtras("card", ids.card, range.from, range.to);
+    const card = await accountReports().loadStatementExtras("card", ids.card, range.from, range.to);
     expect(card?.kind === "card" && card.split).toEqual({
       charges: 500_000,
       payments: 200_000,
@@ -182,13 +184,13 @@ describe("CR-025 report loaders", () => {
     });
 
     // The pack for this month = the Stock page, the Cash book, the balance chip, the Sales report.
-    const { pack } = await loadPack(month);
-    const lots = await stockLots();
+    const { pack } = await packOf().loadPack(month);
+    const lots = await stockLots(api.app.get<Db>(DB));
     const stockPage = lots.reduce((n, l) => add(n, mul(l.unitCost, l.remaining)), 0);
     expect(stockTotal(pack.stock).value).toBe(books.stock);
     expect(stockTotal(pack.stock).value).toBe(stockPage);
     expect(stockTotal(pack.stock)).toMatchObject({ bought: 8, sold: 2, back: 1, writtenOff: 1 });
-    expect(pack.cash.closing).toBe((await loadCashBook(today, today)).book.closing);
+    expect(pack.cash.closing).toBe((await reports().loadCashBook(today, today)).book.closing);
     expect(pack.cash.closing).toBe(books.cash);
     expect(pack.position.difference).toBe(0);
     expect(pack.sales.netProfit).toBe(sales.netProfit);
@@ -198,19 +200,8 @@ describe("CR-025 report loaders", () => {
   });
 });
 
-const ROUTES = {
-  "/pdf/investor": investorPdfGet,
-  "/pdf/card": cardPdfGet,
-  "/pdf/pack": packPdfGet,
-  "/pdf/statement": statementPdfGet,
-  "/reports/investor/xlsx": investorXlsx,
-  "/reports/statement/xlsx": statementXlsx,
-  "/reports/pack/xlsx": packXlsx,
-};
-const get = (href: string) => {
-  const req = new NextRequest(new URL(href, "http://localhost"));
-  return ROUTES[req.nextUrl.pathname as keyof typeof ROUTES](req);
-};
+// N-5: the api's `/files/*`, as web's file routes forward it.
+const get = (href: string, user: TestUser | null = api.user) => fileAs(api.app, user, href);
 const q = (path: string, params: Record<string, string>) =>
   `${path}?${new URLSearchParams(params).toString()}`;
 const pdfText = async (res: Response) =>
@@ -235,9 +226,8 @@ describe("CR-025 report PDFs and Excel", () => {
       q("/reports/pack/xlsx", { month }),
     ];
 
-    getUser.mockResolvedValue(null);
-    for (const h of hrefs) expect((await get(h)).status, h).toBe(403);
-    getUser.mockResolvedValue({ id: userId });
+    for (const h of hrefs) expect((await get(h, null)).status, h).toBe(401);
+    for (const h of hrefs) expect((await get(h, investorUser)).status, h).toBe(403);
     for (const h of [
       q("/pdf/investor", { person: "x", ...range }),
       q("/pdf/card", { id: ids.card, from: range.to, to: "2000-01-01" }),
@@ -248,7 +238,7 @@ describe("CR-025 report PDFs and Excel", () => {
     ])
       expect((await get(h)).status, h).toBe(400);
 
-    const { books } = await loadBooks();
+    const { books } = await booksOf().loadBooks();
     const inv = await get(hrefs[0]);
     expect(inv.status).toBe(200);
     expect(inv.headers.get("Content-Disposition")).toMatch(/investor-report-nadim-.*\.pdf"$/);
@@ -261,7 +251,7 @@ describe("CR-025 report PDFs and Excel", () => {
     expect(cardText).toContain("Card statement");
     expect(cardText).toContain("Refunds & cashback");
 
-    const { pack } = await loadPack(month);
+    const { pack } = await packOf().loadPack(month);
     const packText = await pdfText(await get(hrefs[2]));
     expect(packText).toContain("Monthly pack");
     expect(packText).toContain(format(stockTotal(pack.stock).value));

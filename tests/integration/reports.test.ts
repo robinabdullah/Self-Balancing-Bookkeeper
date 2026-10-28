@@ -1,37 +1,36 @@
 import { randomUUID } from "node:crypto";
 import ExcelJS from "exceljs";
-import { NextRequest } from "next/server";
 import { extractText } from "unpdf";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "@mbl/db";
-import { GET as xlsxGet } from "@/app/(app)/reports/sales/xlsx/route";
-import { GET as pdfGet } from "@/app/pdf/sales/route";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { dhakaToday, monthOf } from "@mbl/domain/dates";
 import { monthProfit } from "@mbl/domain/engine/months";
 import { salesPdfHref, salesXlsxHref, withQuery } from "@mbl/domain/href";
 import { add, format, toDecimal } from "@mbl/domain/money";
 import { receiptLabel } from "@mbl/domain/whatsapp";
-import { loadBooks } from "@/server/books";
-import { loadStatementExtras } from "@/server/account-reports";
-import { loadCashBook, loadSales } from "@/server/reports";
+import { AccountReportsService } from "../../apps/api/src/account-reports/account-reports.service";
+import { BooksService } from "../../apps/api/src/books/books.service";
+import { ReportsService } from "../../apps/api/src/reports/reports.service";
 import { expectBalanced } from "../engine/invariant";
-import { partnerApi } from "./api";
+import { type TestUser, fileAs, partnerApi, signedInUser } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
-// CR-023 (D-043; UIDD §4.17): the Cash book and Sales report loaders on real saves tie out to the
-// books, and the Sales PDF / Excel routes (partner-only, no audit row). The session and
-// `revalidatePath` are stood in for as in action.test.ts. N-3.2: money entries go through the api
+// CR-023 (D-043; UIDD §4.17): the Cash book and Sales report loaders (the api's own services, N-6.1) on real saves tie out to the
+// books, and the Sales PDF / Excel routes (partner-only, no audit row). N-3.2: money entries go through the api
 // (the facade), as the same partner. Synthetic data only (D-014).
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ getUser }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const loadBooks = () => service(api.app, BooksService).loadBooks();
+const reports = () => service(api.app, ReportsService);
+const loadCashBook = (from: string, to: string) => reports().loadCashBook(from, to);
+const loadSales = (from: string, to: string) => reports().loadSales(from, to);
+const loadStatementExtras = (...args: Parameters<AccountReportsService["loadStatementExtras"]>) =>
+  service(api.app, AccountReportsService).loadStatementExtras(...args);
 const reverseEntry = (input: unknown) => api.reverseEntry(input);
 const saveSale = (input: unknown) => api.saveSale(input);
 const saveReturn = (input: unknown) => api.saveReturn(input);
-let userId = "";
+let investor: TestUser;
 const saveMoneyEntry = (input: unknown) => api.saveMoneyEntry(input);
 
 const today = dhakaToday();
@@ -47,7 +46,7 @@ const TABLES = "purchases, purchase_lines, sales, sale_lines, returns, return_li
 
 beforeAll(async () => {
   api = await partnerApi(sql, "Partner A");
-  userId = api.user.userId;
+  investor = await signedInUser(sql, "investor");
   await sql`insert into people (id, name, kind, profit_share_pct) values
     (${ids.arif}, 'Arif', 'partner', 50), (${ids.sumon}, 'Sumon', 'partner', 50)`;
   await sql`insert into customers (id, proprietor_name, shop_name)
@@ -57,7 +56,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  getUser.mockResolvedValue({ id: userId });
   await sql.unsafe(`truncate ${TABLES}, audit_log`);
 });
 
@@ -67,7 +65,6 @@ afterAll(async () => {
   await sql`delete from customers where not is_system`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 const ok = (r: { status: string }) => expect(r.status).toBe("ok");
@@ -230,11 +227,8 @@ describe("CR-033 Avg unit price (D-056)", () => {
   });
 });
 
-const ROUTES = { "/pdf/sales": pdfGet, "/reports/sales/xlsx": xlsxGet };
-const get = (href: string) => {
-  const req = new NextRequest(new URL(href, "http://localhost"));
-  return ROUTES[req.nextUrl.pathname as keyof typeof ROUTES](req);
-};
+// N-5: the api's `/files/*`, as web's file routes forward it.
+const get = (href: string, user: TestUser | null = api.user) => fileAs(api.app, user, href);
 
 describe("CR-023 Sales report PDF and Excel", () => {
   it("I-CR-023.2 partner-only, 400 on a bad range, figures tie out, no audit row", async () => {
@@ -243,10 +237,14 @@ describe("CR-023 Sales report PDF and Excel", () => {
     const pdf = withQuery(salesPdfHref, range);
     const xlsx = withQuery(salesXlsxHref, range);
 
-    getUser.mockResolvedValue(null);
-    expect((await get(pdf)).status).toBe(403);
-    expect((await get(xlsx)).status).toBe(403);
-    getUser.mockResolvedValue({ id: userId });
+    expect((await get(pdf, null)).status).toBe(401);
+    expect((await get(xlsx, null)).status).toBe(401);
+    expect((await get(pdf, investor)).status).toBe(403);
+    const refused = await get(xlsx, investor);
+    expect([refused.status, await refused.text()]).toEqual([
+      403,
+      "Only partners can download reports",
+    ]);
     const bad = { from: range.to, to: "2000-01-01" };
     expect((await get(withQuery(salesPdfHref, bad))).status).toBe(400);
     expect((await get(withQuery(salesXlsxHref, bad))).status).toBe(400);

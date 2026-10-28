@@ -1,15 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
-import { loadBooks } from "@/server/books";
 import type { Result } from "@mbl/domain/result";
 import { CONFLICT } from "../../apps/api/src/action/runner";
+import { BooksService } from "../../apps/api/src/books/books.service";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // Task 4.4.2 (UIDD §4.8; SRS §6; D-020): a card bill's actual dates. N-3.2/N-3.6/N-3.7: the money
 // entries, reversals and bill dates go through the api (the facade), as a signed-in partner.
-// Synthetic data only.
+// N-6.1: the expected values come from the api's own services. Synthetic data only.
 
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
@@ -40,11 +40,10 @@ afterAll(async () => {
   await sql`delete from people`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 const octBill = async () => {
-  const { books } = await loadBooks(asOf);
+  const { books } = await service(api.app, BooksService).loadBooks(asOf);
   expect(books.invariant.difference).toBe(0);
   const card = books.cards[ids.card];
   return { bill: card.bills.find((b) => b.month === "2026-10"), status: card.status };
@@ -154,7 +153,7 @@ describe("CR-034 a card reversal cancels its original on the bills (D-058)", () 
       bill: { amount: 100_000, paid: 0, remaining: 100_000, dueDate: "2026-10-20" },
       status: "due_within_7_days",
     });
-    const { books } = await loadBooks(asOf);
+    const { books } = await service(api.app, BooksService).loadBooks(asOf);
     const card = books.cards[ids.card];
     expect(card).toMatchObject({ balance: 100_000, dueWithin7Days: 100_000 });
     expect(card.moves.filter((m) => m.reversed || m.reversal).map((m) => m.entryId)).toEqual([

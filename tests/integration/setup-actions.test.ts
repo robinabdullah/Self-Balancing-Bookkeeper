@@ -1,19 +1,21 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { db } from "@mbl/db";
 import type { Result } from "@mbl/domain/result";
 import { dhakaToday } from "@mbl/domain/dates";
 import { BUILT_IN, USED } from "@mbl/domain/setup";
-import { loadSetup } from "@/server/setup";
+import { SetupDataService } from "../../apps/api/src/setup/setup-data.service";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // Task 3.2 + CR-004 (PRD §4.1; SRS §4 Setup; UIDD §4.11; D-023). N-3.1: the writes go through
-// the api as Partner A (the facade keeps the old names); the Setup list is still web's read.
+// the api as Partner A (the facade keeps the old names); the Setup list is the api's own
+// SetupDataService (N-6.1).
 // Synthetic data only. Setup rows post nothing, so the books stay as they were (empty and
 // balanced).
 const sql = localSql();
 let api: Awaited<ReturnType<typeof partnerApi>>;
+const loadSetup = () => service(api.app, SetupDataService).loadSetup();
 let userId = "";
 const savePerson = (input: unknown) => api.savePerson(input);
 const saveCard = (input: unknown) => api.saveCard(input);
@@ -38,7 +40,6 @@ afterAll(async () => {
   await sql`delete from people`;
   await api.close();
   await sql.end();
-  await db.$client.end();
 });
 
 const person = (over: object = {}) => ({

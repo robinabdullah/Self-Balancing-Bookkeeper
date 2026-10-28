@@ -6,8 +6,6 @@ import { write } from "@/api/client";
 // the same content, which the engine negates. N-3.6: the api reverses it (apps/api/src/reverse),
 // with the original and its lots locked while it checks the dependents.
 
-export type EntryTable = "purchase" | "sale" | "return" | "money";
-
 /** Reverse `reversesId` with a new entry `id` on `date` (and `forMonth` if the original has one). */
 export async function reverseEntry(input: unknown) {
   return write("PUT", "/reversals", input);

@@ -18,7 +18,7 @@ import type { EffectRow } from "@mbl/domain/effect-rows";
 import type { Errors } from "@mbl/domain/guards";
 import type { AboutForm } from "@mbl/domain/help-text";
 import { cn } from "@/lib/utils";
-import type { Result } from "@/server/action";
+import type { Result } from "@mbl/domain/result";
 import { EffectRows } from "./effect-rows";
 import { FormChanged, FormErrors, FormInitial } from "./field";
 import { NotesBox } from "./notes-box";

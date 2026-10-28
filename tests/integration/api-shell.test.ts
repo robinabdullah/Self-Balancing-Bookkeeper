@@ -2,21 +2,21 @@ import { randomUUID } from "node:crypto";
 import type { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { db } from "@mbl/db";
 import { appName, logoSrc } from "@mbl/domain/business";
 import { breakdown } from "@mbl/domain/dashboard";
 import { formatMonth } from "@mbl/domain/dates";
 import { nextToClose } from "@mbl/domain/engine/months";
-import { loadBooks } from "@/server/books";
-import { getBusiness } from "@/server/business";
 import { BooksService } from "../../apps/api/src/books/books.service";
+import { BusinessService } from "../../apps/api/src/business/business.service";
 import { seedParity } from "../../scripts/parity/seed";
 import { type TestUser, deleteUsers, signedInUser, startApi } from "./api";
 import { localSql } from "./local-db";
+import { service } from "./services";
 
 // N-2.5: the first slice. The app shell (top bar, balance chip, "Closing: …"), the profile and
 // the branding come from the api, with the same values web's layout computed (Ref:
-// src/app/(app)/layout.tsx), and the books load once per page render. Fictional book (D-069).
+// src/app/(app)/layout.tsx), and the books load once per page render. The expected values are read
+// from the api's own services (N-6.1). Fictional book (D-069).
 const sql = localSql();
 let app: INestApplication;
 let partner: TestUser;
@@ -31,7 +31,6 @@ afterAll(async () => {
   await app.close();
   await deleteUsers(sql);
   await sql.end();
-  await db.$client.end();
 });
 
 const get = (path: string, renderId?: string) =>
@@ -44,7 +43,10 @@ const get = (path: string, renderId?: string) =>
 
 describe("first slice (N-2.5)", () => {
   it("I-N-2.5.2 /views/shell has the web layout's name, logo, email, Closing and balance", async () => {
-    const [{ data, books, asOf }, business] = await Promise.all([loadBooks(), getBusiness()]);
+    const [{ data, books, asOf }, business] = await Promise.all([
+      service(app, BooksService).loadBooks(),
+      service(app, BusinessService).getBusiness(),
+    ]);
     const month = nextToClose(data.closed, data.entries[0]?.date ?? null, asOf);
     const expected = {
       name: appName(business),
@@ -73,7 +75,7 @@ describe("first slice (N-2.5)", () => {
   });
 
   it("I-N-2.5.3 /branding needs no sign-in; /me and /views/shell do", async () => {
-    const business = await getBusiness();
+    const business = await service(app, BusinessService).getBusiness();
     await request(app.getHttpServer()).get("/branding").expect(200, {
       name: business!.name,
       shortName: business!.shortName,
