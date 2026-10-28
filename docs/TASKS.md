@@ -1,4 +1,4 @@
-# Mobile Business Lite — Tasks (v1.1)
+# Self-Balancing Bookkeeper — Tasks (v1.1)
 
 *Task breakdown · 10 October 2026* — implements `docs/PRD.md`, `docs/SRS.md`, `docs/UIDD.md`.
 Decisions: `docs/DECISIONS.md`. **v1 (phases 0–7, CR-001…CR-014) is archived in

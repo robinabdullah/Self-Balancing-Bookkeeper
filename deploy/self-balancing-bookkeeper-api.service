@@ -1,0 +1,27 @@
+# Self-Balancing Bookkeeper api: the NestJS bundle that scripts/deploy.sh copies to
+# /var/www/self-balancing-bookkeeper/api (D-068, N-7.1). Install as
+# /etc/systemd/system/self-balancing-bookkeeper-api.service. See deploy/README.md.
+[Unit]
+Description=Self-Balancing Bookkeeper API (NestJS)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/var/www/self-balancing-bookkeeper/api
+Environment=NODE_ENV=production
+# Loopback only (src/main.ts); web's API_URL in self-balancing-bookkeeper.service must match.
+Environment=API_PORT=4006
+# Node comes from nvm: after an nvm upgrade, update this path and run `systemctl daemon-reload`.
+ExecStart=/home/ubuntu/.nvm/versions/node/v24.22.1/bin/node --env-file=/var/www/self-balancing-bookkeeper/api.env /var/www/self-balancing-bookkeeper/api/main.js
+Restart=on-failure
+RestartSec=5
+# Keep the shared VPS safe for the other apps.
+MemoryMax=1G
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

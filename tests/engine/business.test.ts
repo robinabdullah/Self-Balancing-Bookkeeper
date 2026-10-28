@@ -62,24 +62,24 @@ describe("U-CR-019.1 templates, app name, export file name", () => {
     );
   });
 
-  it("the top bar uses the short name, else the name, else the app's own", () => {
+  it("the top bar uses the short name, else the name, else the app's own (CR-048)", () => {
     expect(appName({ name: "Demo Business Shop", shortName: "Demo" })).toBe("Demo");
     expect(appName({ name: "Demo Business Shop", shortName: " " })).toBe("Demo Business Shop");
     expect(appName(null)).toBe(FALLBACK_NAME);
     expect(businessName({ name: "Demo Business Shop", shortName: "Demo" })).toBe(
       "Demo Business Shop",
     );
-    expect(businessName(undefined)).toBe("Mobile Business Lite");
+    expect(businessName(undefined)).toBe("Self-Balancing Bookkeeper");
   });
 
-  it("the export file is named after the business", () => {
+  it("the export file is named after the business (CR-048)", () => {
     expect(exportFileName({ name: "Demo Business Shop" }, "2026-10-10")).toBe(
       "demo-business-shop-2026-10-10.xlsx",
     );
     expect(exportFileName({ name: "S&M (Dhaka) Ltd." }, "2026-10-10")).toBe(
       "s-m-dhaka-ltd-2026-10-10.xlsx",
     );
-    expect(exportFileName(null, "2026-10-10")).toBe("mobile-business-lite-2026-10-10.xlsx");
+    expect(exportFileName(null, "2026-10-10")).toBe("self-balancing-bookkeeper-2026-10-10.xlsx");
   });
 
   it("the first of several phones", () => {

@@ -1,4 +1,4 @@
-# Mobile Business Lite
+# Self-Balancing Bookkeeper
 
 A small, exact bookkeeping web app for a two-partner mobile-phone trading business in
 Bangladesh. It replaced their Excel workbooks: purchases, sales, returns, card bills, customer and

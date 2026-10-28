@@ -14,7 +14,7 @@ export function setupApp(app: INestApplication, config: Config) {
   (app as NestExpressApplication).use(json({ limit: "1mb" }), withContext);
   app.enableShutdownHooks();
   if (config.NODE_ENV !== "production") {
-    const doc = new DocumentBuilder().setTitle("Mobile Business Lite API").build();
+    const doc = new DocumentBuilder().setTitle("Self-Balancing Bookkeeper API").build();
     SwaggerModule.setup("docs", app, () => SwaggerModule.createDocument(app, doc));
   }
   return app;

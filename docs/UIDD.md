@@ -1,4 +1,4 @@
-# Mobile Business Lite — UI Description (v1)
+# Self-Balancing Bookkeeper — UI Description (v1)
 
 *UI/UX description · 7 October 2026 · v1.1* — implements `docs/PRD.md`; the technical rules are in
 `docs/SRS.md`.

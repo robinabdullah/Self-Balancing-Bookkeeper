@@ -1,4 +1,4 @@
-# Mobile Business Lite — Architecture
+# Self-Balancing Bookkeeper — Architecture
 
 *28 October 2026 · after the NestJS migration (D-068)* — how the code is laid out and how a
 request moves through it. The rules themselves are in `docs/SRS.md`; why each one changed is in
@@ -115,5 +115,17 @@ then the E2E in 3 shards, on every push to `dev`.
 ## 8. Running it
 
 `npm run dev` starts both apps (web on 3000, api on 3003), each reading its own lines of the
-root `.env.local`. In production they are two systemd units on one VPS (web on 4005, api on
-`127.0.0.1:4006`), each with its own env file; nginx is unchanged (`deploy/`, N-7).
+root `.env.local`. In production they are two systemd units on one VPS (web on
+`127.0.0.1:4007`, api on `127.0.0.1:4006`), each with its own env file, behind the VPS's nginx
+(`deploy/`, N-7).
+
+`scripts/deploy.sh` builds both and migrates once. It copies both apps into one folder, so a
+release and a rollback always move web and the api together. It starts the api, then web, and
+checks each with curl.
+
+The switch from the old single app runs side by side (D-071):
+- the new app starts beside the old one, on the same database;
+- the old app is parked at `business-old.<domain>`;
+- nginx moves the main subdomain to the new web's port, and switching back is the same line
+  reversed;
+- the old app is removed after a week.

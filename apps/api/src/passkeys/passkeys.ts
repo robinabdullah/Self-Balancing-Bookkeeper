@@ -100,7 +100,7 @@ export class Passkeys {
     const { rpID } = this.relyingParty();
     const existing = await this.loadPasskeys(user.id);
     const options = await generateRegistrationOptions({
-      rpName: "Mobile Business Lite",
+      rpName: "Self-Balancing Bookkeeper",
       rpID,
       userID: new TextEncoder().encode(user.id),
       userName: user.email ?? displayName,

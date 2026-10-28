@@ -53,7 +53,7 @@ earlier decision, add its id to that row's "Later changed by".
 | [D-028](DECISIONS-v1.md#d-028--a-blank-investor-line-is-skipped-a-month-that-hasnt-started-cant-be-closed-2026-10-07) | A blank investor line is skipped; a month that hasn't started can't be closed | 2026-10-07 |  |
 | [D-029](DECISIONS-v1.md#d-029--the-opening-templates-layout-and-how-the-workbooks-fill-it-2026-10-07) | The opening template's layout and how the workbooks fill it | 2026-10-07 | D-070 |
 | [D-030](DECISIONS-v1.md#d-030--hosting-the-partners-own-vps-not-vercelnetlify-2026-10-08) | Hosting: the partners' own VPS, not Vercel/Netlify | 2026-10-08 |  |
-| [D-031](DECISIONS-v1.md#d-031--releases-follow-the-vpss-pull-build-copy-convention-signed-in-pages-are-never-prerendered-2026-10-08) | Releases follow the VPS's pull-build-copy convention; signed-in pages are never prerendered | 2026-10-08 |  |
+| [D-031](DECISIONS-v1.md#d-031--releases-follow-the-vpss-pull-build-copy-convention-signed-in-pages-are-never-prerendered-2026-10-08) | Releases follow the VPS's pull-build-copy convention; signed-in pages are never prerendered | 2026-10-08 | D-071 |
 | [D-032](DECISIONS-v1.md#d-032--ui-feedback-pass-dark-controls-entry-details-in-place-quick-actions-card-page-speed-2026-10-09) | UI feedback pass: dark controls, entry details in place, quick actions, card page, speed | 2026-10-09 | D-038 |
 | [D-033](DECISIONS-v1.md#d-033--bank-badges-in-logo-colours-whole-table-rows-open-card-list-polish-2026-10-09) | Bank badges in logo colours; whole table rows open; card list polish | 2026-10-09 |  |
 | D-034 | v1.1 scope: sharing, reports, settings; v1 tasks archived | 2026-10-10 | D-058, D-060, D-064 |
@@ -93,6 +93,7 @@ earlier decision, add its id to that row's "Later changed by".
 | D-068 | NestJS backend; Next.js stays the UI as a BFF over an internal API | 2026-10-27 |  |
 | D-069 | A public MIT repo with fictional data (amends D-014) | 2026-10-27 |  |
 | D-070 | The opening-import tools are deleted here; the cutover stays in the reference | 2026-10-27 |  |
+| D-071 | The product is "Self-Balancing Bookkeeper"; the switch runs side by side (amends D-031) | 2026-10-28 |  |
 
 ---
 
@@ -527,3 +528,20 @@ earlier decision, add its id to that row's "Later changed by".
   date floor. Opening entries, opening corrections and the opening difference are unchanged.
 - **Docs changed:** SRS §1, §9, §12, §13; `docs/TASKS-NEST.md` (N-0.4).
 - **Tasks:** CR-047.
+
+## D-071 — The product is "Self-Balancing Bookkeeper"; the switch runs side by side (amends D-031) (2026-10-28)
+- **Source:** user decision at the N-7.1 review (S10).
+- **Decision:**
+  - The product's name is **Self-Balancing Bookkeeper**: the docs, the passkey prompt, the
+    fallback name before a business name is set, and the deploy names. The internal `@mbl/*`
+    package names and the archived docs stay.
+  - The production switch runs the new app **beside** the old one, on the same database. The old
+    app is parked at `business-old.<domain>` (open, no extra password), and nginx switches the
+    main subdomain with one port. Switching back is the same line reversed. The old app is removed
+    after a week of watching. No database change: the migrations already ran.
+  - So N-7.1's rollback to a single-app copy is dropped: the new app rolls back only to its own
+    previous copy.
+- **Docs changed:** CLAUDE.md, README, LICENSE, the titles of the living docs (PRD, SRS, UIDD,
+  AI, the task files), ARCHITECTURE §8, `docs/v1.1-plan.md` (CR-019 fallback),
+  `docs/TASKS-NEST.md` (N-7.1, N-7.2); `deploy/*` at CR-048.
+- **Tasks:** CR-048.

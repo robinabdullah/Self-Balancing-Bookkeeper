@@ -1,4 +1,4 @@
-# Mobile Business Lite — Tasks (NestJS migration)
+# Self-Balancing Bookkeeper — Tasks (NestJS migration)
 
 *Task breakdown · 27 October 2026* — moves the app to a NestJS backend with Next.js as the UI on
 top: the same screens, URLs, cookies, messages and numbers (D-068). This repo is the public copy
@@ -7,24 +7,12 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S9 done (2026-10-28), uncommitted, waiting for the user's review: N-5.1 … N-6.2,
-  plus the local part of N-6.3. S8 was pushed and CI run 40614883240 is green.
-  - **Phase gate:**
-    - typecheck and lint clean (with the new boundary lint); denylist empty; gitleaks clean;
-    - unit 723 (64 files);
-    - integration 215 in 42 files (the full `test:int`, since N-6.1 touched 31 files);
-    - full E2E with web's env stripped: 272 passed, 15 skipped by design (viewport-only tests;
-      night_owl, 360 + 1280);
-    - parity MATCH (202 files), TTFB over 92 routes 9633 → 5656 ms (−41%).
-  - **End state:**
-    - web holds no server code but `server/actions/` (thin proxies) and `src/api/`;
-    - it has no `DATABASE_URL` or `CARD_SECRET_KEY`;
-    - the lint keeps it that way.
-  - N-6.3 stays open for the full CI on the push and 👤 the partners' consent before going public.
-  - At N-7.2, update the VPS's installed unit file to run `apps/web/server.js` (N-1.2), and do the
-    production key-type check (moved from N-2.3).
-    - Web's env there needs only `NEXT_PUBLIC_SUPABASE_*` and `API_URL` (N-6.1).
-- **Next:** S10 (`/next-phase S10`, in a new conversation), after S9 is pushed and CI is green.
+- **Session:** S10 (2026-10-28), all uncommitted.
+  - N-7.1 and CR-048 (D-071: the new name, a side-by-side switch) are done and rehearsed.
+  - S9 is pushed and CI run 40707721927 is green.
+  - N-6.3 stays open only for 👤 the partners' consent before going public.
+- **Next:** the user's review, then one commit for N-7.1 + CR-048 (pushed to `dev`), then
+  N-7.2 👤.
 - **Blocked on:** —
 
 ## How to use
@@ -1290,8 +1278,8 @@ Screenshots: the PDFs and XLSX, the 8 screens × 3 themes, the README.
       once this is committed.
 - [ ] **N-6.3 Final gate**
   - **Ref:** the baseline
-  - [ ] Text parity at both viewports; screenshots of 8 screens × 3 themes; file text; audit rows;
-    latency; full CI. (All done locally, 2026-10-28; full CI waits for the push.)
+  - [x] Text parity at both viewports; screenshots of 8 screens × 3 themes; file text; audit rows;
+    latency; full CI (run 40707721927 on `dev`, green, 2026-10-28).
   - [x] All `HF-n` done (there are none).
   - [ ] 👤 The partners' consent, then make the repo public.
   - **Acceptance:** all green; gitleaks and the denylist clean again.
@@ -1307,9 +1295,8 @@ Screenshots: the PDFs and XLSX, the 8 screens × 3 themes, the README.
     - **gitleaks** v8.24.3 (Docker, read-only): 29 commits, no leaks. The commit-able files: no
       leaks.
     - **Denylist:** empty.
-    - **Still open:**
-      - full CI on the push;
-      - 👤 the partners' consent and making the repo public.
+    - **Full CI:** run 40707721927 (N-6.2's push), green.
+    - **Still open:** 👤 the partners' consent and making the repo public.
 
 ---
 
@@ -1318,26 +1305,79 @@ Screenshots: the PDFs and XLSX, the 8 screens × 3 themes, the README.
 ### Session S10
 Screenshots: the rehearsal log; the production smoke test.
 
-- [ ] **N-7.1 Two-unit deploy and rehearsal**
+- [x] **N-7.1 Two-unit deploy and rehearsal**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/scripts/deploy.sh`, `deploy/*`
-  - [ ] A two-unit `deploy.sh`: build both, migrate once, stage, start the api then web with curl
-    checks, a marker file, and `--env-file` per copy. Rolling back to a monolith copy stops the
-    api.
-  - [ ] `deploy/mobile-business-api.service`; `deploy/README.md`.
-  - [ ] Rehearse deploy → rollback → deploy in WSL with systemd.
-  - **Acceptance:** the rehearsal log is in this step.
+  - **Reworked by CR-048 (D-071, 2026-10-28):** the new names; the switch runs side by side, so
+    the first design's rollback to a single-app copy was dropped. Ticked with CR-048's rehearsal.
+  - [x] A two-unit `deploy.sh`: build both, migrate once, stage, start the api then web with curl
+    checks, a marker file, and `--env-file` per copy.
+  - [x] `deploy/self-balancing-bookkeeper-api.service`; `deploy/README.md`.
+  - [x] Rehearse deploy → rollback → deploy with systemd (in a Docker container, the user's
+    choice; WSL here has no Ubuntu).
+  - **Acceptance:** the rehearsal log is in this step (and in CR-048).
+  - **Result (2026-10-28, final design after CR-048):**
+    - **One copy holds both apps**, so a release and a rollback always move them together:
+      - `/var/www/self-balancing-bookkeeper/` has web's standalone tree (`apps/web/server.js`)
+        and `api/` (the bundle and fonts);
+      - `web.env` and `api.env` (mode 600) are split from the clone's one `.env.local` (the
+        user's choice): web gets only the `NEXT_PUBLIC_*` lines, and the api gets the database
+        URL, the Supabase lines, the card key and the optional JWT secret;
+      - `RELEASE` holds the branch and commit.
+    - **`scripts/deploy.sh`** keeps the reference's shape:
+      1. it checks the required keys (the name only, never the value);
+      2. `npm ci`, the web and api builds, then one migrate;
+      3. it stages and swaps;
+      4. `start_units` restarts the api and waits for `/health`, then restarts web and waits for
+         `/login` (30 s each).
+      - A failed check moves the old copy back and starts it.
+      - `--rollback` swaps, then runs `start_units`.
+      - shellcheck is clean.
+    - **Units:**
+      - `self-balancing-bookkeeper.service` (web) runs `apps/web/server.js` with
+        `--env-file=…/web.env`, `PORT=4007` and `API_URL=http://127.0.0.1:4006`, after the api;
+      - `self-balancing-bookkeeper-api.service` runs `api/main.js` with `--env-file=…/api.env`,
+        `NODE_ENV=production` and `API_PORT=4006`;
+      - both use Node v24.22.1 from nvm, `MemoryMax=1G`, `NoNewPrivileges` and `PrivateTmp`.
+    - **The first rehearsal** (the first design: the `mobile-business*` names, web on 4005, a
+      rollback to the single-app copy, M-N-7.1.1–6) passed. It found one fix: the wait loop used
+      `curl -fsS`, which logged "Couldn't connect" while each server was still booting; it is now
+      `curl -fs`. CR-048's rehearsal replaces it.
+    - **Deviations:**
+      - the ports and `API_URL` are in the units, not the env files;
+      - as in the reference, a failed release uses up the `-old` slot (it deletes `-old` before
+        the swap).
 - [ ] **N-7.2 👤 Switch** (the user's go-ahead, at a quiet time)
   - [ ] 👤 Production key-type check (moved from N-2.3), before the api's `.env` is written:
     `curl -s https://<project>.supabase.co/auth/v1/.well-known/jwks.json`.
     - Keys listed → JWKS; the api needs only `SUPABASE_URL`.
     - `{"keys":[]}` → HS256; the api also needs `SUPABASE_JWT_SECRET`.
     - Then drop the unused path from `apps/api/src/auth/jwt.guard.ts`.
-  - [ ] Node 24 via nvm; clone this repo to the VPS (deploy key); web and api `.env` (mode 600)
-    from the old `.env.local`; the units; deploy.
-    - The api's `.env` also needs `SUPABASE_ANON_KEY` (the old `NEXT_PUBLIC_SUPABASE_ANON_KEY`) and
-      `CARD_SECRET_KEY` (the same key, or saved card details can't be read; N-3.8).
+  - The switch runs side by side, on the same database, with no database change (D-071,
+    `deploy/README.md`).
+  - [ ] **Deploy beside the old app.** The old one keeps serving on 4005.
+    - Node 24 via nvm; clone this repo to `~/Self-Balancing-Bookkeeper` (deploy key).
+    - Its `.env.local` (mode 600) is copied from the old one, plus `SUPABASE_URL` and
+      `SUPABASE_ANON_KEY` (the old `NEXT_PUBLIC_*` values). `CARD_SECRET_KEY` is the same key,
+      or saved card details can't be read (N-3.8).
+    - Ports 4006 and 4007 must be free. Install both units (if `nvm which 24` isn't v24.22.1,
+      update their node path first); deploy.
+    - Check `/login` on 4007 and `/health` on 4006 with curl on the VPS.
+  - [ ] **Park the old app** at `business-old.<domain>`:
+    - the DNS record;
+    - an nginx block → `127.0.0.1:4005` (open, no extra password);
+    - certbot;
+    - check that it works there.
+  - [ ] 👤 **Switch** at a quiet time:
+    - in the main site's block, `127.0.0.1:4005` → `127.0.0.1:4007`; `nginx -t` and reload;
+    - then restart the old unit once, so it drops its database connections (the session pooler
+      allows 15 clients).
   - [ ] Smoke test with both partners: login, save/delete, PDF, reveal.
-  - [ ] One week of watching, with the old clone kept for rollback.
+  - [ ] **One week of watching.** Switching back is the same nginx line reversed.
+  - [ ] **Clean up:**
+    - remove `business-old`'s block, DNS record and certificate;
+    - stop and disable `mobile-business`, and delete its unit file, `/var/www/mobile-business*`
+      and `~/Mobile-Business-Lite`;
+    - rename the nginx site file.
   - **Tests:** [ ] M-N-7.2.x smoke passes; logs clean for 24 h. Then the reference becomes an
     archive.
 
@@ -1371,3 +1411,90 @@ Feedback or a rule change found during the migration goes here, after its D entr
   - **Tests:** [x] typecheck, lint, unit and integration green without them; opening entries stay
     covered by the engine and integration suites.
   - **Acceptance:** nothing imports `scripts/opening`; nothing reads `docs/source`.
+
+- [x] **CR-048 The "Self-Balancing Bookkeeper" name; a side-by-side switch** (2026-10-28)
+  - **Source:** user decision at the N-7.1 review · **Decision:** D-071 · **Docs:** CLAUDE.md,
+    README, LICENSE, the living docs' titles, ARCHITECTURE §8, `docs/v1.1-plan.md` (CR-019
+    fallback), this file's N-7.1 and N-7.2
+  - [x] CR-048.1 **The name:**
+    - `FALLBACK_NAME`, so also the export's fallback file name
+      (`self-balancing-bookkeeper-<date>.xlsx`);
+    - the passkey's `rpName` (a label only: the site stays the host, so saved passkeys keep
+      working);
+    - the Swagger title, the root package name (with the lockfile), and the README's opening.
+    - Kept: `@mbl/*`, the archived docs and ticked tasks, the reference repo's paths and
+      `supabase/config.toml`'s `project_id` (the local volumes).
+  - [x] CR-048.2 **Deploy names:**
+    - `deploy/self-balancing-bookkeeper.service`: web on `127.0.0.1:4007`, running
+      `apps/web/server.js` with `--env-file=…/web.env`;
+    - `deploy/self-balancing-bookkeeper-api.service`: `127.0.0.1:4006`;
+    - `APP_DIR=/var/www/self-balancing-bookkeeper`, the clone `~/Self-Balancing-Bookkeeper`, and
+      the lock file's name;
+    - `deploy/nginx.conf` → 4007.
+  - [x] CR-048.3 **Drop N-7.1's rollback to a single-app copy:** the root `server.js` loader,
+    the `RELEASE` start condition and `--env-file-if-exists`. `RELEASE` stays as the live
+    release's name. `start_units` always restarts the api, then web.
+  - [x] CR-048.4 **`deploy/README.md`:**
+    - the one-time setup under the new names;
+    - a "Switching from the old app" section: deploy beside it, park it at
+      `business-old.example.com`, switch, switch back, clean up;
+    - the checks.
+  - **Tests:**
+    - [x] U: `business.test` — the fallback name and file name.
+    - [x] M-CR-048.x: the rehearsal again (the Docker systemd container, plus nginx with both
+      host names):
+      1. the old app live through the reference's own `deploy.sh` and unit (Node 20);
+      2. the new deploy beside it, with the old app unaffected;
+      3. park the old app at `business-old`;
+      4. switch `business` (nginx's upstream log shows the port);
+      5. switch back, then again;
+      6. the new app's own rollback;
+      7. a failed new release leaves both apps serving;
+      8. clean up, then reboot: only the new units run, and `business` serves the new app.
+  - **Acceptance:**
+    - typecheck, lint, unit and parity green;
+    - denylist empty: the real domains are typed only on the VPS;
+    - the rehearsal log is in this task.
+  - **Result (2026-10-28):**
+    - **The name:** `FALLBACK_NAME`, the export's fallback slug and the export button's default
+      file name, the passkey's `rpName`, the Swagger title, and the root package name (and the
+      lockfile's two `name` fields).
+    - **Deploy:**
+      - the units were renamed (`git mv`): web on 4007 runs `apps/web/server.js` from
+        `apps/web`, and the api's `ConditionPathExists` is gone;
+      - `deploy.sh` has the new names and lock, and no root loader; `start_units` always runs
+        the api, then web;
+      - `nginx.conf` → 4007;
+      - the README has the new layout and setup, "Switching from the old app" (deploy beside it,
+        park, switch, switch back, clean up, as commands) and the checks.
+    - **Rehearsal** (`jrei/systemd-ubuntu:24.04` with nginx and a `$host $upstream_addr` log; a
+      fresh `supabase/postgres:17.11`; fictional keys; both repos as bundles, with the
+      uncommitted files laid over the clone as one local commit; placeholder hosts only):
+      1. The reference's own `deploy.sh` and unit (cce0cc5, Node v20.19.6): the old app is
+         live, and `business` goes to 4005.
+      2. The new deploy (Node v24.22.1) beside it:
+         - both new units are active; `/login` 200 on 4007, `/health` `{"ok":true}` on 4006,
+           and `/logo` comes from the api through web;
+         - the old unit's PID is unchanged, and `business` still goes to 4005;
+         - all three listen on 127.0.0.1 only; the env files are split as in N-7.1;
+         - the migrate was a no-op (7 `__drizzle_migrations` rows before and after).
+      3. Park: the `business-old` site → 4005 answers `/login` 200.
+      4. Switch (the README's `sed`, `nginx -t`, reload, then the old unit's restart): the log
+         shows `business` → 4007 and `business-old` → 4005.
+      5. Switching back sends `business` to 4005, and switching again to 4007.
+      6. A second release, then `--rollback`: the first copy is live again, both new units got
+         new PIDs, and the old app is unaffected.
+      7. A missing `CARD_SECRET_KEY` stops before the build, with `/var/www` untouched.
+         `SUPABASE_URL=not-a-url` fails `/health`; the previous copy is moved back, and both
+         hosts serve.
+      8. The README's clean-up, then a reboot: the old unit, its folders, its clone and the
+         `business-old` site are gone; only the new units run, and `business` → 4007.
+      - The containers and network were removed afterwards.
+    - **Notes:**
+      - `nvm install 24` now gives v24.22.2. The rehearsal installed v24.22.1 to match the units;
+        on the VPS, N-7.2's step updates the path if `nvm which 24` differs.
+      - A host with no site of its own falls to nginx's default server, so `business-old`
+        reached the only site before the park and after the clean-up. On the VPS its DNS record
+        is added at the park and removed at the clean-up.
+    - **Gate:** typecheck and lint clean; unit 723 (64 files); shellcheck clean; denylist empty;
+      parity MATCH (202 files), TTFB over 92 routes 9633 → 6316 ms (−34%).

@@ -24,7 +24,7 @@ export function ExportButton() {
       const url = URL.createObjectURL(await res.blob());
       const a = document.createElement("a");
       a.href = url;
-      a.download = name ?? "mobile-business.xlsx";
+      a.download = name ?? "self-balancing-bookkeeper.xlsx";
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
       router.refresh();

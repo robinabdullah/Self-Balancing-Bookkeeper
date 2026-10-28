@@ -1,4 +1,4 @@
-# Mobile Business Lite — Tasks (AI assistant track)
+# Self-Balancing Bookkeeper — Tasks (AI assistant track)
 
 *Task breakdown · 13 October 2026.* This file implements `docs/AI.md` (decision D-057). The track is
 separate from v1.1: the v1.1 tasks stay in `docs/TASKS.md`, and the AI work never changes a v1.1

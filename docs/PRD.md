@@ -1,4 +1,4 @@
-# Mobile Business Lite — PRD (v1)
+# Self-Balancing Bookkeeper — PRD (v1)
 
 *Product requirements · 7 October 2026 · v1.1; scope extended 10 October 2026 (§4.8)* (changes: `docs/DECISIONS.md`)
 Adapted from the original Excel-oriented PRD (R01–R49) after reviewing the real workbooks (not published, D-069),

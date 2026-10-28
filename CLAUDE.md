@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-**Mobile Business Lite:** a small, precise bookkeeping web app for a two-partner mobile-phone
+**Self-Balancing Bookkeeper:** a small, precise bookkeeping web app for a two-partner mobile-phone
 trading business. It uses BDT ৳ and the Asia/Dhaka time zone, and replaces their Excel sheets.
 
 **Status:** the NestJS migration (D-068) is under way; see the first unchecked step in

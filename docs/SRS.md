@@ -1,4 +1,4 @@
-# Mobile Business Lite — SRS (v1)
+# Self-Balancing Bookkeeper — SRS (v1)
 
 *Technical specification · 7 October 2026 · v1.1* — implements `docs/PRD.md`.
 
@@ -15,7 +15,7 @@
 | Tests | **Unit:** Vitest (money, dates, engine, posting rules, guards, Zod, PDF and sheet text, the boundary lint). **Integration:** Vitest + supertest, the api in-process against a **local Supabase** (Docker, `supabase start`) with real tokens. **E2E:** Playwright (360px and 1280px, 3 themes) on both built apps. **Parity:** a harness comparing this build with the pre-migration one (`docs/TASKS-NEST.md`). **CI:** GitHub Actions on every push to `dev`. Plus a final manual phone pass (§14) |
 | Excel | **ExcelJS** for the export and the reports' Excel files, in the api (the SheetJS npm package is outdated) |
 | PDF | **`@react-pdf/renderer`** in the api (`/files/pdf/*`, forwarded by web's `/pdf/*`), with embedded Noto Sans + Noto Sans Bengali for ৳ (D-041) |
-| Hosting | The partners' own **Linux VPS in Singapore** (D-030, D-031): two systemd services on one VPS, web (a Next.js **standalone** `server.js`) and the api (`127.0.0.1` only), behind the existing **nginx** (HTTPS via Let's Encrypt) on their own subdomain. No Docker. Releases run `scripts/deploy.sh` in the VPS's clone of the repo (the two-unit release is N-7.1). Supabase stays for the DB and login |
+| Hosting | The partners' own **Linux VPS in Singapore** (D-030, D-031): two systemd services on one VPS, web (a Next.js **standalone** `server.js`) and the api (`127.0.0.1` only), behind the existing **nginx** (HTTPS via Let's Encrypt) on their own subdomain. No Docker. Releases run `scripts/deploy.sh` in the VPS's clone of the repo: both apps are built, copied into one folder and swapped together, the api is started before web, and each is checked with curl (N-7.1). Supabase stays for the DB and login |
 
 **Why Supabase:** Postgres gives exact `numeric` money, foreign keys (no misspelled names), `CHECK`
 constraints, transactions, SQL reports, and an easy export. Firebase/Firestore was rejected (float

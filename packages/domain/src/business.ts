@@ -64,7 +64,7 @@ export function fillTemplate(
     .trim();
 }
 
-export const FALLBACK_NAME = "Mobile Business Lite";
+export const FALLBACK_NAME = "Self-Balancing Bookkeeper";
 
 type Named = { name?: string | null; shortName?: string | null } | null | undefined;
 
@@ -91,7 +91,7 @@ export const slug = (text: string) =>
 
 /** "demo-business-shop-2026-10-10.xlsx". */
 export function exportFileName(p: Named, date: string) {
-  return `${slug(businessName(p)) || "mobile-business"}-${date}.xlsx`;
+  return `${slug(businessName(p)) || "self-balancing-bookkeeper"}-${date}.xlsx`;
 }
 
 export type BankAccountFields = {

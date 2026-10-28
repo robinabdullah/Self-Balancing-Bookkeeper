@@ -1,4 +1,4 @@
-# Mobile Business Lite — AI assistant (spec)
+# Self-Balancing Bookkeeper — AI assistant (spec)
 
 *Separate track · 13 October 2026 · D-057.* This file is the spec for the AI assistant: what it
 does, its rules, its data and its screens. Tasks are in `docs/TASKS-AI.md`. Use PRD, SRS and UIDD
