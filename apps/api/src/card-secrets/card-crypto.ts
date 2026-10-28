@@ -5,9 +5,9 @@ import {
   randomBytes,
   timingSafeEqual,
 } from "node:crypto";
-import { NO_KEY } from "@mbl/domain/card-secrets";
+import { NO_KEY, REVEAL_WINDOW_COOKIE } from "@mbl/domain/card-secrets";
 
-// Ref: src/server/card-crypto.ts (N-3.8; web keeps its copy for the reveal until N-5.3). D-046
+// Ref: src/server/card-crypto.ts (N-3.8; the reveal since N-5.3). D-046
 // (SRS §11): each saved card field is AES-256-GCM ciphertext, with the card's id bound in
 // as the extra data, so a value moved to another card can't be read. The key `CARD_SECRET_KEY`
 // (32 bytes, base64) is only in the server's env. Errors never carry a value.
@@ -58,8 +58,6 @@ export function decryptField(text: string, cardId: string, key = cardKey()) {
 // D-054: one fingerprint opens a 30 s reveal window, held in an httpOnly cookie
 // "<user id>.<end ms>.<HMAC-SHA256>" whose key is derived from the card key. The end is signed, so
 // it can't be moved; nothing is stored.
-/** The reveal window's cookie (httpOnly, `Path=/cards`). */
-export const REVEAL_WINDOW_COOKIE = "card_reveal";
 
 /** The reveal window's cookie value, from a `Cookie` header. */
 export const revealWindowOf = (cookie: string | null) =>

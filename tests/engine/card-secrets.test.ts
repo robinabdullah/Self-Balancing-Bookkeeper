@@ -21,7 +21,7 @@ import {
   revealWindowOf,
   revealWindowOpen,
   signRevealWindow,
-} from "@/server/card-crypto";
+} from "../../apps/api/src/card-secrets/card-crypto";
 
 // CR-026 (D-046): card details are AES-256-GCM ciphertext bound to their card; the form's checks
 // and the masked / revealed views. Synthetic test numbers only.

@@ -7,6 +7,8 @@ import { BooksService } from "./books/books.service";
 import { BusinessActionsService } from "./business/business-actions.service";
 import { BusinessController } from "./business/business.controller";
 import { BusinessService } from "./business/business.service";
+import { CardRevealController } from "./card-secrets/card-reveal.controller";
+import { CardRevealService } from "./card-secrets/card-reveal.service";
 import { CardSecretsDataService } from "./card-secrets/card-secrets-data.service";
 import { CardSecretsController } from "./card-secrets/card-secrets.controller";
 import { CardSecretsService } from "./card-secrets/card-secrets.service";
@@ -15,6 +17,9 @@ import { CardDetailService } from "./cards/card-detail.service";
 import { ChartsService } from "./charts/charts.service";
 import { ChartViewsController } from "./views/charts.controller";
 import { ExportService } from "./export/export.service";
+import { PdfController } from "./files/pdf.controller";
+import { LogoController } from "./files/logo.controller";
+import { XlsxController } from "./files/xlsx.controller";
 import { BillDatesService } from "./cards/bill-dates.service";
 import { ConfigModule } from "./config.module";
 import { DbModule } from "./db/db.module";
@@ -81,6 +86,10 @@ import { OverlayViewsController } from "./views/overlays.controller";
     AdminViewsController,
     ReportViewsController,
     ChartViewsController,
+    PdfController,
+    XlsxController,
+    LogoController,
+    CardRevealController,
   ],
   providers: [
     Runner,
@@ -101,6 +110,7 @@ import { OverlayViewsController } from "./views/overlays.controller";
     BillDatesService,
     BusinessActionsService,
     CardSecretsService,
+    CardRevealService,
     Passkeys,
     PasskeysService,
     AccountsService,

@@ -3,6 +3,8 @@
 
 /** How long revealed details stay on screen; D-054: also how long one fingerprint lasts. */
 export const REVEAL_SECONDS = 30;
+/** D-054: the reveal window's cookie (httpOnly, `Path=/cards`; apps/api card-crypto.ts). */
+export const REVEAL_WINDOW_COOKIE = "card_reveal";
 /** Edit / Remove are allowed this long after your own reveal of that card (checked on the server). */
 export const EDIT_AFTER_REVEAL_MINUTES = 10;
 

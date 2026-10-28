@@ -1,16 +1,9 @@
-import { getLogo } from "@/server/business";
+import { forwardFile } from "@/api/files";
 
-// D-039: the business logo, public (the login page shows it) and cached for a year: the URL
-// carries `?v=<hash>`, so a new logo gets a new URL.
+// D-039: the business logo (public: the login page shows it). N-5.3: the api serves it
+// (`/files/logo`), cached for a year since its URL carries a hash of it (`/logo?v=`).
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const match = /^data:(image\/(?:png|jpeg|webp));base64,(.+)$/.exec((await getLogo()) ?? "");
-  if (!match) return new Response("No logo", { status: 404 });
-  return new Response(Buffer.from(match[2], "base64"), {
-    headers: {
-      "Content-Type": match[1],
-      "Cache-Control": "public, max-age=31536000, immutable",
-    },
-  });
+export function GET() {
+  return forwardFile("GET", "/files/logo");
 }

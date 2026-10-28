@@ -1,10 +1,12 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { and, asc, eq, gt, lte, or } from "drizzle-orm";
 import {
+  type AuthenticationResponseJSON,
   type AuthenticatorTransportFuture,
   type RegistrationResponseJSON,
   generateAuthenticationOptions,
   generateRegistrationOptions,
+  verifyAuthenticationResponse,
   verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import type { Db } from "@mbl/db/client";
@@ -12,9 +14,8 @@ import { passkeyChallenges, passkeys } from "@mbl/db/schema";
 import { context } from "../auth/context";
 import { DB } from "../db/db.module";
 
-// Ref: src/server/passkeys.ts (N-3.8): set-up and the reveal's options. The reveal's check
-// (`verifyAuthentication`) stays in web's copy with the reveal route until N-5.3; the challenges
-// are rows, so either side can answer the other's. D-046 (SRS §11): fingerprint unlock (passkeys,
+// Ref: src/server/passkeys.ts (N-3.8): set-up, the reveal's options and (N-5.3) the reveal's
+// check. D-046 (SRS §11): fingerprint unlock (passkeys,
 // WebAuthn). Every challenge is one-time: saved for 2 minutes, for this user, and deleted when it
 // is answered. The site (rpID) and origin are the public host behind nginx, which web forwards as
 // X-Forwarded-Host/-Proto (auth/context.ts; D-031).
@@ -160,5 +161,40 @@ export class Passkeys {
     });
     await this.saveChallenge(userId, options.challenge);
     return options;
+  }
+
+  /** True when the fingerprint answered this user's fresh challenge with one of their passkeys. */
+  async verifyAuthentication(userId: string, response: AuthenticationResponseJSON) {
+    const challenge = signedChallenge(response);
+    if (!challenge || !(await this.takeChallenge(userId, challenge))) return false;
+    const [key] = await this.db
+      .select()
+      .from(passkeys)
+      .where(and(eq(passkeys.credentialId, String(response.id)), eq(passkeys.userId, userId)));
+    if (!key) return false;
+    const { rpID, origin } = this.relyingParty();
+    try {
+      const { verified, authenticationInfo } = await verifyAuthenticationResponse({
+        response,
+        expectedChallenge: challenge,
+        expectedOrigin: origin,
+        expectedRPID: rpID,
+        credential: {
+          id: key.credentialId,
+          publicKey: Buffer.from(key.publicKey, "base64url"),
+          counter: key.counter,
+          transports: transportsOf(key.transports),
+        },
+        requireUserVerification: true,
+      });
+      if (!verified) return false;
+      await this.db
+        .update(passkeys)
+        .set({ counter: authenticationInfo.newCounter })
+        .where(eq(passkeys.id, key.id));
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
