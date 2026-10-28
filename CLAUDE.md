@@ -30,11 +30,18 @@ trading business. It uses BDT ৳ and the Asia/Dhaka time zone, and replaces the
   rules here.
 
 ## Stack (decided)
-- Next.js 16 (App Router, TS; Turbopack build, D-048), with server actions for writes.
+- Two apps (D-068; `docs/ARCHITECTURE.md`):
+  - `apps/web`: Next.js 16 (App Router, TS; Turbopack build, D-048), the UI. Its server actions
+    and file routes are thin proxies to the api; it has no database URL and no card key.
+  - `apps/api`: NestJS 11 (webpack + swc bundle), on 127.0.0.1 only: the data, the write runner,
+    the `/views/*` reads, the `/files/*` routes, the crypto.
+  - `packages/domain` (pure, shared) and `packages/db` (schema, migrations); a boundary lint
+    keeps them apart.
 - Supabase Postgres + Auth (ap-south-1).
-- Drizzle + drizzle-kit.
+- Drizzle + drizzle-kit (in the api only).
 - Tailwind + shadcn/ui; React Hook Form + Zod.
-- Vitest (unit + integration on local Supabase); Playwright (E2E).
+- Vitest (unit; integration = the api in-process with supertest, on local Supabase);
+  Playwright (E2E); the parity harness (`scripts/parity`).
 - ExcelJS; `@react-pdf/renderer` for PDFs (D-041); shadcn Chart (Recharts) for charts (D-064).
 
 ## Non-negotiables
@@ -70,20 +77,26 @@ trading business. It uses BDT ৳ and the Asia/Dhaka time zone, and replaces the
 
 ## Commands
 ```bash
-npm run dev                      # http://localhost:3000
-npm test                         # unit (engine, money, the card fixture)
+npm run dev                      # web http://localhost:3000 + api http://127.0.0.1:3003
+npm run seed:demo                # local only: replace the data with the fictional demo book
+npm test                         # unit (engine, money, the card fixture, the boundary lint)
 supabase start                   # local Postgres + Auth (Docker) for test:int / test:e2e
-npm run test:int                 # server actions vs local Supabase
+npm run test:int                 # the api (in-process) vs local Supabase
 npm run test:e2e                 # Playwright, 360px + 1280px, all themes (CI, before a deploy)
 E2E_THEMES=night_owl npx playwright test <specs>   # a task's local E2E, one theme (D-065)
 npm run typecheck && npm run lint
+npm run build:api                # the api's bundle (apps/api/dist)
+npm run parity                   # this build vs the reference baseline (npm run parity:ref)
 npm run db:generate              # migration from packages/db/src/schema.ts
 npm run db:migrate               # apply to DATABASE_URL
 ```
-Env (never committed): `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`,
-`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `CARD_SECRET_KEY`. `.env.local` = local Supabase (from
-`npx supabase status -o env`, plus the E2E card key); `.env.prod` = production, which Next never
-loads by itself.
+Env (never committed; `.env.example` lists each app's lines):
+- web: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `API_URL`;
+- api: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `CARD_SECRET_KEY`, `API_PORT`
+  (`SUPABASE_JWT_SECRET` only on a legacy HS256 project).
+
+`.env.local` = local Supabase (from `npx supabase status -o env`, plus the E2E card key); each app
+reads only its own lines. `.env.prod` = production, which neither app loads by itself.
 
 ## Git
 - Branches: `main` ← `dev` ← `feature/<step>-<desc>`, merged into `dev` with `--no-ff`.

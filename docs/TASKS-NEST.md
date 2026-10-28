@@ -7,27 +7,24 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S8 done (2026-10-28), uncommitted, waiting for the user's review: N-4.5 … N-4.8.
-  S7 was pushed and CI run 40601924940 is green.
+- **Session:** S9 done (2026-10-28), uncommitted, waiting for the user's review: N-5.1 … N-6.2,
+  plus the local part of N-6.3. S8 was pushed and CI run 40614883240 is green.
   - **Phase gate:**
-    - typecheck and lint clean; denylist empty;
-    - unit 721;
-    - integration 125 in 23 files: the 7 `views-*` files plus account-reports, messages,
-      card-page, accounts, cards, reopen-actions, settings-actions, export, setup-actions,
-      card-secrets, business-actions, reports, pdf, charts, queries and books;
-    - E2E 119 passed, 4 skipped by design (night_owl, 360 + 1280). The specs: card-page,
-      account-reports, messages, quick-actions, business, card-secrets, month-close, settings,
-      setup, export, reports, charts, charts-profit, charts-money, charts-customers, charts-stock,
-      home, journal, stock and cards-tab;
-    - parity MATCH (202 files), TTFB over 92 routes 9633 → 6671 ms (−31%).
-  - **Phase N-4's end state:** no page or component under `app/(app)` or `components` makes a
-    value import of `@/server/*` other than `actions`. Four components still use
-    `import type { Result } from "@/server/action"`, which N-6.1 handles.
-    - Web's server read modules stay for the PDF, XLSX, reveal, `/logo` and export-download
-      routes (N-5), then go in N-6.1.
+    - typecheck and lint clean (with the new boundary lint); denylist empty; gitleaks clean;
+    - unit 723 (64 files);
+    - integration 215 in 42 files (the full `test:int`, since N-6.1 touched 31 files);
+    - full E2E with web's env stripped: 272 passed, 15 skipped by design (viewport-only tests;
+      night_owl, 360 + 1280);
+    - parity MATCH (202 files), TTFB over 92 routes 9633 → 5656 ms (−41%).
+  - **End state:**
+    - web holds no server code but `server/actions/` (thin proxies) and `src/api/`;
+    - it has no `DATABASE_URL` or `CARD_SECRET_KEY`;
+    - the lint keeps it that way.
+  - N-6.3 stays open for the full CI on the push and 👤 the partners' consent before going public.
   - At N-7.2, update the VPS's installed unit file to run `apps/web/server.js` (N-1.2), and do the
     production key-type check (moved from N-2.3).
-- **Next:** S9 (`/next-phase S9`, in a new conversation), after S8 is pushed and CI is green.
+    - Web's env there needs only `NEXT_PUBLIC_SUPABASE_*` and `API_URL` (N-6.1).
+- **Next:** S10 (`/next-phase S10`, in a new conversation), after S9 is pushed and CI is green.
 - **Blocked on:** —
 
 ## How to use
@@ -1134,41 +1131,185 @@ Screenshots: those screens, plus the parity report.
 ### Session S9
 Screenshots: the PDFs and XLSX, the 8 screens × 3 themes, the README.
 
-- [ ] **N-5.1 PDFs ×7 in Nest**
+- [x] **N-5.1 PDFs ×7 in Nest**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/app/pdf/**`, `src/pdf/**`
-  - [ ] The font path comes from config or `__dirname`; one `app/pdf/[kind]/route.ts` forwarder.
-  - **Tests:** [ ] `pdf.test` via supertest; `pdf.spec`; PDF-text parity.
-- [ ] **N-5.2 XLSX ×4 and the export download**
+  - [x] The font path comes from config or `__dirname`; one `app/pdf/[kind]/route.ts` forwarder.
+  - **Tests:** [x] `pdf.test` via supertest; `pdf.spec`; PDF-text parity.
+  - **Result (2026-10-28):**
+    - **api:**
+      - `git mv apps/web/src/pdf → apps/api/src/pdf`, fonts included; `server-only` dropped.
+      - `document.tsx` reads the fonts from `__dirname/fonts`: next to the source in tests, and
+        next to `dist/main.js` in the bundle (webpack copies `src/pdf/fonts`). So `env.ts`, the
+        vitest `PDF_FONT_DIR` and web's `outputFileTracingIncludes` are gone.
+      - `files/pdf.controller.ts`, `GET /files/pdf/<kind>`: the 7 route bodies, `respond.ts` and
+        `doc.ts`, word for word with `this.` services. An unknown kind is a 404.
+      - `files/respond.ts` is shared by the file routes: `searchOf` (the query read as
+        `URLSearchParams.get`), `partnerOrNull`, `sendText` and `sendFile` (the reference's three
+        headers).
+      - `BusinessService.getLogo()`.
+      - `@react-pdf/renderer` and `react` are now api dependencies.
+    - **Web:**
+      - `app/pdf/[kind]/route.ts` forwards to `/files/pdf/<kind>`; the 7 folders, `doc.ts` and
+        `respond.ts` are deleted.
+      - `src/api/files.ts` `forwardFile()` passes the api's status, body and only `Content-Type`,
+        `Content-Disposition` and `Cache-Control` through (plus `Set-Cookie` for the reveal),
+        with a 60 s timeout.
+      - `client.ts` exports `send()` (with `cookie` and `timeoutMs` options).
+    - **Tests:**
+      - `pdf.test` (8), with the PDF parts of `reports.test` and `account-reports.test`, now go
+        through supertest via `fileAs()` in `tests/integration/api.ts`.
+      - I-N-5.1.1: an unknown kind is a 404, and a PDF has the reference's three headers.
+      - The 4 engine PDF tests import from `apps/api/src/pdf`: 40 passed with `pdf.test`.
+    - **Deviation:** without a token the api answers 401, where the reference's route answered
+      403. A browser never sees either: `proxy.ts` still sends a signed-out user to /login with a
+      307. An investor still gets the route's own 403 text.
+- [x] **N-5.2 XLSX ×4 and the export download**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/app/(app)/reports/*/xlsx`, `export/download`,
     `src/server/export.ts`
-  - [ ] The export runs at repeatable read and writes an audit row.
-  - **Tests:** [ ] `export.test`, `reports.test`; `export.spec`; cell parity.
-- [ ] **N-5.3 Card reveal and `/logo`**
+  - [x] The export runs at repeatable read and writes an audit row.
+  - **Tests:** [x] `export.test`, `reports.test`; `export.spec`; cell parity.
+  - **Result (2026-10-28):**
+    - **api:**
+      - `ExportService` gains web's `TABLES`, `OMIT`, `rawSheetName`, `toWorkbook` and
+        `exportWorkbook`, word for word. The workbook is one
+        `transaction(…, { isolationLevel: "repeatable read" })` with the `export` audit row.
+      - `files/xlsx.controller.ts`: `GET /files/xlsx/<sales|investor|pack|statement>` is the 4
+        routes plus `xlsxReport`. `POST /files/export` (200) is the download route.
+      - `exceljs` is now an api dependency.
+    - **Web:** the 4 `reports/*/xlsx` routes and `export/download` are one-line forwarders;
+      `export-button.tsx` is unchanged.
+    - **Tests:**
+      - `export.test` (3) reads `POST /files/export`, with the headers and file name.
+      - I-N-5.2.1: signed out is a 401; an investor gets 403 "Only partners can export", with no
+        audit row.
+      - The XLSX parts of `reports.test` and `account-reports.test` go through supertest.
+      - The four files: 19 passed.
+- [x] **N-5.3 Card reveal and `/logo`**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/app/(app)/cards/[id]/reveal/route.ts`,
     `logo/route.ts`, `src/server/card-crypto.ts` (already in the api since N-3.8:
     `apps/api/src/card-secrets/card-crypto.ts`), `src/server/card-secrets.ts` (`revealCardDetails`),
     `src/server/passkeys.ts` (`verifyAuthentication`)
-  - [ ] The reveal needs a passkey and sets the 30 s `card_reveal` cookie (`Path=/cards`).
-  - **Tests:** [ ] `card-secrets.spec` (CDP authenticator on localhost); `curl -I /logo` headers
+  - [x] The reveal needs a passkey and sets the 30 s `card_reveal` cookie (`Path=/cards`).
+  - **Tests:** [x] `card-secrets.spec` (CDP authenticator on localhost); `curl -I /logo` headers
     identical.
-- [ ] **N-6.1 Delete web's server code; boundary lint**
-  - [ ] Remove `DATABASE_URL` and `CARD_SECRET_KEY` from web.
-  - [ ] Boundary lint. Web: no db, drizzle, postgres or `node:crypto`; api imports are type-only.
+  - **Result (2026-10-28):**
+    - **api:**
+      - `Passkeys.verifyAuthentication` and `CardRevealService.revealCardDetails`
+        (`card-secrets/card-reveal.service.ts`), word for word.
+      - `card-reveal.controller.ts`: `POST /cards/:id/reveal` with the reference's 403/404 JSON
+        texts, `Cache-Control: no-store`, and the window's `Set-Cookie` (`; Secure` on https, from
+        the forwarded origin).
+      - `files/logo.controller.ts`: `@Public() GET /files/logo`, the reference's two headers or
+        404 "No logo".
+      - `REVEAL_WINDOW_COOKIE` moved to `@mbl/domain/card-secrets`, so web names the cookie
+        without the crypto module.
+    - **Web:**
+      - The reveal route forwards a JSON body (anything other than an object goes as `{}`, the
+        same 400), only the `card_reveal` cookie, and relays `Set-Cookie`.
+      - `/logo` forwards. The whitelist drops Express's `ETag`, so the headers are the
+        reference's.
+    - **Tests:**
+      - The reveal cases of `card-secrets.test` (25 with the engine file) now use real tokens: a
+        second partner's, and an investor's 403. Signed out is a 401 (see N-5.1's deviation).
+      - I-N-5.3.1 in `business-actions.test`: `/files/logo` with no token returns the image and
+        `public, max-age=31536000, immutable`; with no logo, 404 "No logo".
+      - The engine `card-secrets.test` imports the api's `card-crypto`.
+    - **E2E (N-5.1–5.3, night_owl, 360 + 1280, before N-6.1):** 272 passed, 15 skipped by design,
+      including pdf, export, reports, account-reports, card-secrets and business (E-CR-019.1's
+      `/logo` headers).
+- [x] **N-6.1 Delete web's server code; boundary lint**
+  - [x] Remove `DATABASE_URL` and `CARD_SECRET_KEY` from web.
+  - [x] Boundary lint. Web: no db, drizzle, postgres or `node:crypto`; api imports are type-only.
     Domain: no react, next, db or nest.
-  - [ ] Prune the dependencies.
-  - **Tests:** [ ] E2E green with web's env stripped; the lint rule tests.
-- [ ] **N-6.2 Docs**
-  - [ ] A README for interviewers: screenshots of fictional data, a diagram, how to run it
+  - [x] Prune the dependencies.
+  - **Tests:** [x] E2E green with web's env stripped; the lint rule tests.
+  - **Result (2026-10-28):**
+    - **Deleted:** the 22 `apps/web/src/server/*.ts` modules; only `server/actions/` stays. The 4
+      components take `Result` from `@mbl/domain/result`. `EntryTable` is gone (unused).
+    - **Env:**
+      - `next.config.ts` takes only `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+        and `API_URL` from the root `.env.local` (`util.parseEnv`).
+      - Playwright's web server and the parity `appEnv()` no longer pass `DATABASE_URL` or
+        `CARD_SECRET_KEY`.
+      - `transpilePackages` drops `@mbl/db`.
+      - `.env.example` is grouped by app.
+      - `client.ts` uses the global `crypto.randomUUID()`.
+    - **Boundary lint** (`eslint.config.mjs`, `@typescript-eslint/no-restricted-imports`, beside
+      D-064's Recharts rule):
+      - web: no `@mbl/db*`, `drizzle-orm*`, `postgres`, `crypto`/`node:crypto`, `exceljs`,
+        `@react-pdf/*` or `@simplewebauthn/server`; `@mbl/api` and `apps/api` as
+        `import type` only;
+      - domain: no React, Next, Nest, `@mbl/api` or database.
+    - **Dependencies:** web drops `@mbl/db`, `drizzle-orm`, `postgres`, `exceljs`,
+      `@react-pdf/renderer`, `@simplewebauthn/server` and `zod`. `@supabase/supabase-js` stays,
+      since it is `@supabase/ssr`'s peer. The lockfile is updated with `npm install`.
+    - **Tests use the api's own services** (the user's choice, 2026-10-28):
+      - `tests/integration/services.ts` `service(app, Type, userId?)` runs each call in a fresh
+        request context, as a web loader outside a render was.
+      - 31 files changed (Sonnet subagents in three groups, each diff reviewed here). The 7
+        `views-*` files still compare every view with these values; parity compares both with
+        the reference.
+      - `auth.test` (I1.5.1) tests the api's `AuthService`.
+      - `cache-wrap.test` (U-CR-013.9) keeps what web still caches: `getUser` and the api
+        token. The books-once-per-render rule is the api's memo, I-N-2.3.3.
+    - **New tests:** `tests/engine/boundary-lint.test.ts` U-N-6.1.1–3: each forbidden import
+      errors, and a type-only api import passes.
+    - **Counts:**
+      - unit 723 (64 files);
+      - integration 215 (42 files, the full `test:int`);
+      - full E2E with web's env stripped: 272 passed, 15 skipped by design (night_owl, 360 + 1280).
+- [x] **N-6.2 Docs**
+  - [x] A README for interviewers: screenshots of fictional data, a diagram, how to run it
     locally, the test matrix, the key D entries.
-  - [ ] `docs/ARCHITECTURE.md`; the final SRS §1/§2/§11/§12/§13; the CLAUDE.md commands.
+  - [x] `docs/ARCHITECTURE.md`; the final SRS §1/§2/§11/§12/§13; the CLAUDE.md commands.
   - **Acceptance:** a fresh clone runs by following the README.
+  - **Result (2026-10-28):**
+    - **`README.md`:**
+      - what the app is;
+      - 4 screenshots of the parity book in `docs/screenshots/` (Home, a customer and a card on
+        a phone; the Sales report on a desktop);
+      - a mermaid diagram, the stack, how to run it locally, the test matrix with counts, and
+        D-068, D-069, D-046/D-052/D-054, D-041, D-064 and D-065.
+    - **`npm run seed:demo`** (`scripts/seed-demo.ts`, new): migrates local Supabase and loads
+      the fictional parity book with the `partner@test.local` login, so a fresh clone has
+      something to sign in to. It uses only the local test DB helpers, never an env file.
+    - **`docs/ARCHITECTURE.md`** (new): the shape, the packages and their boundaries, a read, a
+      write, the files, auth and secrets, tests, and running it.
+    - **SRS:**
+      - §1 and §2 describe the two apps;
+      - §11 describes the token and partner check and the reveal forwarding;
+      - §12 is the real tree;
+      - §13 gains row 7 (the migration);
+      - §4's schema path and §14's `test:int` line are corrected.
+    - **`CLAUDE.md`:** the Stack, the Commands (`seed:demo`, `build:api`, `parity`) and the Env
+      by app. `.claude/rules/db-actions.md` points at the api's runner.
+    - **Acceptance:** the commit-able files (tracked plus new, nothing ignored) were copied to an
+      empty folder and run by the README's steps: `npm ci`, `supabase start`, `.env.local` from
+      `.env.example`, `seed:demo`, `npm run dev`. `/` redirected to `/login`; the sign-in
+      reached Home, with its figures; `/pdf/sales` returned a 200 PDF. A real `git clone` follows
+      once this is committed.
 - [ ] **N-6.3 Final gate**
   - **Ref:** the baseline
   - [ ] Text parity at both viewports; screenshots of 8 screens × 3 themes; file text; audit rows;
-    latency; full CI.
-  - [ ] All `HF-n` done.
+    latency; full CI. (All done locally, 2026-10-28; full CI waits for the push.)
+  - [x] All `HF-n` done (there are none).
   - [ ] 👤 The partners' consent, then make the repo public.
   - **Acceptance:** all green; gitleaks and the denylist clean again.
+  - **Result so far (2026-10-28):**
+    - **Parity:**
+      - MATCH, 202 files: the page text at 360 and 1280, PDF text, XLSX cells, the export file and
+        the audit rows after the write sequence.
+      - TTFB over 92 routes 9633 → 5656 ms (−41%).
+    - **Screenshots:** 8 screens × 3 themes × 360/1280 (48 files). `PARITY_SHOTS=<folder>` now
+      shoots Home, Stock, Journal, a customer, a card, the Sales report, Months and Settings in
+      light, dark and night_owl, before the write sequence. It changes only the partner's theme
+      and resets it to night_owl, so the dump is the same with or without it.
+    - **gitleaks** v8.24.3 (Docker, read-only): 29 commits, no leaks. The commit-able files: no
+      leaks.
+    - **Denylist:** empty.
+    - **Still open:**
+      - full CI on the push;
+      - 👤 the partners' consent and making the repo public.
 
 ---
 

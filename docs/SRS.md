@@ -6,14 +6,16 @@
 
 | Layer | Choice |
 |---|---|
-| App | **Next.js 16** (D-048; App Router, TypeScript, React Server Components + **server actions** for every write) |
-| DB + login | **Supabase**: Postgres + Supabase Auth (email/password). Region **Mumbai (`ap-south-1`)** |
-| DB access | **Drizzle ORM** (schema in TypeScript, SQL migrations via `drizzle-kit`), server-side only through `DATABASE_URL` |
-| UI | Tailwind CSS + shadcn/ui · React Hook Form + Zod · charts: the shadcn/ui Chart component (Recharts), loaded only by the chart pages (D-064) |
-| Tests | **Unit:** Vitest (money, dates, engine, posting rules, guards, Zod). **Integration:** Vitest calling server actions against a **local Supabase** (Docker, `supabase start`). **E2E:** Playwright (360px and 1280px). **CI:** GitHub Actions runs all three on PRs to `dev`/`main`. Plus a final manual phone pass (§14) |
-| Excel | **ExcelJS** for export (the SheetJS npm package is outdated) |
-| PDF | **`@react-pdf/renderer`** on the server (`/pdf/*` routes), with embedded Noto Sans + Noto Sans Bengali for ৳ (D-041) |
-| Hosting | The partners' own **Linux VPS in Singapore** (D-030, D-031): a Next.js **standalone** build (`node server.js`, Node 20+) as a systemd service on `127.0.0.1`, behind the existing **nginx** (HTTPS via Let's Encrypt) on their own subdomain. No Docker. Releases run `scripts/deploy.sh` in the VPS's clone of the repo: pull, build, migrate, copy to `/var/www`, restart (one previous copy kept). Supabase stays for the DB and login |
+| UI | **Next.js 16** (D-048; App Router, TypeScript, React Server Components). It is the UI and a backend-for-frontend: pages read one `/views/*` endpoint each, and every write is a **server action** that forwards to the api (D-068) |
+| API | **NestJS 11** (D-068): the data, the writes (one runner), the crypto and the files. Bundled by webpack + swc into one `dist/main.js` with the PDF fonts; listens on `127.0.0.1` only |
+| DB + login | **Supabase**: Postgres + Supabase Auth (email/password). Region **Mumbai (`ap-south-1`)**. The api verifies sign-in tokens itself (the project's JWKS) |
+| DB access | **Drizzle ORM** (schema in TypeScript, SQL migrations via `drizzle-kit`, `packages/db`), in the api only, through `DATABASE_URL` |
+| Shared code | `packages/domain`: the pure engine, money, dates, guards and Zod schemas, used by both apps |
+| UI kit | Tailwind CSS + shadcn/ui · React Hook Form + Zod · charts: the shadcn/ui Chart component (Recharts), loaded only by the chart pages (D-064) |
+| Tests | **Unit:** Vitest (money, dates, engine, posting rules, guards, Zod, PDF and sheet text, the boundary lint). **Integration:** Vitest + supertest, the api in-process against a **local Supabase** (Docker, `supabase start`) with real tokens. **E2E:** Playwright (360px and 1280px, 3 themes) on both built apps. **Parity:** a harness comparing this build with the pre-migration one (`docs/TASKS-NEST.md`). **CI:** GitHub Actions on every push to `dev`. Plus a final manual phone pass (§14) |
+| Excel | **ExcelJS** for the export and the reports' Excel files, in the api (the SheetJS npm package is outdated) |
+| PDF | **`@react-pdf/renderer`** in the api (`/files/pdf/*`, forwarded by web's `/pdf/*`), with embedded Noto Sans + Noto Sans Bengali for ৳ (D-041) |
+| Hosting | The partners' own **Linux VPS in Singapore** (D-030, D-031): two systemd services on one VPS, web (a Next.js **standalone** `server.js`) and the api (`127.0.0.1` only), behind the existing **nginx** (HTTPS via Let's Encrypt) on their own subdomain. No Docker. Releases run `scripts/deploy.sh` in the VPS's clone of the repo (the two-unit release is N-7.1). Supabase stays for the DB and login |
 
 **Why Supabase:** Postgres gives exact `numeric` money, foreign keys (no misspelled names), `CHECK`
 constraints, transactions, SQL reports, and an easy export. Firebase/Firestore was rejected (float
@@ -23,20 +25,23 @@ numbers, no joins).
 
 ```
 Browser (mobile-first UI)
-   │  server actions (writes)  /  server components (reads)
-Next.js server ──► Drizzle ──► Supabase Postgres (entries only, no stored balances)
-   │
-   └─► src/lib/engine/computeBooks(data, asOf)  ← pure TypeScript, unit-tested
+   │  pages, server actions, file URLs
+Next.js (apps/web) ── HTTP on 127.0.0.1, the user's token ──► NestJS (apps/api) ──► Drizzle ──► Supabase Postgres
+                                                                   │                (entries only, no stored balances)
+                                                                   └─► computeBooks(data, asOf)  ← packages/domain, pure, unit-tested
 ```
 
+`docs/ARCHITECTURE.md` describes a read, a write and a file request step by step.
+
 1. **Only facts are stored.** Every balance is derived by the engine from the entries on each
-   request. The data is small (<20k rows/yr), so recomputing is cheap; add caching only if needed.
-   The signed-in pages are never prerendered (`dynamic = "force-dynamic"` on the `(app)` layout,
-   D-031), so a build never reads the database.
+   request. The data is small (<20k rows/yr), so recomputing is cheap; within one page render the
+   api loads the books once (its render memo, D-068). The signed-in pages are never prerendered
+   (`dynamic = "force-dynamic"` on the `(app)` layout, D-031), so a build never calls the api.
 2. **The engine is pure.** It has no I/O: the input is plain arrays of rows, the output is plain
    objects. This makes it testable without a database.
-3. **Writes go through server actions**, which do this:
-   1. Check the session.
+3. **Writes go through server actions**, which keep their names and forward the input to the
+   api. There, one runner does this:
+   1. Check the session and `role = partner`.
    2. Validate with Zod.
    3. **Duplicate check** (new entries only): if a row exists with the same type, same
       counterparty (customer/supplier/card/person), same amount (or bill total) and same date, return
@@ -45,10 +50,11 @@ Next.js server ──► Drizzle ──► Supabase Postgres (entries only, no s
       and refunds 0, so it matches on the same lot and qty and the same date instead (D-025).
    4. Run the DB transaction.
    5. Write an audit row.
-   6. Revalidate the affected pages.
+   6. Return the `Result` (200 ok, 409, 422); on ok, web revalidates the pages.
 4. **Security:** RLS is **enabled with no policies** on every table, so the public anon key can
-   read or write nothing. All access is server-side through Drizzle using the DB connection string.
-   The service key is never sent to the browser.
+   read or write nothing. All database access is in the api, through Drizzle on the DB connection
+   string; web has no database URL and no card key, and a lint rule keeps database, crypto and
+   file code out of it (D-068). The service key is never sent to the browser.
 5. **AI assistant** (D-057): a separate, read-only track, specified in `docs/AI.md` (READ ONLY
    transaction, pure tools, no server-action imports; figures rendered from the screens' view-models).
 
@@ -81,7 +87,7 @@ Next.js server ──► Drizzle ──► Supabase Postgres (entries only, no s
 - **Concurrency:** edits, deletes and Undo send the `updated_at` the client saw. If it doesn't
   match, the server returns a "changed by someone else — reload" error.
 
-## 4. Data model (`src/db/schema.ts`)
+## 4. Data model (`packages/db/src/schema.ts`)
 
 All tables: `id uuid pk`, `created_at`, `updated_at`, `created_by` (auth user id). Money columns
 are `numeric(14,2)` with a `CHECK (> 0)` unless stated otherwise.
@@ -432,17 +438,22 @@ leaves it blank; D-063).
 
 - **Login:** Supabase Auth email/password. Sign-ups are disabled in Supabase; the 2 partner users
   are created manually and linked in `profiles`.
-- **Session check:** `proxy.ts` (Next 16's middleware, D-048) refreshes the session and redirects anonymous users to
-  `/login` (on the public host from `X-Forwarded-Host`/`-Proto` behind nginx, D-031). Every server action re-checks the session and `role = partner`.
+- **Session check:** `proxy.ts` (Next 16's middleware, D-048) refreshes the session and redirects
+  anonymous users to `/login` (on the public host from `X-Forwarded-Host`/`-Proto` behind nginx,
+  D-031). Web sends the session's access token to the api, which verifies it locally (D-068).
+  Reads need a signed-in user; every write and file needs `role = partner`, read from `profiles`
+  on each request. After a sign-out a copied token still works against the api until it expires
+  (at most 1 h); the api listens on `127.0.0.1` only.
 - **Card details** (D-046):
   - **Encryption:**
     - `card_secrets` fields are AES-256-GCM ciphertext (`node:crypto`, the card id as extra
       data);
-    - the key is `CARD_SECRET_KEY` (32 bytes, base64) in the server's `.env.local` only;
+    - the key is `CARD_SECRET_KEY` (32 bytes, base64) in the api's env only;
     - with no key, saving and revealing are refused.
     - a number is saved once across all cards (D-067): on save the server decrypts the rows with
       the same `last4` (not this row) and refuses a match, naming that card.
-  - **Reveal** is `POST /cards/<id>/reveal` (`Cache-Control: no-store`). It needs a **passkey**
+  - **Reveal** is `POST /cards/<id>/reveal` (`Cache-Control: no-store`; web forwards it to the
+    api with only the `card_reveal` cookie, and relays its `Set-Cookie`). It needs a **passkey**
     assertion (`@simplewebauthn/server`) that answers a one-time challenge from
     `passkey_challenges` (2 minutes; deleted on use; the user's own); the signature counter is
     updated. A password is never accepted here (D-052).
@@ -461,33 +472,39 @@ leaves it blank; D-063).
     client; 5 wrong tries lock it for 15 minutes per user (in memory). The passkey's site (rpID) and origin are the
     public host (`X-Forwarded-Host`/`-Proto`).
 
-## 12. Project structure (target)
+## 12. Project structure
 
 ```
-src/
-  app/            (routes: /, /login, /purchases, /sales, /returns, /money, /stock, /customers,
+apps/
+  web/            (Next.js: the UI)
+    src/app/      (routes: /, /login, /purchases, /sales, /returns, /money, /stock, /customers,
                    /suppliers, /cards, /people, /months, /journal, /setup, /export, /settings,
                    /saved (bank accounts, card details), /reports (D-043, D-045; /reports/charts,
-                   D-064), /customers/<id>/trend (D-064), /logo
-                   (public, cached), /pdf/* (partner-only PDFs), /cards/<id>/reveal (D-046))
-  components/     (ui/ = shadcn, forms/, tables/, charts/ = the only importers of Recharts)
-  db/             schema.ts, index.ts (drizzle client), migrations/
-  lib/
-    money.ts
-    dates.ts      (Dhaka today, month helpers, clamp)
-    engine/       index.ts (computeBooks), stock.ts, customers.ts, cards.ts, months.ts, balance.ts
-    charts/       (D-064) pure series for the charts: period, kinds, profit, position, customers,
-                  stock; each is one pass over the posted effects or an existing helper, never
-                  computeBooks per point
-    validation/   (zod schemas per entry type)
-  pdf/            (the shared A4 layout, each document, fonts/; D-041)
-  server/actions/ (one file per entity)
-scripts/          deploy.sh (VPS release, D-031)
-tests/            engine/*.test.ts, fixtures/investor-cards.ts,
-                  integration/*.test.ts (server actions vs local Supabase), e2e/*.spec.ts (Playwright)
+                   D-064), /customers/<id>/trend (D-064); the forwarders /logo (public, cached),
+                   /pdf/[kind], /reports/*/xlsx, /export/download, /cards/<id>/reveal (D-046))
+    src/components/ (ui/ = shadcn, forms/, tables/, charts/ = the only importers of Recharts)
+    src/api/      client.ts (the api calls), files.ts (the file forwarder), contract.ts (wire types)
+    src/server/actions/ (one thin proxy per entity; auth.ts signs in and out)
+    src/proxy.ts  (the session refresh and the /login redirect)
+  api/            (NestJS: data, rules, crypto, files)
+    src/<area>/   one service (and controller) per area: books, journal, setup, sale, purchase,
+                  return, money, reverse, months, cards, card-secrets, passkeys, business, ...
+    src/action/   runner.ts (the one write path)
+    src/auth/     jwt.guard.ts, auth.service.ts, context.ts (per-request state), memo.ts
+    src/views/    the /views/* reads, one per data-loading page or overlay
+    src/files/    the /files/* routes (PDFs, Excel, the export, the logo)
+    src/pdf/      the shared A4 layout, each document, fonts/ (D-041)
+packages/
+  domain/src/     money.ts, dates.ts, engine/ (computeBooks, stock, customers, cards, months,
+                  balance), charts/ (D-064: pure series), validation/ (Zod per entry type), view
+                  helpers, export.ts (the sheets)
+  db/             src/schema.ts, src/client.ts, migrations/
+scripts/          deploy.sh (VPS release, D-031), parity/ (the parity harness), seed-demo.ts
+tests/            engine/*.test.ts, fixtures/, integration/*.test.ts (the api vs local Supabase),
+                  e2e/*.spec.ts (Playwright)
 supabase/         config.toml (local Supabase for integration/E2E tests)
 .github/workflows/ ci.yml
-docs/             PRD.md, SRS.md, UIDD.md, TASKS.md, DECISIONS.md
+docs/             PRD.md, SRS.md, UIDD.md, ARCHITECTURE.md, TASKS*.md, DECISIONS*.md
 ```
 
 **File size:** aim for ≤ 500 lines per source file, hard cap 1000 (ESLint `max-lines`, blank
@@ -495,6 +512,9 @@ lines and comments not counted). Generated files (migrations, `components/ui`) a
 by responsibility, as in `engine/`.
 
 ## 13. Build order
+
+v1 was built in this order; the NestJS migration (D-068) then moved it to two apps in sessions
+S1–S10 (`docs/TASKS-NEST.md`).
 
 | # | Step | Est. |
 |---|---|---|
@@ -504,12 +524,13 @@ by responsibility, as in `engine/`.
 | 4 | Card statements + EMI UI; Stock / Customers / Suppliers / Cards / People views; Dashboard | 1.5–2 d |
 | 5 | Month close + allocations + profit paid/reinvested + locks + re-open | 1 d |
 | 6 | Opening template + import + reconciliation (done once in the reference, D-070); Excel export; deploy | 1–1.5 d |
+| 7 | The migration (D-068): monorepo and parity harness; the Nest api; writes, then reads, then files through it; web's server code removed; the two-unit deploy | S1–S10 |
 
 ## 14. Verification
 - **`npm test`:** every posting rule, S1–S18 (PRD §6), the investor card fixture (§6), and the balance
   invariant after each scenario.
   - Fixture tests compare totals.
-- **`npm run test:int`:** server actions against local Supabase. Covers RLS, the session/role
+- **`npm run test:int`:** the api (in-process, real tokens) against local Supabase. Covers RLS, the session/role
   check, idempotent inserts, the `updated_at` conflict, `FOR UPDATE` on lots, date and lock
   guards, the duplicate warning, audit rows, and the invariant after each scenario. Uses synthetic
   data only.

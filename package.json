@@ -20,7 +20,8 @@
     "db:migrate": "drizzle-kit migrate --config packages/db/drizzle.config.ts",
     "parity": "tsx scripts/parity/run.ts self",
     "parity:ref": "tsx scripts/parity/run.ts ref",
-    "build:api": "npm run build -w @mbl/api"
+    "build:api": "npm run build -w @mbl/api",
+    "seed:demo": "tsx scripts/seed-demo.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",

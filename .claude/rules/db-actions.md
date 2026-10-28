@@ -1,6 +1,7 @@
 ---
 paths:
   - "packages/db/**"
+  - "apps/api/src/**"
   - "apps/web/src/server/**"
   - "apps/web/src/app/**"
   - "scripts/**"
@@ -10,16 +11,18 @@ paths:
 
 - **Security:**
   - RLS is enabled on every table, with **no policies**;
-  - DB access is server-only through Drizzle (`import 'server-only'`);
+  - DB access is in the api only, through Drizzle (D-068); web has no `DATABASE_URL` (the
+    boundary lint in `eslint.config.mjs`);
   - never expose `DATABASE_URL` or a service key to the client or to `NEXT_PUBLIC_*`.
-- **Every server action** goes through the one helper in `apps/web/src/server/action.ts`:
+- **Every write** is a web server action that forwards to the api, where it goes through the one
+  runner in `apps/api/src/action/runner.ts`:
   1. `requirePartner()` (session + `role = partner`);
   2. Zod;
   3. duplicate check;
   4. guards;
   5. transaction;
   6. audit row;
-  7. `revalidatePath`.
+  7. `revalidatePath` (web's `write()` in `apps/web/src/api/client.ts`, on ok).
 - **Write safety:**
   - Ids are client-generated UUIDs; inserts use `on conflict (id) do nothing`.
   - Edit, delete and Undo send the `updated_at` the client saw; a mismatch → "changed by someone
