@@ -8,19 +8,20 @@ import { SegmentedNav } from "@/components/shell/segmented-nav";
 import { periodQuery } from "@mbl/domain/charts/period";
 import { monthOf } from "@mbl/domain/dates";
 import { withQuery } from "@mbl/domain/href";
-import {
-  loadChartPeriod,
-  loadCustomerCharts,
-  loadMoneyCharts,
-  loadProfitCharts,
-  loadStockCharts,
-} from "@/server/charts";
+import type {
+  CustomerChartsView,
+  MoneyChartsView,
+  ProfitChartsView,
+  StockChartsView,
+} from "@mbl/api/views/charts.controller";
+import { api } from "@/api/client";
 
 // D-064 (UIDD §4.17): the Charts page, on screen only (no ⤴ Share). Tabs `?tab=` (Profit first),
 // then the period row (`?period=`, or a custom `?from=&to=` from the Report sheet's View on
 // screen). `?report=1` opens the Report sheet. The window starts no earlier than the oldest entry
 // (the opening) and ends today. Profit's cards are CR-041, Money's CR-042, Customers' CR-043,
 // Stock's CR-044 (Stock age is today's stock whatever the window).
+// N-4.8: one `/views/charts/<tab>` read.
 const TABS = [
   ["profit", "Profit"],
   ["money", "Money"],
@@ -34,18 +35,20 @@ export default async function ChartsPage({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const sp = await searchParams;
-  const base = await loadChartPeriod(sp);
-  const { today, firstDate, period } = base;
   const tab = TABS.find(([key]) => key === sp.tab)?.[0] ?? "profit";
+  const query = { period: sp.period, from: sp.from, to: sp.to };
+  const viewPath = `/views/charts/${tab}`;
+  const profit = tab === "profit" ? await api<ProfitChartsView>(withQuery(viewPath, query)) : null;
+  const money = tab === "money" ? await api<MoneyChartsView>(withQuery(viewPath, query)) : null;
+  const customers =
+    tab === "customers" ? await api<CustomerChartsView>(withQuery(viewPath, query)) : null;
+  const stock = tab === "stock" ? await api<StockChartsView>(withQuery(viewPath, query)) : null;
+  const { today, firstDate, period } = (profit ?? money ?? customers ?? stock)!;
 
   const tabParam = (key: string) => (key === "profit" ? null : key);
   const range = periodQuery(period);
   const path = withQuery("/reports/charts", { tab: tabParam(tab) });
   const current = withQuery(path, range);
-  const profit = tab === "profit" ? await loadProfitCharts(base) : null;
-  const money = tab === "money" ? await loadMoneyCharts(base) : null;
-  const customers = tab === "customers" ? await loadCustomerCharts(base) : null;
-  const stock = tab === "stock" ? await loadStockCharts(base) : null;
   const detail = (chart: string) => withQuery(`/reports/charts/${chart}`, range);
 
   return (

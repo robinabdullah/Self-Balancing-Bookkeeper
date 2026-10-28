@@ -7,20 +7,27 @@ cited.
 
 ## Now
 - **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S7 done (2026-10-28), uncommitted, waiting for the user's review: N-4.1 … N-4.4,
-  plus the `charts-money.spec` fix for CI run 40593721189 (S6's push; a separate `fix(...)`
-  commit).
+- **Session:** S8 done (2026-10-28), uncommitted, waiting for the user's review: N-4.5 … N-4.8.
+  S7 was pushed and CI run 40601924940 is green.
   - **Phase gate:**
     - typecheck and lint clean; denylist empty;
-    - unit 721; integration 177 (38 files);
-    - E2E 89 passed, 3 skipped by design, 1 failed: E-CR-042.1 (desktop), which depended on
-      local data. Fixed after the gate (see under N-4.4; charts-money green). The specs: home,
-      journal, dashboard-totals, entry-sheet, sale, purchase, return, money, personal-spend,
-      entry-flow, stock, cards-tab, charts-money, setup, settings (night_owl, 360 + 1280);
-    - parity MATCH (202 files), TTFB over 92 routes 9633 → 6393 ms (−34%).
+    - unit 721;
+    - integration 125 in 23 files: the 7 `views-*` files plus account-reports, messages,
+      card-page, accounts, cards, reopen-actions, settings-actions, export, setup-actions,
+      card-secrets, business-actions, reports, pdf, charts, queries and books;
+    - E2E 119 passed, 4 skipped by design (night_owl, 360 + 1280). The specs: card-page,
+      account-reports, messages, quick-actions, business, card-secrets, month-close, settings,
+      setup, export, reports, charts, charts-profit, charts-money, charts-customers, charts-stock,
+      home, journal, stock and cards-tab;
+    - parity MATCH (202 files), TTFB over 92 routes 9633 → 6671 ms (−31%).
+  - **Phase N-4's end state:** no page or component under `app/(app)` or `components` makes a
+    value import of `@/server/*` other than `actions`. Four components still use
+    `import type { Result } from "@/server/action"`, which N-6.1 handles.
+    - Web's server read modules stay for the PDF, XLSX, reveal, `/logo` and export-download
+      routes (N-5), then go in N-6.1.
   - At N-7.2, update the VPS's installed unit file to run `apps/web/server.js` (N-1.2), and do the
     production key-type check (moved from N-2.3).
-- **Next:** S8 (`/next-phase S8`, in a new conversation), after S7 is pushed and CI is green.
+- **Next:** S9 (`/next-phase S9`, in a new conversation), after S8 is pushed and CI is green.
 - **Blocked on:** —
 
 ## How to use
@@ -1087,9 +1094,38 @@ Screenshots: those screens, plus the parity report.
       - Unit: 721.
       - E2E `reports` and `account-reports`: 15 passed.
     - **Parity:** MATCH (202 files); TTFB over 92 routes 9633 → 6573 ms (−32%).
-- [ ] **N-4.8 Charts (tabs and `[chart]`)**
+- [x] **N-4.8 Charts (tabs and `[chart]`)**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/charts.ts`
-  - **Tests:** [ ] the `charts*` E2E specs; parity.
+  - **Tests:** [x] the `charts*` E2E specs; parity.
+  - **Result (2026-10-28):** (a Sonnet subagent wrote it; reviewed here)
+    - **api:** `ChartsService` gains `loadProfitCharts`, `loadMoneyCharts`, `loadCustomerCharts`
+      and `loadStockCharts`, with their view types. `git diff -w` against the Ref shows only the
+      wrapper and `this.` calls.
+    - `apps/api/src/views/charts.controller.ts`, one view per tab, shared by both pages:
+      - `GET /views/charts/profit?period&from&to&cat`;
+      - `/views/charts/money?period&from&to`;
+      - `/views/charts/customers?period&from&to&by`;
+      - `/views/charts/stock?period&from&to&by`.
+
+      Each returns the tab loader's view, which carries `today`, `firstDate` and `period`.
+      - A bad `cat` or `by` falls back as before: no filter, or sales / pieces.
+      - An unknown tab has no route, so it is a 404.
+    - **Web:**
+      - The tab page reads its tab.
+      - The `[chart]` page keeps the chart-name check, the titles and the parsing of `cat`, `by`
+        and `age`, and reads its chart's tab.
+      - Only the matching view is fetched, and each branch reads it with `!`.
+    - **Tests:**
+      - `views-charts.test.ts` (6):
+        - I-N-4.8.1: each tab equals web's loaders over 4 windows (the default, a custom
+          September, `12m` and `year`), with each `cat` and `by`, plus a bogus value of each.
+        - I-N-4.8.2: an unknown tab is a 404.
+        - I-N-4.8.3: 401 without a token.
+        - The books balance.
+      - With `charts`: 11 passed.
+      - E2E `charts`, `charts-profit`, `charts-money`, `charts-customers` and `charts-stock`: 13
+        passed.
+    - **Parity:** MATCH (202 files); TTFB over 92 routes 9633 → 6671 ms (−31%).
 
 ---
 

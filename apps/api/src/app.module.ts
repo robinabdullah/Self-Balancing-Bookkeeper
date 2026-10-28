@@ -13,6 +13,7 @@ import { CardSecretsService } from "./card-secrets/card-secrets.service";
 import { BillDatesController } from "./cards/bill-dates.controller";
 import { CardDetailService } from "./cards/card-detail.service";
 import { ChartsService } from "./charts/charts.service";
+import { ChartViewsController } from "./views/charts.controller";
 import { ExportService } from "./export/export.service";
 import { BillDatesService } from "./cards/bill-dates.service";
 import { ConfigModule } from "./config.module";
@@ -79,6 +80,7 @@ import { OverlayViewsController } from "./views/overlays.controller";
     OverlayViewsController,
     AdminViewsController,
     ReportViewsController,
+    ChartViewsController,
   ],
   providers: [
     Runner,
