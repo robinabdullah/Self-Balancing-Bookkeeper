@@ -13,8 +13,8 @@ cited.
   - **Phase gate:**
     - typecheck and lint clean; denylist empty;
     - unit 721; integration 177 (38 files);
-    - E2E 89 passed, 3 skipped by design, 1 failed: E-CR-042.1 (desktop), the local-data case
-      noted under N-4.4. It passes on an empty DB, and CI starts empty. The specs: home,
+    - E2E 89 passed, 3 skipped by design, 1 failed: E-CR-042.1 (desktop), which depended on
+      local data. Fixed after the gate (see under N-4.4; charts-money green). The specs: home,
       journal, dashboard-totals, entry-sheet, sale, purchase, return, money, personal-spend,
       entry-flow, stock, cards-tab, charts-money, setup, settings (night_owl, 360 + 1280);
     - parity MATCH (202 files), TTFB over 92 routes 9633 → 6393 ms (−34%).
@@ -938,9 +938,12 @@ Screenshots: those screens, plus the parity report.
     `evaluateAll` doesn't wait.
   - `lastRow` now waits for the last row first. The test only; S6 didn't cause it. It is a
     separate `fix(...)` change.
-  - **Found (not changed):** E-CR-042.1 needs that day's local cash at ≤ 0 ("the local books may
-    already be below 0"). After an integration run leaves the parity book in the local DB, it
-    fails locally. It passes on an empty DB, and CI's E2E job always starts empty.
+  - **Second fix (user decision, 2026-10-28):** E-CR-042.1 assumed that day's cash was already ≤ 0
+    before its ৳BIG capital out. Earlier specs or the parity book could leave it above 0, so it
+    failed locally (e.g. −৳899,998,000 against ≤ −৳900,000,000).
+    - It now checks the "Below zero" amount against that day's Cash book (`?day=`): the day lists
+      the ৳BIG capital out and closes on the amount shown.
+    - Green on the parity book and on an empty DB (5 passed each).
 
 ### Session S8
 Screenshots: those screens, plus the parity report.

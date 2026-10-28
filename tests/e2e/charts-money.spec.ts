@@ -1,6 +1,6 @@
 import { type Page, expect, test } from "@playwright/test";
 import { formatDate } from "@mbl/domain/dates";
-import { parse } from "@mbl/domain/money";
+import { format, parse } from "@mbl/domain/money";
 import { goHome, noSideScroll } from "./helpers";
 import { dhaka, phone, seedAccounts, seedMoney, sql } from "./seed";
 
@@ -15,6 +15,9 @@ const LOW = dhaka(-3);
 const BACK = dhaka(-2);
 const BIG = 900_000_000;
 const seeded: string[] = [];
+
+/** A row's last word as poisha: "Closing -৳1,200" → -120000. */
+const amount = (text: string) => parse(text.trim().split(/\s+/).at(-1)!.replace("৳", "")) as number;
 
 /** What the Books balance sheet shows (label → amount), opened from the top-bar chip. */
 async function balanceSheet(page: Page) {
@@ -132,9 +135,8 @@ test.describe("CR-042 Charts · Money tab", () => {
       name: new RegExp(formatDate(LOW)),
     });
     await expect(day).toBeVisible();
-    // The local books may already be below 0; the capital out takes that day ৳BIG lower.
-    const shown = await day.locator(".text-destructive").innerText();
-    expect(parse(shown.replace("৳", ""))).toBeLessThanOrEqual(-BIG * 100);
+    const shown = amount(await day.locator(".text-destructive").innerText());
+    expect(shown).toBeLessThan(0);
     // The chart marks it with a red dot.
     await expect(page.locator("circle[fill='var(--destructive)']").first()).toBeAttached();
 
@@ -145,6 +147,19 @@ test.describe("CR-042 Charts · Money tab", () => {
       ...(await page.getByRole("navigation", { name: "Period" }).getByRole("link").all()),
     ];
     for (const link of taps) expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+
+    // That day's Cash book has the capital out (৳BIG) and closes on the balance shown. This holds
+    // whatever the shared books held that day before the seed (other specs may leave it above 0).
+    await page.goto(`/reports/cash?day=${LOW}`);
+    const book = page.getByRole(phone(page) ? "list" : "table", {
+      name: `Cash book ${formatDate(LOW)}`,
+    });
+    const row = phone(page) ? "listitem" : "row";
+    const out = book.getByRole(row).filter({ hasText: "Capital out" });
+    await expect(out.filter({ hasText: format(BIG * 100) })).toHaveCount(1);
+    expect(amount(await book.getByRole(row).filter({ hasText: "Closing" }).innerText())).toBe(
+      shown,
+    );
   });
 
   test("E-CR-046.1 Business assets after Customers owe in the table and the tooltip, = the Books balance's", async ({
