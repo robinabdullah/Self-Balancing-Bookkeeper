@@ -15,7 +15,7 @@ import type { Bill } from "@mbl/domain/engine/cards";
 import { withQuery } from "@mbl/domain/href";
 import { toDecimal } from "@mbl/domain/money";
 import { deleteBillDates, saveBillDates } from "@/server/actions/cards";
-import type { BillDatesRow } from "@/server/cards";
+import type { BillDatesRow } from "@/api/contract";
 
 // UIDD §4.8 (task 4.4.2, D-032): a card's statements, newest first: bill month, statement and due
 // dates (actual / est.), amount, paid, remaining. By default only the unpaid bills whose statement

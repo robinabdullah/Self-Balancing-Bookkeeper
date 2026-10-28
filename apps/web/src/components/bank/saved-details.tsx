@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { inputClass } from "@/components/forms/field";
-import type { BankAccount } from "@/server/business";
+import type { BankAccount } from "@/api/contract";
 import { BankAccounts, type OwnerOptions } from "./bank-accounts";
 
 // UIDD §4.14 (D-039): the saved bank accounts grouped by owner, with a search over the owner,

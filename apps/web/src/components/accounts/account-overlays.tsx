@@ -4,7 +4,8 @@ import type { StatementKind } from "@mbl/domain/accounts";
 import { monthOf } from "@mbl/domain/dates";
 import { statementXlsxHref, withQuery } from "@mbl/domain/href";
 import { rowId } from "@mbl/domain/validation/fields";
-import { payAccounts } from "@/server/business";
+import type { PayAccountsView } from "@mbl/api/views/overlays.controller";
+import { api } from "@/api/client";
 
 // D-040: what an account page opens over itself from the URL: the Report sheet (`?report=1`) and
 // the send preview (`?send=statement` with a period, `?send=reminder`, `?send=<entry id>` on a
@@ -44,7 +45,11 @@ export async function AccountOverlays({
   const due = kind === "customer" || kind === "supplier" ? kind : null;
   const pdf =
     report && due
-      ? { kind: due, id, accounts: due === "customer" ? await payAccounts() : [] }
+      ? {
+          kind: due,
+          id,
+          accounts: due === "customer" ? await api<PayAccountsView>("/views/pay-accounts") : [],
+        }
       : undefined;
   return (
     <>

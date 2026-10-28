@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { bankAccountText, bankFields } from "@mbl/domain/business";
 import type { OwnerKind } from "@mbl/domain/validation/business";
 import { deleteBankAccount, saveBankAccount } from "@/server/actions/business";
-import type { BankAccount, Owner } from "@/server/business";
+import type { BankAccount, Owner } from "@/api/contract";
 import { copyText, shareText } from "./copy-share";
 
 // UIDD §4.14 (D-039): saved bank accounts as cards: each field with a copy button, Copy all,

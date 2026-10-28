@@ -12,21 +12,15 @@ import { CardMoves, EmiPlans } from "@/components/cards/card-detail";
 import { StatusBadge } from "@/components/cards/card-list";
 import { InfoNote } from "@/components/info-note";
 import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
-import { entryLabels, otherSide } from "@mbl/domain/journal/labels";
-import { statementRange, statementRowsOf } from "@mbl/domain/accounts";
-import { cardDetail, cardRows, emiLabel, ordinal } from "@mbl/domain/card-view";
+import { ordinal } from "@mbl/domain/card-view";
 import { dhakaToday, formatDate } from "@mbl/domain/dates";
 import { withQuery } from "@mbl/domain/href";
 import { parseRange } from "@mbl/domain/journal-filter";
 import { viewHelp } from "@mbl/domain/help-text";
 import { format } from "@mbl/domain/money";
-import { setupNames } from "@mbl/domain/setup";
 import { rowId } from "@mbl/domain/validation/fields";
-import { loadStatementExtras } from "@/server/account-reports";
-import { loadBooks } from "@/server/books";
-import { cardDetailData } from "@/server/cards";
-import { loadJournal } from "@/server/journal";
-import { loadSetup } from "@/server/setup";
+import type { CardView } from "@mbl/api/views/accounts.controller";
+import { api } from "@/api/client";
 
 // UIDD §4.8 (task 4.4.2): a card's full summary row, then its statements (tap a bill to set its
 // actual dates), charges and credits, and EMI plans. Every number is from `cardSummaries` (SRS §6).
@@ -34,7 +28,7 @@ import { loadSetup } from "@/server/setup";
 // period as a statement; `?report=1` / `?send=` the Report sheet / send preview (D-040). D-045:
 // with a period, Statements lists that period's bills as on its last day (read-only), and the
 // period's charges, card payments and refunds & cashback follow the statement. `?secret=1`: the
-// card's saved details (D-046).
+// card's saved details (D-046). N-4.5: one `/views/cards/:id` read.
 export default async function CardPage({
   params,
   searchParams,
@@ -55,25 +49,20 @@ export default async function CardPage({
   if (entry) preloadEntry(entry);
   const range = parseRange(sp);
   const base = withQuery(`/cards/${id}`, { ...range });
-  const [{ books, asOf }, setup, journal, extra, cardReport] = await Promise.all([
-    loadBooks(),
-    loadSetup(),
-    loadJournal(),
-    cardDetailData(id),
-    range ? loadStatementExtras("card", id, range.from, range.to) : null,
-  ]);
-  const periodBills = cardReport?.kind === "card" ? cardReport : null;
-  const card = setup.cards.find((c) => c.id === id);
-  if (!card) notFound();
-
-  const [row] = cardRows([card], books.cards);
-  const summary = books.cards[id];
-  const { bills, moves, emiPlans } = cardDetail(summary);
-  const labels = entryLabels(journal, otherSide(setupNames(setup), "card")); // D-060
-  const label = (entryId: string) => labels.get(entryId) ?? "Entry";
-  const emi = new Map(emiPlans.map((p) => [p.entryId, p]));
-  const period =
-    range && statementRange(statementRowsOf("card", id, books, asOf), range.from, range.to);
+  const {
+    card,
+    row,
+    summary,
+    bills,
+    periodBills,
+    billDates,
+    moves,
+    lines,
+    period,
+    plans,
+    today: asOf,
+    first,
+  } = await api<CardView>(withQuery(`/views/cards/${id}`, { ...range }));
   const balanceText =
     row.balance < 0 ? `Card credit ${format(0 - row.balance)}` : `Balance ${format(row.balance)}`;
 
@@ -95,9 +84,9 @@ export default async function CardPage({
       ),
     ],
     ["Overdue", <Amount key="o" poisha={row.overdue} />],
-    ["Due within 7 days", <Amount key="w" poisha={summary?.dueWithin7Days ?? 0} />],
-    ["Unbilled", <Amount key="u" poisha={summary?.unbilled ?? 0} />],
-    ["Remaining EMI", <Amount key="e" poisha={summary?.remainingEmi ?? 0} />],
+    ["Due within 7 days", <Amount key="w" poisha={summary.dueWithin7Days} />],
+    ["Unbilled", <Amount key="u" poisha={summary.unbilled} />],
+    ["Remaining EMI", <Amount key="e" poisha={summary.remainingEmi} />],
   ];
 
   return (
@@ -131,7 +120,7 @@ export default async function CardPage({
         report={report}
         send={send}
         range={range}
-        first={journal.at(-1)?.date ?? null}
+        first={first}
         today={dhakaToday()}
       />
 
@@ -144,23 +133,23 @@ export default async function CardPage({
           <CardBills
             cardId={id}
             bills={[...periodBills.bills].reverse()}
-            billDates={extra.billDates}
+            billDates={billDates}
             today={asOf}
             base={base}
             period
           />
         </>
       ) : (
-        <CardBills cardId={id} bills={bills} billDates={extra.billDates} today={asOf} base={base} />
+        <CardBills cardId={id} bills={bills} billDates={billDates} today={asOf} base={base} />
       )}
       <h2 className="mt-6 mb-2 font-semibold">Charges and credits</h2>
-      {period ? (
+      {range && period ? (
         <>
           <RangeChip {...range} clear={withQuery(base, { from: null, to: null })} />
           <Statement
             kind="card"
             label="Charges and credits"
-            lines={period.lines.map((l) => ({ ...l, label: label(l.entryId) }))}
+            lines={lines}
             range={period}
             base={base}
           />
@@ -184,22 +173,10 @@ export default async function CardPage({
           )}
         </>
       ) : (
-        <CardMoves
-          moves={moves.map((m) => {
-            const plan = m.billMonth ? emi.get(m.entryId) : undefined;
-            return { ...m, label: label(m.entryId), emi: plan && emiLabel(plan, m.billMonth!) };
-          })}
-          base={base}
-        />
+        <CardMoves moves={moves} base={base} />
       )}
       <h2 className="mt-6 mb-2 font-semibold">EMI plans</h2>
-      <EmiPlans
-        base={base}
-        plans={emiPlans.map((p) => ({
-          ...p,
-          label: extra.emiItems[p.entryId] ?? label(p.entryId),
-        }))}
-      />
+      <EmiPlans base={base} plans={plans} />
     </>
   );
 }

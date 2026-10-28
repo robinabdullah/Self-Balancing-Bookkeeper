@@ -948,12 +948,65 @@ Screenshots: those screens, plus the parity report.
 ### Session S8
 Screenshots: those screens, plus the parity report.
 
-- [ ] **N-4.5 Account pages and overlays**
+- [x] **N-4.5 Account pages and overlays**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/{accounts,cards,account-reports,messages}.ts`,
     the overlay components
-  - [ ] Account pages: customers, suppliers, people, cards `[id]`, the customer trend.
-  - [ ] Overlays: Bank, AccountOverlays, Send, StatementByModel, CardSecrets.
-  - **Tests:** [ ] `account-reports`, `messages`, the `card-page` E2E; parity.
+  - [x] Account pages: customers, suppliers, people, cards `[id]`, the customer trend.
+  - [x] Overlays: Bank, AccountOverlays, Send, StatementByModel, CardSecrets.
+  - **Tests:** [x] `account-reports`, `messages`, the `card-page` E2E; parity.
+  - **Result (2026-10-28):**
+    - **api read services** (the Ref as classes; `git diff --no-index -w` shows only that and the
+      imports):
+      - `accounts/accounts.service.ts` (`customerBills`);
+      - `cards/card-detail.service.ts` (`cardDetailData`);
+      - `BusinessService` gains `loadBankAccounts` (`memo("bank-accounts")`), `payAccounts` and
+        `bankCounts`;
+      - `card-secrets/card-secrets-data.service.ts` (`loadCardSecrets`);
+      - `reports/reports.service.ts` and `reports/report-lines.service.ts`;
+      - `account-reports/account-reports.service.ts` (`booksOn` stays a plain export there);
+      - `messages/messages.service.ts` (`loadDraft`, `loadStatement`, `loadDocEntry`,
+        `extrasText`);
+      - `charts/charts.service.ts`, with `loadChartPeriod` only so far.
+    - **Deviation:**
+      - The reports, report-lines, account-reports and messages services move here, not in N-4.7.
+        The overlays need `loadStatementExtras` and `loadDraft`, and those pull in `loadSales`,
+        `loadPurchasesByModel` and `loadInvestorReport`.
+      - `cashLabel` stays in web until N-4.7.
+    - **Views:**
+      - `views/accounts.controller.ts`: `GET /views/{customers,suppliers,people,cards}/:id` (with
+        `?from&to`) and `/views/customers/:id/trend` (with `?period&from&to`).
+        - The statement lines come labelled, and the period comes as its totals without the lines,
+          so no label `Map` crosses.
+        - The card view's lines, moves (with their EMI label) and plans also come labelled.
+        - An unknown or malformed id is a 404, and Walk-in's trend is a 404.
+      - `views/overlays.controller.ts`:
+        - `GET /views/bank-accounts?kind&id`;
+        - `/views/pay-accounts`;
+        - `/views/send?<DraftSource>`: `{draft, greeting, signOff, save, accounts}`, or null for an
+          invalid source or no draft;
+        - `/views/statement-extras/:kind/:id?from&to`;
+        - `/views/card-secrets/:cardId`: `{items, hasPasskey}`.
+    - **Web:**
+      - The 5 pages and 5 overlays each make one read. Their JSX is unchanged except the card
+        page's period branch, which tests `range && period`: TypeScript's narrowing of `range`
+        through `period` is gone.
+      - `bills`, `card-bills`, `bank-*`, `saved-details`, `card-secrets`, `saved-cards` and
+        `send-sheet` take their types from the contract (`Bill`, `BillDatesRow`, `Owner`,
+        `BankAccount`, `CardSecret`, `Draft`).
+      - **Temporary:** `saved/page.tsx` casts web's bank accounts (`createdAt` is a `Date`) to the
+        contract type until N-4.6.
+    - **Tests:**
+      - `views-accounts.test.ts` (12):
+        - I-N-4.5.1: each page and overlay view equals web's loaders on the parity book. This
+          covers both periods, a card with and without EMI, and every send source: 2 entries, the
+          reminder, the 4 statement kinds and the investor report.
+        - I-N-4.5.2: 404s, and an invalid send source returns nothing.
+        - I-N-4.5.3: 401 without a token.
+        - The books balance.
+      - `account-reports`, `messages`, `card-page`, `accounts` and `cards`: 11 passed, unchanged.
+      - E2E (`card-page`, `account-reports`, `messages`, `quick-actions`, `business`,
+        `card-secrets`, `charts-customers`): 58 passed, 1 skipped.
+    - **Parity:** MATCH (202 files); TTFB over 92 routes 9633 → 7685 ms (−20%).
 - [ ] **N-4.6 Months (and `[month]`), setup, saved, settings (passkey dates), export page**
   - **Ref:** `D:/Projects/Mobile-Business-Lite/src/server/months.ts`, `settings/page.tsx`,
     `saved/page.tsx`

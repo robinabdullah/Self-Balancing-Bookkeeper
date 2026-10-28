@@ -1,11 +1,11 @@
+import type { CardSecretsView } from "@mbl/api/views/overlays.controller";
+import { api } from "@/api/client";
 import { OverlaySheet } from "@/components/bank/bank-sheet";
-import { getUser } from "@/lib/supabase/server";
-import { loadCardSecrets } from "@/server/card-secrets";
-import { loadPasskeys } from "@/server/passkeys";
 import { CardSecrets } from "./card-secrets";
 
 // D-046 (UIDD §4.8): ⋯ → Manage → Card details opens this card's saved numbers over its page
-// (`?secret=1`), masked, with Add (D-054: a supplementary card on the same bill too).
+// (`?secret=1`), masked, with Add (D-054: a supplementary card on the same bill too). N-4.5: one
+// `/views/card-secrets/:cardId` read.
 export async function CardSecretsOverlay({
   card,
   closeHref,
@@ -13,8 +13,7 @@ export async function CardSecretsOverlay({
   card: { id: string; display: string };
   closeHref: string;
 }) {
-  const user = await getUser();
-  const [items, keys] = await Promise.all([loadCardSecrets(), user ? loadPasskeys(user.id) : []]);
+  const { items, hasPasskey } = await api<CardSecretsView>(`/views/card-secrets/${card.id}`);
   return (
     <OverlaySheet
       title="Card details"
@@ -22,9 +21,9 @@ export async function CardSecretsOverlay({
       closeHref={closeHref}
     >
       <CardSecrets
-        items={items.filter((s) => s.cardId === card.id)}
+        items={items}
         cardId={card.id}
-        hasPasskey={keys.length > 0}
+        hasPasskey={hasPasskey}
         empty="No saved details for this card yet."
       />
     </OverlaySheet>

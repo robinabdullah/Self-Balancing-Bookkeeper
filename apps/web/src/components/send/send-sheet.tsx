@@ -21,7 +21,7 @@ import { withQuery } from "@mbl/domain/href";
 import { cn } from "@/lib/utils";
 import { LONG_TEXT, compose, howToPayText, waLink } from "@mbl/domain/whatsapp";
 import { saveTemplate } from "@/server/actions/business";
-import type { Draft } from "@/server/messages";
+import type { Draft } from "@/api/contract";
 import type { PayAccount } from "@mbl/domain/business";
 import { HowToPay, firstPick } from "./how-to-pay";
 

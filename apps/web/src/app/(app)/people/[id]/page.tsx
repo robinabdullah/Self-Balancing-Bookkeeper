@@ -7,28 +7,22 @@ import { QuickActions } from "@/components/accounts/quick-actions";
 import { Statement } from "@/components/accounts/statement";
 import { Amount } from "@/components/amount";
 import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
-import { entryLabels, otherSide } from "@mbl/domain/journal/labels";
 import { Allocations, CardsSupplied, ProfitMoves } from "@/components/people/people-detail";
 import { Badge, kindText } from "@/components/people/people-list";
-import { statementRange, statementRowsOf } from "@mbl/domain/accounts";
-import { cardRows } from "@mbl/domain/card-view";
 import { dhakaToday } from "@mbl/domain/dates";
 import { withQuery } from "@mbl/domain/href";
 import { parseRange } from "@mbl/domain/journal-filter";
 import { format } from "@mbl/domain/money";
-import { peopleRows, personDetail } from "@mbl/domain/people-view";
-import { setupNames } from "@mbl/domain/setup";
 import { rowId } from "@mbl/domain/validation/fields";
-import { loadBooks } from "@/server/books";
-import { loadJournal } from "@/server/journal";
-import { loadSetup } from "@/server/setup";
+import type { PersonView } from "@mbl/api/views/accounts.controller";
+import { api } from "@/api/client";
 
 // UIDD §4.8 (task 4.5): a person's capital history and current capital, the cards they supply
 // (with business balances), profit allocated per month / paid / reinvested / owed, and their
 // opening difference until it is resolved (SRS §5). Every number is from `computeBooks`.
 // `?entry=` opens an entry over the page (D-032), `?bank=1` the saved bank accounts (D-039).
 // `?from=&to=` shows the capital history and profit moves for a period; `?report=1` / `?send=` the
-// Report sheet / send preview (D-040).
+// Report sheet / send preview (D-040). N-4.5: one `/views/people/:id` read.
 export default async function PersonPage({
   params,
   searchParams,
@@ -49,29 +43,8 @@ export default async function PersonPage({
   if (entry) preloadEntry(entry);
   const range = parseRange(sp);
   const base = withQuery(`/people/${id}`, { ...range });
-  const [{ data, books, asOf }, setup, journal] = await Promise.all([
-    loadBooks(),
-    loadSetup(),
-    loadJournal(),
-  ]);
-  const person = setup.people.find((p) => p.id === id);
-  if (!person) notFound();
-
-  const [row] = peopleRows([person], books);
-  const byId = new Map(journal.map((r) => [r.id, r]));
-  const labels = entryLabels(journal, otherSide(setupNames(setup), "person")); // D-060
-  const labelled = <T extends { entryId: string }>(lines: T[]) =>
-    lines.map((l) => ({ ...l, label: labels.get(l.entryId) ?? "Entry" }));
-  const detail = personDetail(id, books, data.allocations, asOf, (e) => byId.get(e)?.type);
-  const cards = cardRows(
-    setup.cards.filter((c) => c.ownerPersonId === id),
-    books.cards,
-  );
-  const { profit } = detail;
-  const period =
-    range && statementRange(statementRowsOf("person", id, books, asOf), range.from, range.to);
-  const inRange = <T extends { date: string }>(lines: T[]) =>
-    range ? lines.filter((l) => l.date >= range.from && l.date <= range.to) : lines;
+  const { person, row, capital, period, cards, profit, allocations, profitMoves, first } =
+    await api<PersonView>(withQuery(`/views/people/${id}`, { ...range }));
 
   const facts: [string, number][] = [
     ...(row.openingDifference == null
@@ -114,7 +87,7 @@ export default async function PersonPage({
         report={report}
         send={send}
         range={range}
-        first={journal.at(-1)?.date ?? null}
+        first={first}
         today={dhakaToday()}
       />
       {range && <RangeChip {...range} clear={withQuery(base, { from: null, to: null })} />}
@@ -123,7 +96,7 @@ export default async function PersonPage({
       <Statement
         kind="capital"
         label="Capital history"
-        lines={labelled(period ? period.lines : detail.capital)}
+        lines={capital}
         range={period ?? undefined}
         base={base}
       />
@@ -132,9 +105,9 @@ export default async function PersonPage({
       <h2 className="mt-6 mb-2 font-semibold">Profit</h2>
       <Facts label="Profit" facts={profitFacts} />
       <h3 className="mt-4 mb-2 text-sm font-semibold">Allocated per month</h3>
-      <Allocations rows={detail.allocations} />
+      <Allocations rows={allocations} />
       <h3 className="mt-4 mb-2 text-sm font-semibold">Paid and reinvested</h3>
-      <ProfitMoves lines={labelled(inRange(detail.profitMoves))} base={base} />
+      <ProfitMoves lines={profitMoves} base={base} />
     </>
   );
 }

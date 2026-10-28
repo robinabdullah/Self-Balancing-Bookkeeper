@@ -1,8 +1,16 @@
+import type { Bill as ApiBill } from "@mbl/api/accounts/accounts.service";
+import type {
+  BankAccount as ApiBankAccount,
+  Owner as ApiOwner,
+} from "@mbl/api/business/business.service";
+import type { CardSecret as ApiCardSecret } from "@mbl/api/card-secrets/card-secrets-data.service";
+import type { BillDatesRow as ApiBillDatesRow } from "@mbl/api/cards/card-detail.service";
 import type { EditValues as ApiEditValues } from "@mbl/api/entries/entries.service";
 import type {
   JournalEntry as ApiJournalEntry,
   JournalRow as ApiJournalRow,
 } from "@mbl/api/journal/journal.service";
+import type { Draft as ApiDraft } from "@mbl/api/messages/messages.service";
 import type {
   BillLine as ApiBillLine,
   ReturnLot as ApiReturnLot,
@@ -21,3 +29,10 @@ export type EditValues = Jsonify<ApiEditValues>;
 export type LotInfo = Jsonify<ApiLotInfo>;
 export type BillLine = Jsonify<ApiBillLine>;
 export type ReturnLot = Jsonify<ApiReturnLot>;
+// N-4.5: the account pages and their overlays.
+export type Bill = Jsonify<ApiBill>;
+export type BillDatesRow = Jsonify<ApiBillDatesRow>;
+export type Owner = Jsonify<ApiOwner>;
+export type BankAccount = Jsonify<ApiBankAccount>;
+export type CardSecret = Jsonify<ApiCardSecret>;
+export type Draft = Jsonify<ApiDraft>;

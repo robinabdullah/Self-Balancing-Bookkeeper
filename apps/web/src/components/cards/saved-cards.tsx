@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { inputClass } from "@/components/forms/field";
 import type { Option } from "@/components/forms/picker";
-import type { CardSecret } from "@/server/card-secrets";
+import type { CardSecret } from "@/api/contract";
 import { CardSecrets } from "./card-secrets";
 
 // D-046 (UIDD §4.14): Saved details → Cards: the cards that have saved details, with a search over

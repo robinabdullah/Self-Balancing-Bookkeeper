@@ -9,26 +9,22 @@ import { Statement } from "@/components/accounts/statement";
 import { StatementByModel } from "@/components/report/by-model";
 import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
 import { SegmentedNav } from "@/components/shell/segmented-nav";
-import { entryLabels } from "@mbl/domain/journal/labels";
-import { billProfit, statementLines, statementRange } from "@mbl/domain/accounts";
 import { dhakaToday } from "@mbl/domain/dates";
-import { aboveTarget } from "@mbl/domain/engine/customers";
 import { withQuery } from "@mbl/domain/href";
 import { parseRange } from "@mbl/domain/journal-filter";
-import { format, parse } from "@mbl/domain/money";
-import { dueText, setupNames } from "@mbl/domain/setup";
+import { format } from "@mbl/domain/money";
+import { dueText } from "@mbl/domain/setup";
 import { cn } from "@/lib/utils";
 import { rowId } from "@mbl/domain/validation/fields";
-import { customerBills } from "@/server/accounts";
-import { loadBooks } from "@/server/books";
-import { loadJournal } from "@/server/journal";
-import { loadSetup } from "@/server/setup";
+import type { CustomerView } from "@mbl/api/views/accounts.controller";
+import { api } from "@/api/client";
 
 // UIDD §4.8 (task 4.3.1): a customer's contact, balance (+ "Above target"), statement with a
 // running balance, and the Bills tab (`?tab=bills`) with each bill's lines and profit. `?entry=`
 // opens an entry over the page (D-032), `?bank=1` the saved bank accounts (D-039); `?from=&to=` shows
 // the statement for a period, `?report=1` / `?send=` open the Report sheet / send preview (D-040);
-// D-045: a period also shows Sales by model (and Bought from you).
+// D-045: a period also shows Sales by model (and Bought from you). N-4.5: one `/views/customers/:id`
+// read.
 export default async function CustomerPage({
   params,
   searchParams,
@@ -48,25 +44,10 @@ export default async function CustomerPage({
   const { tab, entry, bank, report, send } = sp;
   if (!rowId.safeParse(id).success) notFound();
   if (entry) preloadEntry(entry);
-  const [{ books }, setup, journal, bills] = await Promise.all([
-    loadBooks(),
-    loadSetup(),
-    loadJournal(),
-    customerBills(id),
-  ]);
-  const customer = setup.customers.find((c) => c.id === id);
-  if (!customer) notFound();
-
-  const balance = books.customers[id]?.balance ?? 0;
-  const target = customer.targetBalance == null ? null : parse(customer.targetBalance);
-  const above = aboveTarget(balance, target);
-  const labels = entryLabels(journal);
   const range = parseRange(sp);
-  const period = range && statementRange(books.customers[id]?.rows ?? [], range.from, range.to);
-  const lines = (period ? period.lines : statementLines(books.customers[id])).map((l) => ({
-    ...l,
-    label: labels.get(l.entryId) ?? "Entry",
-  }));
+  const { customer, balance, above, lines, period, bills, names, first } = await api<CustomerView>(
+    withQuery(`/views/customers/${id}`, { ...range }),
+  );
   const showBills = tab === "bills";
   const base = withQuery(`/customers/${id}`, { tab: showBills ? "bills" : null, ...range });
 
@@ -103,7 +84,7 @@ export default async function CustomerPage({
         report={customer.isSystem ? undefined : report}
         send={send}
         range={range}
-        first={journal.at(-1)?.date ?? null}
+        first={first}
         today={dhakaToday()}
       />
 
@@ -117,11 +98,8 @@ export default async function CustomerPage({
       />
       {showBills ? (
         <Bills
-          bills={bills.map((b) => ({
-            ...b,
-            profit: billProfit(books.posted.find((p) => p.id === b.id)),
-          }))}
-          names={setupNames(setup)}
+          bills={bills}
+          names={names}
           base={base}
         />
       ) : (

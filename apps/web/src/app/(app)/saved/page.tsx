@@ -1,3 +1,4 @@
+import type { BankAccount } from "@/api/contract";
 import Link from "next/link";
 import { SavedDetails } from "@/components/bank/saved-details";
 import { SavedCards } from "@/components/cards/saved-cards";
@@ -57,7 +58,9 @@ async function BankTab() {
       .map((c) => ({ id: c.id, label: c.display })),
     supplier: setup.suppliers.filter(pickable).map((s) => ({ id: s.id, label: s.name })),
   };
-  return <SavedDetails accounts={accounts} owners={owners} />;
+  // Until N-4.6 reads `/views/saved`: the RSC sends the rows' `createdAt` as a Date, which Saved
+  // details never reads; its props now take the api's JSON shape (contract.ts).
+  return <SavedDetails accounts={accounts as unknown as BankAccount[]} owners={owners} />;
 }
 
 async function CardsTab() {

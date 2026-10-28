@@ -14,7 +14,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import type { BankAccount, Owner } from "@/server/business";
+import type { BankAccount, Owner } from "@/api/contract";
 import { BankAccounts } from "./bank-accounts";
 
 /**

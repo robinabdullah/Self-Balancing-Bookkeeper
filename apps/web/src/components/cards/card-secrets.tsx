@@ -25,7 +25,7 @@ import {
 } from "@mbl/domain/card-secrets";
 import { removeCardDetails, saveCardDetails } from "@/server/actions/card-secrets";
 import { revealOptions } from "@/server/actions/passkeys";
-import type { CardSecret } from "@/server/card-secrets";
+import type { CardSecret } from "@/api/contract";
 import { BankBadge } from "./bank-badge";
 import { CardNumberField, ExpiryField } from "./card-detail-fields";
 

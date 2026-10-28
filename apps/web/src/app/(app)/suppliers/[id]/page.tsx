@@ -7,20 +7,18 @@ import { QuickActions } from "@/components/accounts/quick-actions";
 import { Statement } from "@/components/accounts/statement";
 import { StatementByModel } from "@/components/report/by-model";
 import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
-import { entryLabels } from "@mbl/domain/journal/labels";
-import { statementLines, statementRange, supplierDueText } from "@mbl/domain/accounts";
+import { supplierDueText } from "@mbl/domain/accounts";
 import { dhakaToday } from "@mbl/domain/dates";
 import { withQuery } from "@mbl/domain/href";
 import { parseRange } from "@mbl/domain/journal-filter";
 import { rowId } from "@mbl/domain/validation/fields";
-import { loadBooks } from "@/server/books";
-import { loadJournal } from "@/server/journal";
-import { loadSetup } from "@/server/setup";
+import type { SupplierView } from "@mbl/api/views/accounts.controller";
+import { api } from "@/api/client";
 
 // UIDD §4.8 (task 4.3.2): a supplier's phone, what we owe them and the statement with a running
 // balance. `?entry=` opens an entry over the page (D-032), `?bank=1` the saved bank accounts (D-039);
 // `?from=&to=` a period, `?report=1` / `?send=` the Report sheet / send preview (D-040); D-045: a
-// period also shows Purchases by model.
+// period also shows Purchases by model. N-4.5: one `/views/suppliers/:id` read.
 export default async function SupplierPage({
   params,
   searchParams,
@@ -41,16 +39,9 @@ export default async function SupplierPage({
   if (entry) preloadEntry(entry);
   const range = parseRange(sp);
   const base = withQuery(`/suppliers/${id}`, { ...range });
-  const [{ books }, setup, journal] = await Promise.all([loadBooks(), loadSetup(), loadJournal()]);
-  const supplier = setup.suppliers.find((s) => s.id === id);
-  if (!supplier) notFound();
-
-  const labels = entryLabels(journal);
-  const period = range && statementRange(books.suppliers[id]?.rows ?? [], range.from, range.to);
-  const lines = (period ? period.lines : statementLines(books.suppliers[id])).map((l) => ({
-    ...l,
-    label: labels.get(l.entryId) ?? "Entry",
-  }));
+  const { supplier, balance, lines, period, first } = await api<SupplierView>(
+    withQuery(`/views/suppliers/${id}`, { ...range }),
+  );
 
   return (
     <>
@@ -58,7 +49,7 @@ export default async function SupplierPage({
         back={{ href: "/suppliers", label: "Suppliers" }}
         actions={<QuickActions kind="supplier" row={supplier} from={base} />}
         name={supplier.name}
-        due={supplierDueText(books.suppliers[id]?.balance ?? 0)}
+        due={supplierDueText(balance)}
         phone={supplier.phone}
       />
       {entry && <EntryOverlay id={entry} closeHref={base} />}
@@ -72,7 +63,7 @@ export default async function SupplierPage({
         report={report}
         send={send}
         range={range}
-        first={journal.at(-1)?.date ?? null}
+        first={first}
         today={dhakaToday()}
       />
       {range && <RangeChip {...range} clear={withQuery(base, { from: null, to: null })} />}

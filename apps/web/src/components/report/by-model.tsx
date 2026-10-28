@@ -1,11 +1,14 @@
 import { Amount } from "@/components/amount";
 import { EmptyState } from "@/components/states";
 import { AVG, type ModelRow, modelTotal, piecesAt } from "@mbl/domain/by-model";
-import { loadStatementExtras } from "@/server/account-reports";
+import { withQuery } from "@mbl/domain/href";
+import type { StatementExtrasView } from "@mbl/api/views/overlays.controller";
+import { api } from "@/api/client";
 
 // D-045 (UIDD §4.8): the By model tables under a customer's or supplier's statement for a period
 // (Model · Pieces · Avg unit price · Amount, no profit; D-056: on a phone the average sits under
-// the model, "30 pcs × ৳15,700"). The same loader as its PDF, Excel and message.
+// the model, "30 pcs × ৳15,700"). The same loader as its PDF, Excel and message (N-4.5: one
+// `/views/statement-extras` read).
 
 export async function StatementByModel({
   kind,
@@ -18,7 +21,9 @@ export async function StatementByModel({
   from: string;
   to: string;
 }) {
-  const x = await loadStatementExtras(kind, id, from, to);
+  const x = await api<StatementExtrasView>(
+    withQuery(`/views/statement-extras/${kind}/${id}`, { from, to }),
+  );
   if (!x || x.kind === "card") return null;
   const name = (m: string) => x.names[m] ?? "—";
   return x.kind === "customer" ? (

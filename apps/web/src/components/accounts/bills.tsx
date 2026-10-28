@@ -5,7 +5,7 @@ import { formatDate } from "@mbl/domain/dates";
 import { entryHref, withQuery } from "@mbl/domain/href";
 import { add, format, mul } from "@mbl/domain/money";
 import { invoiceLabel } from "@mbl/domain/whatsapp";
-import type { Bill } from "@/server/accounts";
+import type { Bill } from "@/api/contract";
 
 // UIDD §4.8 (task 4.3.1): a customer's Bills tab: each sale, newest first, with its lines, total
 // and profit (from the books). A reversed bill says so; its profit is cancelled by the reversal.
