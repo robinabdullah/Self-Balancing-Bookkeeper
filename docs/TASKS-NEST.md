@@ -10,7 +10,7 @@ cited.
 - **Session:** S10 (2026-10-28), all uncommitted.
   - N-7.1 and CR-048 (D-071: the new name, a side-by-side switch) are done and rehearsed.
   - S9 is pushed and CI run 40707721927 is green.
-  - N-6.3 stays open only for 👤 the partners' consent before going public.
+  - N-6.3: the partners consented; it stays open only until the repo is made public.
 - **Next:** the user's review, then one commit for N-7.1 + CR-048 (pushed to `dev`), then
   N-7.2 👤.
 - **Blocked on:** —
@@ -1296,7 +1296,11 @@ Screenshots: the PDFs and XLSX, the 8 screens × 3 themes, the README.
       leaks.
     - **Denylist:** empty.
     - **Full CI:** run 40707721927 (N-6.2's push), green.
-    - **Still open:** 👤 the partners' consent and making the repo public.
+    - **Re-checked at 296dd3d (N-7.1, CR-048):** gitleaks over 35 commits, no leaks; the denylist
+      is empty on the files, and every diff and commit message in the history is clean. The only
+      history matches are the commits' author name and email, which the user keeps (2026-10-28).
+    - 👤 The partners gave their consent (2026-10-28).
+    - **Still open:** making the repo public.
 
 ---
 
