@@ -1,17 +1,7 @@
 import type { NextRequest } from "next/server";
-import { parseRange } from "@mbl/domain/journal-filter";
-import { salesSheets } from "@mbl/domain/sales-report";
-import { xlsxReport } from "@/server/export";
-import { loadSales } from "@/server/reports";
+import { forwardFile } from "@/api/files";
 
-// D-043 (UIDD §4.17): the Sales report for a period as Excel (`?from=&to=`). Partner-only; a GET
-// with no audit row, like the PDFs (it is a view, not the backup).
-export async function GET(request: NextRequest) {
-  const q = request.nextUrl.searchParams;
-  const range = parseRange({ from: q.get("from") ?? undefined, to: q.get("to") ?? undefined });
-  return xlsxReport(["sales", range?.from ?? "", "to", range?.to ?? ""], async () => {
-    if (!range) return null;
-    const { report, names } = await loadSales(range.from, range.to);
-    return salesSheets(report, (id) => names[id] ?? "—");
-  });
+// N-5.2 (D-043, D-045): the api makes this report's Excel file (`/files/xlsx/sales`).
+export function GET(request: NextRequest) {
+  return forwardFile("GET", `/files/xlsx/sales${request.nextUrl.search}`);
 }
