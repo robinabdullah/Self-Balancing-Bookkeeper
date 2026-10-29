@@ -8,11 +8,10 @@ cited.
 ## Now
 - **Live:** the reference app serves the main host. The new app runs beside it at
   `business2.<domain>` (N-7.2, 2026-10-29), on the same database.
-- **Session:** S10.
-  - N-7.1 and CR-048 are committed.
-  - N-6.3: the partners consented; it stays open only until the repo is made public.
-  - CR-049 (D-072: the `business2` trial, Pool Size 30) is done, uncommitted.
-- **Next:** the user's review and commit of CR-049, then N-7.2's switch at a quiet time.
+- **Session:** S11.
+  - CR-049 is committed; N-6.3 is done: the repo is public (2026-10-30).
+  - CR-050 (D-073: a sole owner is one partner at 100%) is done, uncommitted.
+- **Next:** the user's review and commit of CR-050, then N-7.2's switch at a quiet time.
 - **Blocked on:** —
 
 ## How to use
@@ -49,8 +48,9 @@ cited.
 - **Denylist check:** real names, phones, the production domain and the shop's details must never
   be committed. A gitignored `.denylist` at the repo root (one case-insensitive pattern per line,
   never committed) feeds:
-  `git grep --untracked -n -I -i -E -f .denylist -- .`.
-  - There are no exclusions (since N-0.5). Add `--untracked` so new files count too.
+  `git grep --untracked -n -I -i -E -f .denylist -- . ':!LICENSE'`.
+  - One exclusion: `LICENSE` names the author on purpose (the user's call, 2026-10-30, CR-050).
+    Add `--untracked` so new files count too.
   - The output must be empty.
 - **Real workbooks:** `docs/source/` is gitignored and never committed here (D-069); N-0.4 deleted
   it from disk.
@@ -1276,12 +1276,13 @@ Screenshots: the PDFs and XLSX, the 8 screens × 3 themes, the README.
       `.env.example`, `seed:demo`, `npm run dev`. `/` redirected to `/login`; the sign-in
       reached Home, with its figures; `/pdf/sales` returned a 200 PDF. A real `git clone` follows
       once this is committed.
-- [ ] **N-6.3 Final gate**
+- [x] **N-6.3 Final gate**
   - **Ref:** the baseline
   - [x] Text parity at both viewports; screenshots of 8 screens × 3 themes; file text; audit rows;
     latency; full CI (run 40707721927 on `dev`, green, 2026-10-28).
   - [x] All `HF-n` done (there are none).
-  - [ ] 👤 The partners' consent, then make the repo public.
+  - [x] 👤 The partners' consent, then make the repo public (public 2026-10-30, `main` = `13f2aee`,
+    CI run 40967205641 green; the history re-scanned for secrets and the denylist first).
   - **Acceptance:** all green; gitleaks and the denylist clean again.
   - **Result so far (2026-10-28):**
     - **Parity:**
@@ -1300,7 +1301,7 @@ Screenshots: the PDFs and XLSX, the 8 screens × 3 themes, the README.
       is empty on the files, and every diff and commit message in the history is clean. The only
       history matches are the commits' author name and email, which the user keeps (2026-10-28).
     - 👤 The partners gave their consent (2026-10-28).
-    - **Still open:** making the repo public.
+    - **Public:** 2026-10-30 (MIT; LICENSE holder and the README opener set the same day).
 
 ---
 
@@ -1525,3 +1526,21 @@ Feedback or a rule change found during the migration goes here, after its D entr
   - **Tests:** [x] M-CR-049.1: the user deployed beside the old app and tried it at `business2`
     (N-7.2).
   - **Acceptance:** typecheck, lint and unit green; the denylist is empty.
+
+- [x] **CR-050 One owner or several partners** (2026-10-30)
+  - **Source:** user request · **Decision:** D-073 · **Docs:** PRD §4.1, SRS §4 (`people`), UIDD §3
+  - The engine already allowed one partner (only zero is refused: `computeClose`, `openingDiff`);
+    `splitShares` gives a single share the whole total. No behaviour change; tests prove it.
+  - [x] CR-050.1 **Help texts:** `setup_person` and `profit_share_pct` say a sole owner is one partner
+    at 100 (UIDD §3 first, `help-text.ts` word for word). The opening-correction confirm ("the
+    partners' opening difference") reads right for one owner and stays.
+  - [x] CR-050.2 **The demo and parity seeds keep two partners** (the baseline depends on them).
+  - **Tests:** [x] U-CR-050.1 profit 100,000, investors 20,000 → the owner 80,000, books balance ·
+    [x] U-CR-050.2 a loss of −10,000.01 goes to the owner whole · [x] U-CR-050.3 an opening
+    correction posts the whole opening difference to the owner · [x] I-CR-050.1 the same close
+    through the api: stored rows, the audit row, books balance (`tests/engine/sole-owner.test.ts`,
+    `tests/integration/sole-owner.test.ts`).
+  - **Acceptance:** typecheck, lint, unit (726) and integration (216) green; parity MATCH (202
+    files: the help texts are not in the page dumps); the denylist is empty outside `LICENSE`, which
+    names the author on purpose (the user's call, 2026-10-30; the check excludes it, see "Denylist
+    check" above).

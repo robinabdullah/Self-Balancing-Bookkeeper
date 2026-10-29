@@ -26,7 +26,7 @@ export const aboutText = {
     "Profit owed to a person, paid in cash or kept in the business as capital.",
   opening_correction: "Fixes an opening balance entered wrongly at go-live.",
   setup_person:
-    "A partner or investor in the business. Partners also have a profit share %; the partners' shares must total 100.",
+    "A partner or investor in the business. Partners also have a profit share %; the partners' shares must total 100. A sole owner is one partner at 100.",
   setup_card:
     'A card used for business purchases, named by its bank ("EBL") with its Type (Visa, Mastercard, Amex). Statement and due days set the bill dates.',
   setup_customer:
@@ -54,7 +54,7 @@ export const fieldHelp = {
   target_balance:
     "Optional. The due we want this shop to stay within (e.g. ৳60L). Their page shows how far above it they are.",
   profit_share_pct:
-    "This partner's share of the profit left after investors are paid. The partners' shares must total 100 before a month can be closed.",
+    "This partner's share of the profit left after investors are paid. The partners' shares must total 100 before a month can be closed; a sole owner sets 100.",
   // Entry forms (D-024)
   purchase_paid_by:
     "How the phones were paid for. Cash leaves the cash box; Card adds to that card's bill; Supplier credit means we owe the supplier; Customer's due lowers what that customer owes us.",

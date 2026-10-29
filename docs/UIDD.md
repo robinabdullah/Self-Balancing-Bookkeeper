@@ -170,7 +170,7 @@ Create and Edit use the same form.
 | Capital in / out | Money a person puts into, or takes out of, the business. Out can be paid by a card: the person's own spending that the business pays with the card's bill. |
 | Profit paid / reinvested | Profit owed to a person, paid in cash or kept in the business as capital. |
 | Opening correction | Fixes an opening balance entered wrongly at go-live. |
-| Setup: Person | A partner or investor in the business. Partners also have a profit share %; the partners' shares must total 100. |
+| Setup: Person | A partner or investor in the business. Partners also have a profit share %; the partners' shares must total 100. A sole owner is one partner at 100. |
 | Setup: Card | A card used for business purchases, named by its bank ("EBL") with its Type (Visa, Mastercard, Amex). Statement and due days set the bill dates. |
 | Setup: Customer | A mobile shop we sell to, shown as "Shop name (Proprietor)". Contact details and target balance are optional. |
 | Setup: Supplier | A seller we buy phones from. We owe them when we buy on supplier credit. |
@@ -185,7 +185,7 @@ Create and Edit use the same form.
 | Due day | The day the bill must be paid: the first such day after the statement date. |
 | Credit limit | Optional. Used only to show roughly how much is still available on the card. |
 | Target balance | Optional. The due we want this shop to stay within (e.g. ৳60L). Their page shows how far above it they are. |
-| Profit share % | This partner's share of the profit left after investors are paid. The partners' shares must total 100 before a month can be closed. |
+| Profit share % | This partner's share of the profit left after investors are paid. The partners' shares must total 100 before a month can be closed; a sole owner sets 100. |
 
 | Field (entry forms) | ⓘ text (D-024) |
 |---|---|

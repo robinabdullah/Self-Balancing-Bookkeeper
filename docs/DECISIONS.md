@@ -95,6 +95,7 @@ earlier decision, add its id to that row's "Later changed by".
 | D-070 | The opening-import tools are deleted here; the cutover stays in the reference | 2026-10-27 |  |
 | D-071 | The product is "Self-Balancing Bookkeeper"; the switch runs side by side (amends D-031) | 2026-10-28 | D-072 |
 | D-072 | The new app is tried on its own subdomain (amends D-071) | 2026-10-29 |  |
+| D-073 | One owner or several partners | 2026-10-30 |  |
 
 ---
 
@@ -554,3 +555,12 @@ earlier decision, add its id to that row's "Later changed by".
   pools of 10 don't fit in 15. No idle timeout, so D-032's speed is kept.
 - **Docs changed:** `deploy/README.md`, ARCHITECTURE §8, `docs/TASKS-NEST.md` (N-7.2).
 - **Tasks:** CR-049.
+
+## D-073 — One owner or several partners (2026-10-30)
+- **Source:** user request (the app should suit a business run by one owner, not only partners).
+- **Decision:** a business has one or more partners whose profit shares total 100; a sole owner is
+  one partner at 100%. The engine already allowed it (only zero partners is refused); CR-050 adds
+  the tests and fixes the help texts that read as if there were always several. The demo and parity
+  seeds keep two partners.
+- **Docs changed:** PRD §4.1, SRS §4 (`people`), UIDD §3.
+- **Tasks:** CR-050.

@@ -71,7 +71,7 @@ A role column exists from day 1 so the later roles need no redesign.
 ### 4.1 Setup
 - **People:** partner or investor, with an optional note (e.g. "managed by Arif"). Partners also
   have a **profit share %** (50/50 today; the partners' %s must total 100 before a month can be
-  closed; Setup shows a warning until they do).
+  closed; Setup shows a warning until they do). A sole owner is one partner at 100% (D-073).
 - **Cards:** owner, usual statement day, usual due day, and an optional **credit limit**. Each
   person's card is its own card with its own days, even for the same bank (e.g. Arif's and
   Babul's Brac Visa); the name is unique per owner. Shows the
