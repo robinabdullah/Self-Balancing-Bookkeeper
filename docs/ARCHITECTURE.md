@@ -123,9 +123,10 @@ root `.env.local`. In production they are two systemd units on one VPS (web on
 release and a rollback always move web and the api together. It starts the api, then web, and
 checks each with curl.
 
-The switch from the old single app runs side by side (D-071):
-- the new app starts beside the old one, on the same database;
-- the old app is parked at `business-old.<domain>`;
+The switch from the old single app runs side by side (D-071, D-072):
+- the new app starts beside the old one, on the same database. The pooler's Pool Size is 30
+  while both run, since each keeps a pool of 10;
+- it is tried at its own subdomain, `business2.<domain>`, while the old app keeps the main one;
 - nginx moves the main subdomain to the new web's port, and switching back is the same line
   reversed;
-- the old app is removed after a week.
+- the old app and the trial subdomain are removed after a week.

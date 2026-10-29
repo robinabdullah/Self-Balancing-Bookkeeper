@@ -63,14 +63,17 @@ Run these on the VPS as `ubuntu`. On the partners' VPS the old app is still live
 
    Use Supabase's **session pooler** connection string (port 5432): it works over IPv4 (the
    direct `db.<ref>.supabase.co` host is IPv6-only), and the migrations can run through it. It
-   allows 15 clients. The api keeps one pool of at most 10 (CR-030), so a migration or script
-   still fits beside it; a second app or pool on the same URL would not (see the switch's step 3).
+   allows 15 clients by default. The api keeps one pool of at most 10 (CR-030), so a migration or
+   script still fits beside it; a second app or pool on the same URL would not (the switch's
+   step 1 raises the Pool Size).
    A password with special characters must be URL-encoded. The `NEXT_PUBLIC_*` values are built
    into the app, so changing any value needs a new release. In Supabase → Authentication → URL
    Configuration, set the Site URL to `https://business.example.com`.
 
    **Card details key** (D-046): saved card details are encrypted with `CARD_SECRET_KEY`
-   (32 random bytes, base64). Make it once on the VPS and add it to `.env.local`:
+   (32 random bytes, base64). **When switching from the old app, copy its line from
+   `~/Mobile-Business-Lite/.env.local` and skip the command below:** a new key can't read the cards
+   saved so far. On a fresh install only, make it once on the VPS and add it to `.env.local`:
    ```bash
    echo "CARD_SECRET_KEY=$(openssl rand -base64 32)" >> ~/Self-Balancing-Bookkeeper/.env.local
    ```
@@ -95,6 +98,15 @@ Run these on the VPS as `ubuntu`. On the partners' VPS the old app is still live
    They start on the first deploy. Both files use Node's nvm path
    (`/home/ubuntu/.nvm/versions/node/v24.22.1/bin/node`). If `nvm which 24` prints another one,
    or after an nvm upgrade, update both files there and run `sudo systemctl daemon-reload`.
+   Otherwise systemd logs `Failed to locate executable` and `status=203/EXEC`:
+   ```bash
+   NODE_VER=$(basename "$(dirname "$(dirname "$(nvm which 24)")")")
+   sudo sed -i "s|/node/v24.22.1/|/node/$NODE_VER/|" \
+     /etc/systemd/system/self-balancing-bookkeeper.service \
+     /etc/systemd/system/self-balancing-bookkeeper-api.service
+   sudo systemctl daemon-reload
+   ```
+   (After a later upgrade, replace `v24.22.1` there with the version the files now hold.)
 6. **nginx and HTTPS** (a fresh VPS only; when switching from the old app, its site is kept):
    ```bash
    sudo cp ~/Self-Balancing-Bookkeeper/deploy/nginx.conf \
@@ -112,43 +124,60 @@ Run these on the VPS as `ubuntu`. On the partners' VPS the old app is still live
 ## Switching from the old app
 
 The old app (the single Next.js app, D-031: unit `mobile-business`, `/var/www/mobile-business`,
-port 4005, the clone `~/Mobile-Business-Lite`) keeps running beside the new one on the same
-database. No database change is needed. `business-old.example.com` is a placeholder for the parked
-host, which stays open like the main site (D-071).
+port 4005, the clone `~/Mobile-Business-Lite`) keeps serving `business.example.com`. The new app
+runs beside it on the same database and is tried first on its own subdomain (D-072).
+`business2.example.com` is a placeholder for it; like the main site, it is open. No database change
+is needed.
 
-1. **Deploy beside it:** steps 2–5 and 7 above. Then check on the VPS:
+1. **Raise the pooler's Pool Size first.** Each app keeps a pool of up to 10 connections and
+   holds idle ones, so together they need 20 of the session pooler's 15. Without this, the new
+   app fails with `EMAXCONNSESSION max clients reached in session mode`, while `/health` (which
+   doesn't touch the database) still passes. In Supabase, go to Project Settings → Database →
+   Connection pooling configuration, and set Pool Size to **30**: two pools plus room for a
+   migration or a script. It can go back to 15 after the clean-up.
+2. **Deploy beside it:** steps 2–5 and 7 above. Then check on the VPS:
    ```bash
    curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4007/login   # 200
    curl -fsS http://127.0.0.1:4006/health                                     # {"ok":true}
    ```
    `business.example.com` still serves the old app.
-2. **Park the old app at `business-old.example.com`:**
-   - add an `A` record for `business-old` in Cloudflare (as in step 1);
-   - add its nginx site, a copy of `deploy/nginx.conf` with `server_name business-old.example.com`
-     and `proxy_pass http://127.0.0.1:4005`, as `/etc/nginx/sites-available/business-old`; link it
-     into `sites-enabled`, then `sudo nginx -t && sudo systemctl reload nginx`;
-   - `sudo certbot --nginx -d business-old.example.com`;
-   - check that the old app opens and logs in there.
-3. **Switch** (at a quiet time): point the main site at the new web, then restart the old app once
-   so it drops its database connections (the old app's pool and the api's would need 20 of the
-   pooler's 15):
+3. **Try the new app at `business2.example.com`:**
+   1. Add an `A` record for `business2` in Cloudflare, as in step 1. Keep it one level deep:
+      Cloudflare's free certificate doesn't cover `a.b.example.com`.
+   2. Add its nginx site:
+      ```bash
+      sudo cp ~/Self-Balancing-Bookkeeper/deploy/nginx.conf /etc/nginx/sites-available/business2
+      sudo sed -i 's|business.example.com|business2.example.com|g' /etc/nginx/sites-available/business2
+      sudo ln -s /etc/nginx/sites-available/business2 /etc/nginx/sites-enabled/
+      sudo nginx -t && sudo systemctl reload nginx
+      sudo certbot --nginx -d business2.example.com
+      ```
+   3. Check it:
+      - each partner logs in;
+      - the balances and reports match the old app's;
+      - a test entry shows in both apps (they share one database), then delete it.
+   4. Don't save a passkey there. A passkey belongs to its host, so it stops working after the
+      switch.
+4. **Switch** (at a quiet time): point the main site at the new web, then restart the old app once
+   so it drops its database connections:
    ```bash
    sudo sed -i 's|127.0.0.1:4005|127.0.0.1:4007|' /etc/nginx/sites-available/mobile-business
    sudo nginx -t && sudo systemctl reload nginx
    sudo systemctl restart mobile-business
    ```
-   The `sed` changes certbot's HTTPS block too. Then run the smoke test below.
-4. **Switch back**, if needed during the week: the same line reversed, then restart the new api so
+   The `sed` changes certbot's HTTPS block too. Then run the smoke test below. Card reveal works
+   again with the partners' existing passkeys.
+5. **Switch back**, if needed during the week: the same line reversed, then restart the new api so
    it drops its connections:
    ```bash
    sudo sed -i 's|127.0.0.1:4007|127.0.0.1:4005|' /etc/nginx/sites-available/mobile-business
    sudo nginx -t && sudo systemctl reload nginx
    sudo systemctl restart self-balancing-bookkeeper-api
    ```
-5. **Clean up**, after a week of watching:
+6. **Clean up**, after a week of watching:
    ```bash
-   sudo rm /etc/nginx/sites-enabled/business-old /etc/nginx/sites-available/business-old
-   sudo certbot delete --cert-name business-old.example.com
+   sudo rm /etc/nginx/sites-enabled/business2 /etc/nginx/sites-available/business2
+   sudo certbot delete --cert-name business2.example.com
    sudo systemctl disable --now mobile-business
    sudo rm /etc/systemd/system/mobile-business.service && sudo systemctl daemon-reload
    sudo rm -rf /var/www/mobile-business /var/www/mobile-business-old ~/Mobile-Business-Lite
@@ -158,9 +187,9 @@ host, which stays open like the main site (D-071).
    sudo ln -s /etc/nginx/sites-available/self-balancing-bookkeeper /etc/nginx/sites-enabled/
    sudo nginx -t && sudo systemctl reload nginx
    ```
-   Then remove the `business-old` DNS record.
+   Then remove the `business2` DNS record. In Supabase, set Pool Size back to 15 if you like.
 
-Logins and passkeys belong to one host. On `business-old` the partners log in again, and the card
+Logins and passkeys belong to one host. On `business2` the partners log in again, and the card
 reveal doesn't work there: a passkey is tied to `business.example.com`.
 
 ## Releasing
@@ -200,6 +229,9 @@ sudo journalctl -u self-balancing-bookkeeper-api -u self-balancing-bookkeeper -f
   7. a failed new release (a missing key, or an api that doesn't answer `/health`) leaves both
      hosts serving;
   8. after the clean-up and a reboot, only the new units run, and `business` serves them.
+
+  That rehearsal parked the old app at `business-old`. D-072 tries the new app at `business2`
+  instead, with the same nginx steps, and production has run it that way (CR-049).
 - **Smoke test (M-CR-011.2):** `https://business.example.com` has a valid certificate; a private
   window goes to `https://business.example.com/login`; each partner logs in on their phone, saves
   one entry and deletes it; the other apps on the VPS still respond.

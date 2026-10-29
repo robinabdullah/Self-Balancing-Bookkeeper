@@ -6,13 +6,13 @@ top: the same screens, URLs, cookies, messages and numbers (D-068). This repo is
 cited.
 
 ## Now
-- **Live:** production runs the reference repo (`D:/Projects/Mobile-Business-Lite`) until N-7.2.
-- **Session:** S10 (2026-10-28), all uncommitted.
-  - N-7.1 and CR-048 (D-071: the new name, a side-by-side switch) are done and rehearsed.
-  - S9 is pushed and CI run 40707721927 is green.
+- **Live:** the reference app serves the main host. The new app runs beside it at
+  `business2.<domain>` (N-7.2, 2026-10-29), on the same database.
+- **Session:** S10.
+  - N-7.1 and CR-048 are committed.
   - N-6.3: the partners consented; it stays open only until the repo is made public.
-- **Next:** the user's review, then one commit for N-7.1 + CR-048 (pushed to `dev`), then
-  N-7.2 👤.
+  - CR-049 (D-072: the `business2` trial, Pool Size 30) is done, uncommitted.
+- **Next:** the user's review and commit of CR-049, then N-7.2's switch at a quiet time.
 - **Blocked on:** —
 
 ## How to use
@@ -1358,7 +1358,14 @@ Screenshots: the rehearsal log; the production smoke test.
     - Then drop the unused path from `apps/api/src/auth/jwt.guard.ts`.
   - The switch runs side by side, on the same database, with no database change (D-071,
     `deploy/README.md`).
-  - [ ] **Deploy beside the old app.** The old one keeps serving on 4005.
+  - **Reworked by CR-049 (D-072, 2026-10-29):**
+    - the new app is tried at `business2.<domain>` and nothing is parked at `business-old`;
+    - the pooler's Pool Size goes to 30 first.
+  - [x] 👤 **Pool Size 30** (2026-10-29). With 15, the new api returned 500 on login
+    (`EMAXCONNSESSION max clients reached in session mode`) while `/health` passed.
+  - [x] **Deploy beside the old app** (2026-10-29, by the user). The old one keeps serving on 4005.
+    - Its first start failed with `203/EXEC`: the VPS's `nvm which 24` wasn't v24.22.1. Fixed by
+      the units' path `sed` (now in the README).
     - Node 24 via nvm; clone this repo to `~/Self-Balancing-Bookkeeper` (deploy key).
     - Its `.env.local` (mode 600) is copied from the old one, plus `SUPABASE_URL` and
       `SUPABASE_ANON_KEY` (the old `NEXT_PUBLIC_*` values). `CARD_SECRET_KEY` is the same key,
@@ -1366,11 +1373,12 @@ Screenshots: the rehearsal log; the production smoke test.
     - Ports 4006 and 4007 must be free. Install both units (if `nvm which 24` isn't v24.22.1,
       update their node path first); deploy.
     - Check `/login` on 4007 and `/health` on 4006 with curl on the VPS.
-  - [ ] **Park the old app** at `business-old.<domain>`:
+  - [x] **Try the new app** at `business2.<domain>` (2026-10-29, by the user; it replaces the
+    business-old park):
     - the DNS record;
-    - an nginx block → `127.0.0.1:4005` (open, no extra password);
+    - an nginx block → `127.0.0.1:4007` (open);
     - certbot;
-    - check that it works there.
+    - the partners log in and the figures look right.
   - [ ] 👤 **Switch** at a quiet time:
     - in the main site's block, `127.0.0.1:4005` → `127.0.0.1:4007`; `nginx -t` and reload;
     - then restart the old unit once, so it drops its database connections (the session pooler
@@ -1378,7 +1386,7 @@ Screenshots: the rehearsal log; the production smoke test.
   - [ ] Smoke test with both partners: login, save/delete, PDF, reveal.
   - [ ] **One week of watching.** Switching back is the same nginx line reversed.
   - [ ] **Clean up:**
-    - remove `business-old`'s block, DNS record and certificate;
+    - remove `business2`'s block, DNS record and certificate;
     - stop and disable `mobile-business`, and delete its unit file, `/var/www/mobile-business*`
       and `~/Mobile-Business-Lite`;
     - rename the nginx site file.
@@ -1502,3 +1510,18 @@ Feedback or a rule change found during the migration goes here, after its D entr
         is added at the park and removed at the clean-up.
     - **Gate:** typecheck and lint clean; unit 723 (64 files); shellcheck clean; denylist empty;
       parity MATCH (202 files), TTFB over 92 routes 9633 → 6316 ms (−34%).
+
+- [x] **CR-049 The new app tried on its own subdomain** (2026-10-29)
+  - **Source:** user request after the first production deploy (N-7.2) · **Decision:** D-072 ·
+    **Docs:** `deploy/README.md`, ARCHITECTURE §8, N-7.2 here
+  - [x] CR-049.1 **The deploy docs:**
+    - the switch tries the new app at `business2.<domain>`; nothing is parked at `business-old`;
+    - the Pool Size goes to 30 first;
+    - copy the old card key, don't make a new one;
+    - the Node path fix for `203/EXEC`.
+  - [x] CR-049.2 **`parity:ref` starts the reference with its DB again:** since N-6.1 `appEnv()`
+    dropped `DATABASE_URL` and `CARD_SECRET_KEY` for both targets. The ref target gets local
+    Supabase's URL and the test key back (`scripts/parity/run.ts`).
+  - **Tests:** [x] M-CR-049.1: the user deployed beside the old app and tried it at `business2`
+    (N-7.2).
+  - **Acceptance:** typecheck, lint and unit green; the denylist is empty.

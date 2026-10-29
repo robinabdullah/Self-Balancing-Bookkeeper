@@ -70,14 +70,19 @@ function newest(path: string): number {
   return Math.max(stat.mtimeMs, ...readdirSync(path).map((name) => newest(join(path, name))));
 }
 
-/** Web's build and server env. N-6.1 (D-068): no database URL or card key (the api's alone). */
-function appEnv() {
+/**
+ * Web's build and server env. N-6.1 (D-068): no database URL or card key (the api's alone). The
+ * reference is still one app that reads its DB itself, so it gets local Supabase's and the test
+ * card key.
+ */
+function appEnv(t: Target) {
   const supabase = localSupabase();
   const env = { ...process.env };
   delete env.DATABASE_URL;
   delete env.CARD_SECRET_KEY;
   return {
     ...env,
+    ...(t.name === "ref" ? { DATABASE_URL: supabase.dbUrl, CARD_SECRET_KEY: E2E_CARD_KEY } : {}),
     NEXT_DIST_DIR: DIST,
     NEXT_TELEMETRY_DISABLED: "1",
     NEXT_PUBLIC_SUPABASE_URL: supabase.url,
@@ -102,7 +107,7 @@ function build(t: Target) {
     statSync(stamp).mtimeMs > Math.max(...t.appFiles.map((f) => newest(join(t.dir, f))));
   if (fresh) return console.log(`parity: reusing the ${t.name} build`);
   console.log(`parity: building ${t.name} (${t.dir})`);
-  execSync("npx next build", { cwd: t.dir, env: appEnv(), stdio: "inherit" });
+  execSync("npx next build", { cwd: t.dir, env: appEnv(t), stdio: "inherit" });
 }
 
 async function apiIsUp() {
@@ -157,7 +162,7 @@ async function serve(t: Target): Promise<ChildProcess[]> {
   const api = t.name === "self" ? await serveApi(clock) : undefined;
   const server = spawn(`npx next start --hostname 127.0.0.1 --port ${PARITY_PORT}`, {
     cwd: t.dir,
-    env: { ...appEnv(), PARITY_NOW, NODE_OPTIONS: `--require "${clock}"` },
+    env: { ...appEnv(t), PARITY_NOW, NODE_OPTIONS: `--require "${clock}"` },
     shell: true,
     stdio: "ignore",
   });

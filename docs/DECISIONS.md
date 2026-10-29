@@ -93,7 +93,8 @@ earlier decision, add its id to that row's "Later changed by".
 | D-068 | NestJS backend; Next.js stays the UI as a BFF over an internal API | 2026-10-27 |  |
 | D-069 | A public MIT repo with fictional data (amends D-014) | 2026-10-27 |  |
 | D-070 | The opening-import tools are deleted here; the cutover stays in the reference | 2026-10-27 |  |
-| D-071 | The product is "Self-Balancing Bookkeeper"; the switch runs side by side (amends D-031) | 2026-10-28 |  |
+| D-071 | The product is "Self-Balancing Bookkeeper"; the switch runs side by side (amends D-031) | 2026-10-28 | D-072 |
+| D-072 | The new app is tried on its own subdomain (amends D-071) | 2026-10-29 |  |
 
 ---
 
@@ -545,3 +546,11 @@ earlier decision, add its id to that row's "Later changed by".
   AI, the task files), ARCHITECTURE §8, `docs/v1.1-plan.md` (CR-019 fallback),
   `docs/TASKS-NEST.md` (N-7.1, N-7.2); `deploy/*` at CR-048.
 - **Tasks:** CR-048.
+
+## D-072 — The new app is tried on its own subdomain (amends D-071) (2026-10-29)
+- **Source:** user request after the first production deploy (N-7.2).
+- **Decision:** the new app is tried at `business2.<domain>` while the old one keeps the main
+  host; nothing is parked at `business-old`. The pooler's Pool Size is 30 while both run: two
+  pools of 10 don't fit in 15. No idle timeout, so D-032's speed is kept.
+- **Docs changed:** `deploy/README.md`, ARCHITECTURE §8, `docs/TASKS-NEST.md` (N-7.2).
+- **Tasks:** CR-049.
