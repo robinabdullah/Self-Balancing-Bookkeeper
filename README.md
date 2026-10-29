@@ -1,12 +1,16 @@
 # Self-Balancing Bookkeeper
 
-An exact bookkeeping system for a two-partner mobile-phone trading business in Bangladesh, in
-daily use: a Next.js front end over a NestJS API, with every balance derived, never stored. It
-replaced their Excel workbooks: purchases, sales, returns, card bills, customer and supplier dues,
-stock, month close and profit sharing, all in BDT ৳ on the Asia/Dhaka calendar. It is built for a
-phone first.
+A full-stack TypeScript accounting system: a NestJS API and a Next.js client over PostgreSQL. It
+stores only facts and derives every balance, and it moved from a Next.js monolith to the API step
+by step, each step proven by a byte-for-byte parity harness.
 
-Every name, number and card in this repo is fictional (D-069). The project started in 2025; this
+**What it does:** purchases, sales, returns, stock, customer and supplier dues, credit-card bills
+and EMI plans, investors, month close and profit sharing, in BDT ৳ on the Asia/Dhaka calendar.
+Built for a phone first.
+
+**Who uses it:** a small trading business in Bangladesh runs its daily books on it, in place of
+Excel workbooks. It works for a sole owner or for partners with any profit split (D-073). Every
+name, number and card in this repo is fictional (D-069). The project started in 2025; this
 repository is the cleaned public version, prepared in October 2026.
 
 | Home (phone) | A customer (phone) | A card (phone) |
