@@ -1,11 +1,13 @@
 # Self-Balancing Bookkeeper
 
-A small, exact bookkeeping web app for a two-partner mobile-phone trading business in
-Bangladesh. It replaced their Excel workbooks: purchases, sales, returns, card bills, customer and
-supplier dues, stock, month close and profit sharing, all in BDT ৳ on the Asia/Dhaka calendar.
-It is built for a phone first.
+An exact bookkeeping system for a two-partner mobile-phone trading business in Bangladesh, in
+daily use: a Next.js front end over a NestJS API, with every balance derived, never stored. It
+replaced their Excel workbooks: purchases, sales, returns, card bills, customer and supplier dues,
+stock, month close and profit sharing, all in BDT ৳ on the Asia/Dhaka calendar. It is built for a
+phone first.
 
-Every name, number and card in this repo is fictional (D-069).
+Every name, number and card in this repo is fictional (D-069). The project started in 2025; this
+repository is the cleaned public version, prepared in October 2026.
 
 | Home (phone) | A customer (phone) | A card (phone) |
 |---|---|---|
