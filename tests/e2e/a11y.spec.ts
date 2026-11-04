@@ -436,7 +436,11 @@ for (const theme of THEMES) {
       for (const [status, id] of cards) {
         found.push(...(await audit(page, `/cards/${id}`)));
         // The badge under the name (not the Overdue / Due within 7 days facts).
-        await expect(page.locator("main p", { hasText: new RegExp(`^${status}$`) })).toBeVisible();
+        const badge = page.locator("main p", { hasText: new RegExp(`^${status}$`) });
+        await expect(badge).toBeVisible();
+        // Its tone is built (the classes live in packages/domain, D-068): the amber fill.
+        if (status === "Due within 7 days")
+          await expect(badge.locator("span")).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
       }
       await page.goto(`/cards/${s.ids.card}`);
       await expect(page.getByText("Reversal of Card payment")).toBeVisible();

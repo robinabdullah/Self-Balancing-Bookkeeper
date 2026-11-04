@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* The card status tones (STATUS) live in the shared domain package, outside this app. */
+@source "../../../../packages/domain/src";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
