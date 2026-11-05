@@ -3,7 +3,7 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { logoSrc } from "@mbl/domain/business";
 import { profitsFor } from "@mbl/domain/charts/profit";
-import { dhakaToday, formatDate, monthOf } from "@mbl/domain/dates";
+import { addMonths, dhakaToday, formatDate, monthOf } from "@mbl/domain/dates";
 import { nextToClose } from "@mbl/domain/engine/months";
 import { breakdownLines, closeScreen, monthList } from "@mbl/domain/months-view";
 import { partnerWarning } from "@mbl/domain/setup";
@@ -194,7 +194,9 @@ describe("I-N-4.6.1 each admin view has what web's page computed", () => {
 
 describe("I-N-4.6.2 a future, unknown or malformed month", () => {
   it("is a 404", async () => {
-    for (const month of ["2027-01", "2026-13", "2026-1", "not-a-month", "2026-11", "2026-07"])
+    // Next month is always in the future (a fixed "2026-11" stopped being one on 1 Nov 2026).
+    const next = addMonths(monthOf(dhakaToday()), 1);
+    for (const month of ["2027-01", "2026-13", "2026-1", "not-a-month", next, "2026-07"])
       await get(`/views/months/${month}`).expect(404);
   });
 });
