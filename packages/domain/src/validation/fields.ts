@@ -102,5 +102,10 @@ export const EXPENSE_LABELS: Record<(typeof EXPENSE_CATEGORIES)[number], string>
   other: "Other",
 };
 
+/** Card fees' key among the expense categories (charts, the Expense statement, the breakdown
+ * links): the `fee` component, card fee entries and cash-out fees. */
+export const CARD_FEES = "card-fees";
+/** D-080: the Expense statement's "Expenses only" filter: every expense category, no card fees. */
+export const EXPENSES = "expenses";
 /** A card fee's fixed category (SRS §4). */
 export const CARD_FEE_CATEGORY = "card fee/interest";

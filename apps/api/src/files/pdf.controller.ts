@@ -1,5 +1,6 @@
 import { Controller, Get, NotFoundException, Param, Req, Res } from "@nestjs/common";
 import type { Request, Response } from "express";
+import { costCategory } from "@mbl/domain/expense-report";
 import { parseRange } from "@mbl/domain/journal-filter";
 import { rowId } from "@mbl/domain/validation/fields";
 import { AccountReportsService } from "../account-reports/account-reports.service";
@@ -7,6 +8,7 @@ import { AuthService } from "../auth/auth.service";
 import { BusinessService } from "../business/business.service";
 import { MessagesService } from "../messages/messages.service";
 import { cardPdf, investorPdf, modelSection } from "../pdf/account-reports";
+import { expensesPdf } from "../pdf/expenses";
 import { invoicePdf, receiptPdf } from "../pdf/invoice";
 import { renderDocPdf } from "../pdf/invoice-pdf";
 import { type PdfKind, pdfFileName, pdfFrame } from "../pdf/layout";
@@ -53,6 +55,7 @@ export class PdfController {
     card: (q) => this.card(q),
     investor: (q) => this.investor(q),
     sales: (q) => this.sales(q),
+    expenses: (q) => this.expenses(q),
     pack: (q) => this.pack(q),
   };
 
@@ -197,6 +200,25 @@ export class PdfController {
     const doc = salesPdf({ report, ...range, name: (id) => names[id] ?? "—" });
     const body = await renderReportPdf(frame, doc);
     return { body, name: pdfFileName(business, "sales", range.from, "to", range.to) };
+  }
+
+  /**
+   * D-075, D-080 (UIDD §4.17): the Expense statement for a period (`?from=&to=`, and `?cat=` for
+   * one category). An internal report: no How to pay, no terms or footer line.
+   */
+  private async expenses(q: URLSearchParams): Promise<Made> {
+    const range = rangeOf(q);
+    if (!range) return refuse(400, "Bad expense statement request");
+    const cat = costCategory(q.get("cat"));
+
+    const [{ report, names, notes }, { business, frame }] = await Promise.all([
+      this.reports.loadExpenses(range.from, range.to, cat),
+      this.context("report", []),
+    ]);
+    const doc = expensesPdf({ report, ...range, name: (id) => names[id] ?? "—", notes });
+    const body = await renderReportPdf(frame, doc);
+    const parts = ["expenses", ...(cat ? [cat] : []), range.from, "to", range.to];
+    return { body, name: pdfFileName(business, ...parts) };
   }
 
   /** D-045: the Monthly pack (`?month=YYYY-MM`): an internal report frame. */

@@ -6,6 +6,14 @@ import { add, format, mul } from "./money";
 import { toWords } from "./words";
 import type { CashBook, CashRow } from "./cash-book";
 import type { SalesReport } from "./sales-report";
+import {
+  type ExpenseReport,
+  elsewhereLine,
+  elsewhereNote,
+  filterLabel,
+  spendLine,
+} from "./expense-report";
+import { EXPENSES } from "./validation/fields";
 
 // D-040: every WhatsApp message, as plain text in the sectioned + emoji style of the v1.1 plan's
 // samples (`*bold*`, `_italic_`, `- ` bullets). Each builder returns the body only: the send
@@ -324,6 +332,35 @@ export function salesText({ report: r, from, to, name }: SalesMessage) {
           (g) =>
             `- ${name(g.id)}: ${piecesAt(g)} · ${format(g.sales)} · profit ${format(g.profit)}`,
         ),
+      ]),
+  ]);
+}
+
+export type ExpensesMessage = { report: ExpenseReport; from: string; to: string };
+
+/** D-075, D-080: the Expense statement's categories and total (one category while filtered). */
+export function expensesText({ report: r, from, to }: ExpensesMessage) {
+  const head = !r.cat
+    ? "Expenses"
+    : r.cat === EXPENSES
+      ? "Expenses only"
+      : `Expenses · ${filterLabel(r.cat)}`;
+  return compose([
+    lines([
+      `🧾 *${head} — ${formatRange(from, to)}*`,
+      r.rows.length === 0 ? "No expenses in this period." : spendLine(r),
+    ]),
+    r.rows.length > 0 &&
+      lines([
+        ...r.byCategory.map(
+          (c) => `- ${c.label}: ${format(c.amount)}${c.share == null ? "" : ` (${c.share}%)`}`,
+        ),
+        `*Total: ${format(r.total)}*`,
+      ]),
+    r.elsewhere &&
+      lines([
+        `_${elsewhereNote(r)}_`,
+        ...r.elsewhere.rows.map((row) => `- ${elsewhereLine(row)}: ${format(row.amount)}`),
       ]),
   ]);
 }

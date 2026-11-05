@@ -2,10 +2,19 @@ import { randomUUID } from "node:crypto";
 import ExcelJS from "exceljs";
 import { extractText } from "unpdf";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { dhakaToday, monthOf } from "@mbl/domain/dates";
+import { CARD_FEES } from "@mbl/domain/charts/profit";
+import { addMonths, dhakaToday, monthOf } from "@mbl/domain/dates";
 import { monthProfit } from "@mbl/domain/engine/months";
-import { salesPdfHref, salesXlsxHref, withQuery } from "@mbl/domain/href";
+import { costEntries, expenseReport } from "@mbl/domain/expense-report";
+import {
+  expensesPdfHref,
+  expensesXlsxHref,
+  salesPdfHref,
+  salesXlsxHref,
+  withQuery,
+} from "@mbl/domain/href";
 import { add, format, toDecimal } from "@mbl/domain/money";
+import { EXPENSES } from "@mbl/domain/validation/fields";
 import { receiptLabel } from "@mbl/domain/whatsapp";
 import { AccountReportsService } from "../../apps/api/src/account-reports/account-reports.service";
 import { BooksService } from "../../apps/api/src/books/books.service";
@@ -276,6 +285,142 @@ describe("CR-023 Sales report PDF and Excel", () => {
     expect(totals.getRow(2).getCell(net).value).toBe(Number(toDecimal(report.netProfit)));
     const byModel = wb.getWorksheet("By model")!;
     expect(byModel.getRow(2).getCell(1).value).toBe("Model V");
+
+    const [{ n: after }] = await sql`select count(*)::int as n from audit_log`;
+    expect(after).toBe(before);
+  });
+});
+
+describe("CR-052 Expense statement", () => {
+  const card = randomUUID();
+  beforeAll(async () => {
+    await sql`insert into cards (id, name, owner_person_id, statement_day, due_day)
+      values (${card}, 'Test Visa', ${ids.arif}, 5, 20)`;
+  });
+  afterAll(async () => {
+    await sql.unsafe(`truncate ${TABLES}`);
+    await sql`delete from cards where id = ${card}`;
+  });
+
+  /** Rent in cash (then reversed), a salary for last month, a card-paid delivery, a Card fee and
+   * a cash-out with a ৳200 fee. */
+  async function costs() {
+    ok(await money({ type: "capital_in", personId: ids.arif, amount: "50,000" }));
+    const rentId = randomUUID();
+    ok(
+      await money({
+        id: rentId,
+        type: "expense",
+        amount: "2,000",
+        category: "rent",
+        source: "cash",
+        note: "Shop rent",
+      }),
+    );
+    ok(
+      await reverseEntry({
+        id: randomUUID(),
+        table: "money",
+        reversesId: rentId,
+        date: today,
+        forMonth: monthOf(today),
+      }),
+    );
+    ok(
+      await money({
+        type: "expense",
+        amount: "3,000",
+        category: "salary",
+        source: "cash",
+        forMonth: addMonths(monthOf(today), -1),
+      }),
+    );
+    ok(
+      await money({
+        type: "expense",
+        amount: "400",
+        category: "delivery",
+        source: "card",
+        cardId: card,
+      }),
+    );
+    ok(await money({ type: "card_fee", amount: "1,150", cardId: card }));
+    ok(
+      await money({
+        type: "card_cash_out",
+        cardId: card,
+        cardCharged: "10,000",
+        cashReceived: "9,800",
+      }),
+    );
+  }
+
+  it("I-CR-052.1 the statement equals the books; the PDF and Excel follow the filter", async () => {
+    await costs();
+    const { books, data } = await loadBooks();
+    expectBalanced(books.posted, today);
+    const view = await reports().loadExpenses(range.from, range.to);
+    // The page's one read is the service's answer.
+    expect(await api.read(withQuery("/views/reports/expenses", range))).toEqual(
+      JSON.parse(JSON.stringify(view)),
+    );
+    expect(view.report).toEqual(
+      expenseReport(costEntries(books.posted, data.entries), range.from, range.to),
+    );
+    const r = view.report;
+    expect(r.rows).toHaveLength(6);
+    expect(r.total).toBe(300_000 + 40_000 + 115_000 + 20_000); // the rent nets to 0
+    expect([r.cash, r.cards]).toEqual([300_000, 175_000]);
+    expect(r.tagged).toBe(true);
+    expect(Object.values(view.notes)).toContain("Shop rent");
+    // A month whose rows are all untagged ties out to the profit breakdown.
+    const p = monthProfit(books.posted, monthOf(today), today);
+    expect(0 - p.components.fee).toBe(r.byCategory.find((c) => c.key === CARD_FEES)?.amount);
+    expect(0 - p.expenses.delivery).toBe(r.byCategory.find((c) => c.key === "delivery")?.amount);
+    // D-080: Expenses only leaves the card fees out (the salary for last month stays: by date).
+    const noFees = (await reports().loadExpenses(range.from, range.to, EXPENSES)).report;
+    expect([noFees.total, noFees.rows.length]).toEqual([300_000 + 40_000, 4]); // rent + its reversal, salary, delivery
+
+    const [{ n: before }] = await sql`select count(*)::int as n from audit_log`;
+    const pdf = withQuery(expensesPdfHref, range);
+    const xlsx = withQuery(expensesXlsxHref, range);
+    expect((await get(pdf, null)).status).toBe(401);
+    expect((await get(pdf, investor)).status).toBe(403);
+    expect((await get(xlsx, investor)).status).toBe(403);
+    const bad = { from: range.to, to: "2000-01-01" };
+    expect((await get(withQuery(expensesPdfHref, bad))).status).toBe(400);
+    expect((await get(withQuery(expensesXlsxHref, bad))).status).toBe(400);
+
+    const res = await get(pdf);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Disposition")).toMatch(
+      new RegExp(`expenses-${range.from}-to-${range.to}\\.pdf"$`),
+    );
+    const { text } = await extractText(new Uint8Array(await res.arrayBuffer()), {
+      mergePages: true,
+    });
+    expect(text).toContain("Expense statement");
+    expect(text).toContain("Test Visa");
+    expect(text).toContain(format(r.total));
+    expect(text).toContain("Salary");
+
+    const rentOnly = await get(withQuery(expensesPdfHref, { ...range, cat: "delivery" }));
+    const only = await extractText(new Uint8Array(await rentOnly.arrayBuffer()), {
+      mergePages: true,
+    });
+    expect(only.text).toContain("Expense statement · Delivery");
+    expect(only.text).not.toContain("Salary");
+
+    const book = await get(withQuery(expensesXlsxHref, { ...range, cat: CARD_FEES }));
+    expect(book.status).toBe(200);
+    expect(book.headers.get("Content-Disposition")).toMatch(/expenses-card-fees-.*\.xlsx"$/);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await book.arrayBuffer());
+    expect(wb.worksheets.map((s) => s.name)).toEqual(["By category", "Entries"]);
+    const byCat = wb.getWorksheet("By category")!;
+    expect(byCat.getRow(2).getCell(1).value).toBe("Card fees");
+    expect(byCat.getRow(3).getCell(2).value).toBe(1_350);
+    expect(wb.getWorksheet("Entries")!.rowCount).toBe(4); // header, the fee, the cash-out, Total
 
     const [{ n: after }] = await sql`select count(*)::int as n from audit_log`;
     expect(after).toBe(before);

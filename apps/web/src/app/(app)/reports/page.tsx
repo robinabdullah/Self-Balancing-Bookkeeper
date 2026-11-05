@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRightIcon } from "lucide-react";
 
-// D-043, D-045, D-064 (UIDD §4.17): the Reports list, Charts first. Backup all data is the Export
+// D-043, D-045, D-064, D-075 (UIDD §4.17): the Reports list, Charts first. Backup all data is the Export
 // page, which keeps its `/export` address.
 const REPORTS = [
   {
@@ -14,6 +14,11 @@ const REPORTS = [
     label: "Sales report",
     hint: "Sales, profit, by model and by customer",
     href: "/reports/sales",
+  },
+  {
+    label: "Expense statement",
+    hint: "Every expense and card fee, by date",
+    href: "/reports/expenses",
   },
   {
     label: "Monthly pack",

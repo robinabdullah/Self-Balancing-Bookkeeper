@@ -5,6 +5,7 @@ import { purchaseLines, returnLines, returns, saleLines, sales } from "@mbl/db/s
 import { entryTitle, reversalLabel, whoOf } from "@mbl/domain/journal/labels";
 import { type CashBook, type CashLabel, cashBook } from "@mbl/domain/cash-book";
 import type { DatedLines } from "@mbl/domain/charts/profit";
+import { type ExpenseReport, costEntries, expenseReport } from "@mbl/domain/expense-report";
 import { parse } from "@mbl/domain/money";
 import { type SalesReport, salesReport } from "@mbl/domain/sales-report";
 import { setupNames } from "@mbl/domain/setup";
@@ -30,6 +31,15 @@ export type CashBookView = {
 const poisha = (text: string) => parse(text) as number;
 
 export type SalesView = { report: SalesReport; names: Record<string, string> };
+
+export type ExpensesView = {
+  report: ExpenseReport;
+  names: Record<string, string>;
+  /** Each row's note (the books don't carry notes). */
+  notes: Record<string, string>;
+  /** The oldest entry's date (the month stepper's first month). */
+  first: string | null;
+};
 
 @Injectable()
 export class ReportsService {
@@ -130,5 +140,22 @@ export class ReportsService {
       this.setup.loadSetup(),
     ]);
     return { report: salesReport(lines.sold, lines.returned), names: setupNames(setup) };
+  }
+
+  /** D-075: the Expense statement, read off the books' posted profit effects (CR-052). */
+  async loadExpenses(from: string, to: string, cat: string | null = null): Promise<ExpensesView> {
+    const [{ books, data }, journal, setup] = await Promise.all([
+      this.books.loadBooks(),
+      this.journal.loadJournal(),
+      this.setup.loadSetup(),
+    ]);
+    const report = expenseReport(costEntries(books.posted, data.entries), from, to, cat);
+    const rows = new Map(journal.map((r) => [r.id, r]));
+    const notes: Record<string, string> = {};
+    for (const { id } of report.rows) {
+      const note = rows.get(id)?.note;
+      if (note) notes[id] = note;
+    }
+    return { report, names: setupNames(setup), notes, first: journal.at(-1)?.date ?? null };
   }
 }

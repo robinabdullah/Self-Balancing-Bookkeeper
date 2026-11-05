@@ -96,4 +96,7 @@ export const viewHelp = {
   available: "approximate — excludes personal spending not entered as Personal spend",
   salesReport:
     "sales profit after customer returns; a reversed sale counts on the day it was reversed",
+  /** D-075: shown when a row is tagged "for Oct 2026". */
+  expenseStatement:
+    "Profit counts an expense in its For month, so this total can differ from the month's profit.",
 } as const;

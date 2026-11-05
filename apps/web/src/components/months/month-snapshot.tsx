@@ -1,30 +1,58 @@
+import Link from "next/link";
+import { ChevronRightIcon } from "lucide-react";
 import { Amount } from "@/components/amount";
 import type { Allocation } from "@mbl/domain/engine/months";
+import { expensesHref } from "@mbl/domain/href";
 import { add } from "@mbl/domain/money";
 import type { BreakdownLine } from "@mbl/domain/months-view";
 
 // UIDD §4.9 (tasks 5.1, 5.2): the profit breakdown (the close screen and a closed month), and a
 // closed month's stored allocations, read-only: investors (basis × rate % = amount), then the
-// partners' split. A loss shows in red (`Amount`).
+// partners' split. A loss shows in red (`Amount`). D-075, D-080: the Expenses and Card fees rows
+// (with ›) open the month's Expense statement, filtered to them.
 
 const PART = { cash: "Cash", card: "Card", partner: "Partner" } as const;
 const row = "flex min-h-11 items-center justify-between gap-3 px-3";
 
-export function Breakdown({ lines, total }: { lines: BreakdownLine[]; total: number }) {
+export function Breakdown({
+  lines,
+  total,
+  month,
+}: {
+  lines: BreakdownLine[];
+  total: number;
+  /** "YYYY-MM": the month the lines are for (their Expense statement links). */
+  month: string;
+}) {
   return (
     <section aria-labelledby="breakdown" className="mb-6">
       <h2 id="breakdown" className="mb-2 font-semibold">
         Profit breakdown
       </h2>
       <dl aria-label="Profit breakdown" className="divide-y rounded-lg border lg:max-w-md">
-        {lines.map((l) => (
-          <div key={l.label} className={row}>
-            <dt>{l.label}</dt>
-            <dd>
-              <Amount poisha={l.amount} />
-            </dd>
-          </div>
-        ))}
+        {lines.map((l) =>
+          l.cat && l.amount !== 0 ? (
+            // D-080: the whole row opens the month's Expense statement, filtered to it.
+            <div key={l.label} className={`${row} hover:bg-muted/40 relative`}>
+              <dt>
+                <Link href={expensesHref(month, l.cat)} className="after:absolute after:inset-0">
+                  {l.label}
+                </Link>
+              </dt>
+              <dd className="flex items-center gap-1">
+                <Amount poisha={l.amount} />
+                <ChevronRightIcon aria-hidden className="text-muted-foreground -mr-1 size-4" />
+              </dd>
+            </div>
+          ) : (
+            <div key={l.label} className={row}>
+              <dt>{l.label}</dt>
+              <dd>
+                <Amount poisha={l.amount} />
+              </dd>
+            </div>
+          ),
+        )}
         <div className={`${row} font-semibold`}>
           <dt>Month profit</dt>
           <dd>

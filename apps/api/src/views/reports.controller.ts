@@ -1,4 +1,5 @@
 import { Controller, Get, NotFoundException, Query } from "@nestjs/common";
+import { costCategory } from "@mbl/domain/expense-report";
 import { parseRange } from "@mbl/domain/journal-filter";
 import { defaultPackMonth } from "@mbl/domain/monthly-pack";
 import { peopleRows } from "@mbl/domain/people-view";
@@ -52,6 +53,13 @@ export class ReportViewsController {
     return { report, names, first: journal.at(-1)?.date ?? null };
   }
 
+  /** D-075, D-080 (UIDD §4.9): the Expense statement for a period, `cat` = one category. */
+  @Get("reports/expenses")
+  async expenses(@Query() q: Period & { cat?: string }) {
+    const { from, to } = period(q);
+    return this.reports.loadExpenses(from, to, costCategory(q.cat));
+  }
+
   /**
    * D-045 (UIDD §4.17): without `person`, the investors and partners (active, or still holding
    * capital, profit owed or a difference); with one, their report for whole months.
@@ -97,5 +105,6 @@ export class ReportViewsController {
 
 export type CashReportView = Awaited<ReturnType<ReportViewsController["cash"]>>;
 export type SalesReportView = Awaited<ReturnType<ReportViewsController["sales"]>>;
+export type ExpensesReportView = Awaited<ReturnType<ReportViewsController["expenses"]>>;
 export type InvestorReportView = Awaited<ReturnType<ReportViewsController["investorReport"]>>;
 export type PackReportView = Awaited<ReturnType<ReportViewsController["monthlyPack"]>>;

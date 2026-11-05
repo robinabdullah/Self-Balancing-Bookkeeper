@@ -89,6 +89,11 @@ export function pages(r: Refs): string[] {
     "/reports/charts?tab=stock",
     ...CHARTS.map((c) => `/reports/charts/${c}`),
     "/reports/charts/expenses?cat=salary",
+    "/reports/expenses",
+    "/reports/expenses?from=2026-09-01&to=2026-09-30",
+    `/reports/expenses?${ALL}`,
+    "/reports/expenses?from=2026-09-01&to=2026-09-30&cat=card-fees",
+    "/reports/expenses?report=1",
     "/reports/investor",
     `/reports/investor?person=${ids.kamal}`,
     `/reports/investor?person=${ids.kamal}&report=1`,
@@ -122,6 +127,7 @@ export function pdfs(r: Refs): string[] {
     `/pdf/card?id=${ids.visa}&${ALL}`,
     `/pdf/investor?person=${ids.kamal}&${ALL}`,
     `/pdf/sales?${ALL}`,
+    `/pdf/expenses?${ALL}`,
     "/pdf/pack?month=2026-09",
   ];
 }
@@ -133,6 +139,7 @@ export function workbooks(): string[] {
     `/reports/statement/xlsx?kind=supplier&id=${ids.alpha}&${ALL}`,
     `/reports/investor/xlsx?person=${ids.kamal}&${ALL}`,
     `/reports/sales/xlsx?${ALL}`,
+    `/reports/expenses/xlsx?${ALL}`,
     "/reports/pack/xlsx?month=2026-09",
   ];
 }

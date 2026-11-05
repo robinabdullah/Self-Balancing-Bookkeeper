@@ -45,6 +45,12 @@ export function clampDay(month: string, day: number): string {
   return `${month}-${String(d).padStart(2, "0")}`;
 }
 
+/** The month ("YYYY-MM") a range covers exactly (its 1st to its last day), else null. */
+export function wholeMonth(from: string, to: string): string | null {
+  const month = monthOf(from);
+  return from === `${month}-01` && to === clampDay(month, 31) ? month : null;
+}
+
 /**
  * Future dates are rejected (SRS §3). `today` is explicit (callers pass `dhakaToday()`; the
  * engine passes `asOf`). ISO strings compare lexicographically.

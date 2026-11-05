@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
 import { type Page, expect, test } from "@playwright/test";
 import { billMonthOf } from "@mbl/domain/engine/cards";
+import { expensesHref } from "@mbl/domain/href";
 import { SIGNED_OUT, goHome } from "./helpers";
 import { THEMES, dhaka, seedAccounts, seedCardDetails, seedMoney, setTheme, sql } from "./seed";
 
@@ -184,6 +185,37 @@ for (const theme of THEMES) {
       found.push(...(await audit(page, "/reports/cash?send=cash")));
       found.push(...(await audit(page, "/reports/sales?report=1")));
       found.push(...(await audit(page, "/reports/sales?send=sales")));
+      expect(found).toEqual([]);
+    });
+
+    // E-CR-052.1 (D-075, D-080): the Expense statement, filtered, its Report sheet and message.
+    test(`CR-052 the Expense statement has no axe violations (${theme})`, async ({ page }) => {
+      test.slow();
+      const s = await seedAccounts();
+      await seedMoney({ type: "expense", amount: "450", category: "rent", source: "cash" });
+      await seedMoney({
+        type: "expense",
+        amount: "120",
+        category: "salary",
+        source: "cash",
+        for_month: `${dhaka(-40).slice(0, 7)}-01`,
+      });
+      await seedMoney({
+        type: "card_fee",
+        amount: "75",
+        category: "card fee/interest",
+        card_id: s.ids.card,
+      });
+      const found: string[] = [];
+      for (const path of [
+        "/reports/expenses",
+        "/reports/expenses?cat=rent",
+        "/reports/expenses?report=1",
+        "/reports/expenses?send=expenses",
+        // D-080: the salary's For month, with its "dated in another month" note.
+        expensesHref(dhaka(-40).slice(0, 7)),
+      ])
+        found.push(...(await audit(page, path)));
       expect(found).toEqual([]);
     });
 

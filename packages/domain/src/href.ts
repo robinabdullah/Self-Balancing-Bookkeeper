@@ -1,5 +1,6 @@
 // In-app links (D-032): entry details open over the current page (`?entry=<id>`), and forms go
 // back to the page they were opened from (`?from=<path>`). Plain functions, safe on the client.
+import { clampDay } from "./dates";
 
 /** `href` with `params` set (a null/empty value removes that param); other params are kept. */
 export function withQuery(href: string, params: Record<string, string | null | undefined>) {
@@ -37,6 +38,14 @@ export const receiptPdfHref = (id: string, pay: string[] = []) =>
 /** D-043: the Sales report's PDF and Excel (the Report sheet adds `from`/`to`). */
 export const salesPdfHref = "/pdf/sales";
 export const salesXlsxHref = "/reports/sales/xlsx";
+
+/** D-075: the Expense statement's PDF and Excel (the Report sheet adds `from`/`to`). */
+export const expensesPdfHref = "/pdf/expenses";
+export const expensesXlsxHref = "/reports/expenses/xlsx";
+
+/** D-075: the Expense statement for a whole month ("YYYY-MM"), filtered to one category. */
+export const expensesHref = (month: string, cat?: string | null) =>
+  withQuery("/reports/expenses", { from: `${month}-01`, to: clampDay(month, 31), cat });
 
 /** D-045: the card statement PDF and the Investor report PDF for a period. */
 export const cardPdfHref = (id: string, from: string, to: string) =>

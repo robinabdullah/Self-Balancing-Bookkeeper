@@ -18,7 +18,7 @@ import {
   margin,
   salesReport,
 } from "../sales-report";
-import { EXPENSE_LABELS } from "../validation/fields";
+import { CARD_FEES, EXPENSE_LABELS } from "../validation/fields";
 import type { ChartPeriod } from "./period";
 
 // D-064 (UIDD §4.17): the Profit tab: Net profit, Sales & margin, Expenses. Each figure comes from
@@ -30,8 +30,8 @@ import type { ChartPeriod } from "./period";
 // Months row), in the day view too; the day view's profit is sales profit (sale + customer return)
 // per day. Sales & margin uses the window's own buckets. Pure; integer poisha.
 
-/** Card fees' key among the expense categories: the `fee` component (card and cash-out fees). */
-export const CARD_FEES = "card-fees";
+/** Card fees' key among the expense categories (it lives with the categories). */
+export { CARD_FEES };
 
 /** The whole months a window touches, and the same number right before (null: any of them is
  * before the opening month). `partial`: a custom range starts or ends mid-month. */

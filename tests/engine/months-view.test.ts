@@ -193,21 +193,18 @@ describe("Months view (task 5.1)", () => {
     expectBalanced(b.posted, asOf, allocations, data.closed);
   });
 
-  it("breaks October's profit down by component and expense category; the lines sum to it", () => {
+  it("breaks October's profit down by component, the expenses as one line (D-080); the lines sum to it", () => {
     expect(screen.profit.total).toBe(3_700_000);
     const shown = Object.fromEntries(screen.lines.map((l) => [l.label, l.amount]));
     expect(shown).toMatchObject({
       "Sale profit": 0,
       "Profit share": 1_000_000,
       Cashback: 3_000_000,
-      "Expense: Delivery": -200_000,
-      "Expense: Salary": -100_000,
+      Expenses: -300_000, // delivery ৳2,000 + salary ৳1,000
       "Card fees": 0,
     });
     expect(screen.lines.reduce((n, l) => add(n, l.amount), 0)).toBe(screen.profit.total);
-    expect(breakdownLines(screen.profit).some((l) => l.label.startsWith("Expense: Rent"))).toBe(
-      false,
-    );
+    expect(breakdownLines(screen.profit).some((l) => l.label.startsWith("Expense:"))).toBe(false);
   });
 
   it("defaults the investor lines: cash basis = capital at month end, the rest from last month", () => {

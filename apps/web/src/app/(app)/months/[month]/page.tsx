@@ -34,7 +34,7 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
           Closed on {formatDate(view.closeDate)}
           {view.by && ` by ${view.by}`} · read-only
         </p>
-        <Breakdown lines={view.lines} total={view.total} />
+        <Breakdown lines={view.lines} total={view.total} month={month} />
         <ClosedAllocations rows={view.allocations} nameOf={new Map(Object.entries(view.names))} />
         {view.latest && <ReopenMonth month={month} close={view.close} paid={view.paid} />}
       </>
@@ -49,7 +49,7 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
         <p className="text-muted-foreground mb-4 text-sm">
           Open · close {formatMonth(view.next)} first
         </p>
-        <Breakdown lines={view.lines} total={view.total} />
+        <Breakdown lines={view.lines} total={view.total} month={month} />
       </>
     );
   }
@@ -58,7 +58,7 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
     <>
       {back}
       <h1 className="mb-4 text-xl font-semibold">Close {formatMonth(month)}</h1>
-      <Breakdown lines={view.lines} total={view.total} />
+      <Breakdown lines={view.lines} total={view.total} month={month} />
 
       {view.warning && (
         <p role="alert" className="text-destructive mb-4 text-sm">

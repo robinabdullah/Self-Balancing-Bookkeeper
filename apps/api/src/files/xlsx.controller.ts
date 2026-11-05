@@ -12,6 +12,7 @@ import type { Request, Response } from "express";
 import { businessName, exportFileName, slug } from "@mbl/domain/business";
 import { dhakaToday } from "@mbl/domain/dates";
 import type { Sheet } from "@mbl/domain/export";
+import { costCategory, expenseSheets } from "@mbl/domain/expense-report";
 import { parseRange } from "@mbl/domain/journal-filter";
 import { cardSheets, investorSheets, modelSheets, packSheets, statementSheet } from "@mbl/domain/report-sheets";
 import { salesSheets } from "@mbl/domain/sales-report";
@@ -59,6 +60,7 @@ export class XlsxController {
 
   private readonly kinds: Record<string, Report> = {
     sales: (q) => this.sales(q),
+    expenses: (q) => this.expenses(q),
     investor: (q) => this.investor(q),
     pack: (q) => this.pack(q),
     statement: (q) => this.statement(q),
@@ -105,6 +107,20 @@ export class XlsxController {
         if (!range) return null;
         const { report, names } = await this.reports.loadSales(range.from, range.to);
         return salesSheets(report, (id) => names[id] ?? "—");
+      },
+    };
+  }
+
+  /** D-075, D-080 (UIDD §4.17): the Expense statement (`?from=&to=`, and `?cat=` for one category). */
+  private expenses(q: URLSearchParams) {
+    const range = rangeOf(q);
+    const cat = costCategory(q.get("cat"));
+    return {
+      parts: ["expenses", ...(cat ? [cat] : []), range?.from ?? "", "to", range?.to ?? ""],
+      sheets: async () => {
+        if (!range) return null;
+        const { report, names, notes } = await this.reports.loadExpenses(range.from, range.to, cat);
+        return expenseSheets(report, (id) => names[id] ?? "—", notes);
       },
     };
   }

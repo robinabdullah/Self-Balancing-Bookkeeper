@@ -3,7 +3,7 @@ import { type Books, type BooksData, type StoredEntry, computeBooks } from "./en
 import { type MonthProfit, type MonthRow, monthProfit } from "./engine/months";
 import type { ProfitComponent } from "./engine/post";
 import { parse, pct } from "./money";
-import { EXPENSE_LABELS } from "./validation/fields";
+import { CARD_FEES, EXPENSES } from "./validation/fields";
 
 // UIDD §4.9 (task 5.1, CR-024): the Months list and the close screen's defaults (SRS §7), read off
 // `computeBooks` and the stored allocations. Pure: integer poisha; `asOf` is passed in.
@@ -52,27 +52,25 @@ export function monthList(
   });
 }
 
-export type BreakdownLine = { label: string; amount: number };
+/** `cat`: `EXPENSES` or `CARD_FEES`; the line opens the Expense statement filtered to it (D-075). */
+export type BreakdownLine = { label: string; amount: number; cat?: string };
 
-const COMPONENT_LABEL: Record<Exclude<ProfitComponent, "expense">, string> = {
+const COMPONENT_LABEL: Record<ProfitComponent, string> = {
   sale: "Sale profit",
   customer_return: "Customer returns",
   discount: "Customer discounts",
   profit_share: "Profit share",
   cashback: "Cashback",
+  expense: "Expenses",
   fee: "Card fees",
   purchase_return: "Purchase returns",
 };
 
 /**
- * UIDD §4.9 step 1: each component as it counts (expenses by category, only those used); the lines
- * sum to the total.
+ * UIDD §4.9 step 1: each component as it counts; D-080: the expenses as one line (their categories
+ * are in the Expense statement and the Expenses chart). The lines sum to the total.
  */
 export function breakdownLines(p: MonthProfit): BreakdownLine[] {
-  const label = (c: string) => EXPENSE_LABELS[c as keyof typeof EXPENSE_LABELS] ?? c;
-  const expenses = Object.entries(p.expenses)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([c, amount]) => ({ label: `Expense: ${label(c)}`, amount }));
   const line = (c: keyof typeof COMPONENT_LABEL) => ({
     label: COMPONENT_LABEL[c],
     amount: p.components[c],
@@ -83,8 +81,8 @@ export function breakdownLines(p: MonthProfit): BreakdownLine[] {
     line("discount"),
     line("profit_share"),
     line("cashback"),
-    ...expenses,
-    line("fee"),
+    { ...line("expense"), cat: EXPENSES },
+    { ...line("fee"), cat: CARD_FEES },
     line("purchase_return"),
   ];
 }

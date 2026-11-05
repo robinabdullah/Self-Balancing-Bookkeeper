@@ -25,6 +25,7 @@ import {
   formatMonth,
   formatRange,
   monthOf,
+  wholeMonth,
 } from "@mbl/domain/dates";
 import { statementPdfHref, withQuery } from "@mbl/domain/href";
 import { periodOptions, periodRange } from "@mbl/domain/journal-filter";
@@ -36,7 +37,8 @@ import { SharePdfButton } from "./share-pdf";
 // that exist for it: View on screen (`?from=&to=`), WhatsApp message (the send preview) and, on
 // customers and suppliers, Share PDF (D-041) with Add How to pay (customers, the business's
 // accounts). D-043: the Cash book and the Sales report open it from their ⤴ Share icon, with their
-// own title and outputs (the Cash book's day on screen is an extra first chip). D-045: the
+// own title and outputs; D-080: the period on screen (the Cash book's day, the Expense statement's
+// month or range) is an extra first chip, selected. D-045: the
 // Investor report picks whole months (Custom = From month / To month); the Monthly pack one month
 // (no Custom; the outputs carry `month=`), and Months opens it with its outputs on the pack.
 
@@ -49,8 +51,9 @@ type Props = {
   /** Customers and suppliers: the due statement PDF (`accounts`: How to pay, customers only). */
   pdf?: { kind: "customer" | "supplier"; id: string; accounts: PayAccount[] };
   title?: string;
-  /** The day on screen (Cash book): a first chip, selected. */
-  day?: string;
+  /** The period on screen (the Cash book's day, the Expense statement's month): a first chip,
+   * selected. */
+  shown?: { from: string; to: string };
   /** The send preview's `send=` value; null: no WhatsApp message. */
   send?: string | null;
   /** A report's PDF and Excel routes; the period is added as `from`/`to`. */
@@ -62,13 +65,20 @@ type Props = {
   target?: string;
 };
 
+/** "06 Oct 2026" for a day, "Oct 2026" for a whole month, else the range. */
+function shownLabel({ from, to }: { from: string; to: string }) {
+  if (from === to) return formatDate(from);
+  const month = wholeMonth(from, to);
+  return month ? formatMonth(month) : formatRange(from, to);
+}
+
 export function ReportSheet({
   base,
   first,
   today,
   pdf,
   title = "Statement",
-  day,
+  shown,
   send = "statement",
   pdfHref,
   excelHref,
@@ -77,7 +87,7 @@ export function ReportSheet({
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(true);
-  const [period, setPeriod] = useState(day ? "day" : "this");
+  const [period, setPeriod] = useState(shown ? "shown" : "this");
   const [custom, setCustom] = useState({ from: "", to: "" });
   const current = monthOf(today);
   const [span, setSpan] = useState({ from: current, to: current });
@@ -93,8 +103,8 @@ export function ReportSheet({
     ] as [string, string][]
   ).filter(([v], i) => i === 0 || !first || v >= first);
   const range =
-    period === "day" && day
-      ? { from: day, to: day }
+    period === "shown" && shown
+      ? shown
       : mode === "months" && period === "custom"
         ? span.from <= span.to
           ? { from: `${span.from}-01`, to: clampDay(span.to, 31) }
@@ -156,7 +166,7 @@ export function ReportSheet({
           <section aria-label="Period" className="flex flex-col gap-2">
             <h3 className="font-medium">Period</h3>
             <div className="flex flex-wrap gap-2">
-              {day && chip("day", formatDate(day))}
+              {shown && chip("shown", shownLabel(shown))}
               {chip("this", "This month")}
               {chip("last", "Last month")}
               {mode !== "month" && chip("custom", "Custom")}

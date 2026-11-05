@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { type Locator, type Page, expect, test } from "@playwright/test";
 import { extractText } from "unpdf";
 import { goHome, noSideScroll } from "./helpers";
+import { excelText, pdfText } from "./report-files";
 import { dhaka, phone, seedAccounts, seedMoney, sql } from "./seed";
 
 // CR-023 (D-043; UIDD §3, §4.2, §4.17): Reports in More / the sidebar, the Cash book (Home's
@@ -43,7 +44,7 @@ test.beforeEach(async ({ page }) => {
   await goHome(page);
 });
 
-test("E-CR-023.1 More / the sidebar → Reports: Charts · Cash book · Sales · Monthly pack · Investor · Backup", async ({
+test("E-CR-023.1 More / the sidebar → Reports: Charts · Cash book · Sales · Expenses · Monthly pack · Investor · Backup", async ({
   page,
 }) => {
   if (phone(page)) {
@@ -58,6 +59,7 @@ test("E-CR-023.1 More / the sidebar → Reports: Charts · Cash book · Sales ·
     /^Charts/, // D-064
     /^Cash book/,
     /^Sales report/,
+    /^Expense statement/, // D-075
     /^Monthly pack/,
     /^Investor report/,
     /^Backup all data \(\.xlsx\)/,
@@ -296,4 +298,131 @@ test("E-CR-033.3 Avg unit price: Sales report and a customer's By model; the PDF
     await expect(row).toContainText("৳15,700");
   }
   await noSideScroll(page);
+});
+
+// CR-052 (D-075, D-080): the Expense statement. Its own old months (Jun 2023 and May 2023, which no
+// other spec uses), cleared before and after, so each run's figures are its own. Amounts in SQL are taka.
+const JUN = { from: "2023-06-01", to: "2023-06-30" };
+/** Removes those months' rows (they would make May 2023 the next month to close for later specs). */
+async function clearCosts() {
+  const within = sql`date between '2023-05-01' and '2023-06-30'`;
+  await sql`delete from money_entries where ${within} and reverses_id is not null`;
+  await sql`delete from money_entries where ${within}`;
+}
+async function seedCosts() {
+  const s = await seedAccounts();
+  await clearCosts();
+  const rent = await seedMoney({
+    type: "expense",
+    date: "2023-06-05",
+    amount: "20000",
+    category: "rent",
+    source: "cash",
+    note: "Shop rent",
+  });
+  await seedMoney({
+    type: "expense",
+    date: "2023-06-02",
+    amount: "30000",
+    category: "salary",
+    source: "cash",
+    for_month: "2023-05-01",
+  });
+  await seedMoney({
+    type: "card_fee",
+    date: "2023-06-12",
+    amount: "1500",
+    category: "card fee/interest",
+    card_id: s.ids.card,
+  });
+  await seedMoney({
+    type: "expense",
+    date: "2023-05-20",
+    amount: "500",
+    category: "delivery",
+    source: "cash",
+  });
+  return { ...s, rent };
+}
+
+test("E-CR-052.1 Expense statement: total, categories, the filter and its outputs, the stepper", async ({
+  page,
+}) => {
+  test.slow();
+  await seedCosts();
+  await page.goto("/reports");
+  await page.getByRole("link", { name: /^Expense statement/ }).click();
+  await page.waitForURL("/reports/expenses");
+  await expect(page.getByRole("heading", { name: /^This month · / })).toBeVisible();
+
+  await page.goto(`/reports/expenses?from=${JUN.from}&to=${JUN.to}`);
+  await expect(page.getByRole("heading", { name: "Jun 2023", exact: true })).toBeVisible();
+  const total = page.getByRole("region", { name: "Total spent" });
+  await expect(total).toContainText("৳51,500");
+  await expect(total).toContainText("3 entries · Cash ৳50,000 · Cards ৳1,500");
+  const categories = page.getByRole("list", { name: "By category" }).getByRole("link");
+  await expect(categories).toHaveText([
+    /^Salary৳30,000.*58\.3%$/,
+    /^Rent৳20,000.*38\.8%$/,
+    /^Card fees৳1,500.*2\.9%$/,
+  ]);
+  const entries = page.getByRole(phone(page) ? "list" : "table", { name: "Entries" });
+  await expect(entries).toContainText("for May 2023");
+  await expect(page.getByText(/^Profit counts an expense in its For month/)).toBeVisible();
+
+  // A row opens the entry sheet in place.
+  await rowOf(page, entries, "Shop rent").getByRole("link").click();
+  const entry = page.getByRole("dialog", { name: "Expense" });
+  await expect(entry).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(entry).toBeHidden();
+
+  // Rent only: its total and entries, a chip that clears it.
+  await categories.filter({ hasText: "Rent" }).click();
+  await page.waitForURL(/cat=rent/);
+  await expect(total).toContainText("৳20,000");
+  await expect(total).toContainText("1 entry · Cash ৳20,000");
+  await expect(categories).toHaveText([/^Rent৳20,000.*100%$/]);
+  await expect(entries).not.toContainText("Salary");
+  await expect(page.getByText(/^Profit counts an expense/)).toHaveCount(0);
+
+  // ⤴ Share: the month on screen is picked; the PDF and the Excel hold Rent only.
+  await page.getByRole("link", { name: "Share" }).click();
+  const sheet = page.getByRole("dialog", { name: "Expense statement · Rent" });
+  await expect(sheet.getByRole("button", { name: "Jun 2023" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  const pdf = await pdfText(page, sheet);
+  expect(pdf).toContain("Expense statement · Rent");
+  expect(pdf).toContain("৳20,000");
+  expect(pdf).not.toContain("Salary");
+  const excel = await excelText(page, sheet);
+  expect(excel).toContain("Rent");
+  expect(excel).toContain("Shop rent");
+  expect(excel).not.toContain("Salary");
+  await sheet.getByRole("button", { name: "Close" }).click();
+  await expect(sheet).toBeHidden();
+
+  await page.getByRole("link", { name: "Show every category" }).click();
+  await expect(total).toContainText("৳51,500");
+
+  // ‹ steps to May 2023: the delivery.
+  await page.getByRole("link", { name: "Previous month" }).click();
+  await expect(page.getByRole("heading", { name: "May 2023", exact: true })).toBeVisible();
+  await expect(total).toContainText("৳500");
+  await expect(entries).toContainText("Delivery");
+  // D-080: May's profit also counts June's salary (for May): the note names it and opens it.
+  await expect(total).toContainText(
+    "May 2023's profit also counts ৳30,000 dated in another month:",
+  );
+  await page
+    .getByRole("list", { name: "Dated in another month" })
+    .getByRole("link", { name: /^Salary · 02 Jun 2023/ })
+    .click();
+  await expect(page.getByRole("dialog", { name: "Expense" })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await noSideScroll(page);
+  await clearCosts();
 });

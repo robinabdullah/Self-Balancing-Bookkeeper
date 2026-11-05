@@ -147,4 +147,23 @@ test.describe("Phase 5 E2E (task 5.6)", () => {
     await expect(page.getByText("This page could not be found.")).toBeVisible();
     await expect(page.getByText(/^Open · close /)).toHaveCount(0);
   });
+
+  // E-CR-052.2 (D-075, D-080): the close screen's Expenses row opens the Expense statement for the
+  // month, Expenses only; a row at ৳0 (Card fees) is not a link.
+  test("E-CR-052.2 the close screen's Expenses row opens the Expense statement, Expenses only", async ({
+    page,
+  }) => {
+    await sql`insert into money_entries (type, date, amount, category, source, note)
+      values ('expense', ${`${OCT}-15`}, 300, 'rent', 'cash', 'October rent')`;
+    await page.goto(`/months/${OCT}`);
+    await expect(page.getByRole("link", { name: "Card fees" })).toHaveCount(0);
+    await expect(page.getByRole("definition").filter({ hasText: "-৳300" })).toBeVisible();
+    await page.getByRole("link", { name: "Expenses", exact: true }).click();
+    await page.waitForURL(`/reports/expenses?from=${OCT}-01&to=${OCT}-31&cat=expenses`);
+    await expect(page.getByText("Expenses only", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: october, exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Show every category" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Total spent" })).toContainText("৳300");
+    await expect(page.getByText(/October rent/).locator("visible=true")).toBeVisible();
+  });
 });

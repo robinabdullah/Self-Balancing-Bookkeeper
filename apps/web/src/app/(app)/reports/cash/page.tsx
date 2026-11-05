@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { RangeChip } from "@/components/accounts/range-chip";
 import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
@@ -7,11 +6,11 @@ import { CashCount } from "@/components/report/cash-count";
 import { CashDayView, dayLabel } from "@/components/report/cash-book-view";
 import { ReportSheet } from "@/components/report/report-sheet";
 import { ReportTitle } from "@/components/report/report-title";
+import { Step } from "@/components/report/step";
 import { SendSheet } from "@/components/send/send-sheet";
 import { addDays, dhakaToday, formatDate, monthOf } from "@mbl/domain/dates";
 import { withQuery } from "@mbl/domain/href";
 import { parseRange } from "@mbl/domain/journal-filter";
-import { cn } from "@/lib/utils";
 import { cashLabel } from "@mbl/domain/cash-book";
 import { cashBookText } from "@mbl/domain/whatsapp";
 import type { CashReportView } from "@mbl/api/views/reports.controller";
@@ -100,7 +99,7 @@ export default async function CashBookPage({
           first={first && monthOf(first)}
           today={today}
           title="Cash book"
-          day={range ? undefined : day}
+          shown={range ? undefined : { from: day, to: day }}
           send="cash"
         />
       )}
@@ -128,26 +127,5 @@ function Figure({ label, poisha }: { label: string; poisha: number }) {
         <Amount poisha={poisha} />
       </dd>
     </div>
-  );
-}
-
-function Step({
-  href,
-  label,
-  children,
-}: {
-  href: string | null;
-  label: string;
-  children: React.ReactNode;
-}) {
-  const cls = "flex size-11 items-center justify-center rounded-lg";
-  return href ? (
-    <Link href={href} aria-label={label} className={cn(cls, "hover:bg-muted")}>
-      {children}
-    </Link>
-  ) : (
-    <span aria-hidden className={cn(cls, "text-muted-foreground/50")}>
-      {children}
-    </span>
   );
 }
