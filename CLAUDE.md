@@ -13,7 +13,7 @@ trading business. It uses BDT ৳ and the Asia/Dhaka time zone, and replaces the
   or real names (the denylist check, `docs/TASKS-NEST.md` → How to use).
 - `docs/TASKS-NEST.md`: the migration steps (`N-x.y`, sessions S1–S10) and hotfixes (`HF-n`), with
   Ref, tests and acceptance. Run a session with `/next-phase S<n>`, a hotfix with `/next-task HF-n`.
-- `docs/PRD.md`: what and why (scope §4, stories S1–S18 §6).
+- `docs/PRD.md`: what and why (scope §4, stories S1–S19 §6).
 - `docs/SRS.md`: how (data model §4, **posting rules §5**, cards §6, close §7, build order §13).
 - `docs/UIDD.md`: screens, forms, formatting.
 - `docs/TASKS.md`: Now, the open v1.1 tasks, tests, acceptance criteria. Finished v1.1 CRs are in

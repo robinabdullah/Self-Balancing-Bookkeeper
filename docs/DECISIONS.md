@@ -56,7 +56,7 @@ earlier decision, add its id to that row's "Later changed by".
 | [D-031](DECISIONS-v1.md#d-031--releases-follow-the-vpss-pull-build-copy-convention-signed-in-pages-are-never-prerendered-2026-10-08) | Releases follow the VPS's pull-build-copy convention; signed-in pages are never prerendered | 2026-10-08 | D-071 |
 | [D-032](DECISIONS-v1.md#d-032--ui-feedback-pass-dark-controls-entry-details-in-place-quick-actions-card-page-speed-2026-10-09) | UI feedback pass: dark controls, entry details in place, quick actions, card page, speed | 2026-10-09 | D-038 |
 | [D-033](DECISIONS-v1.md#d-033--bank-badges-in-logo-colours-whole-table-rows-open-card-list-polish-2026-10-09) | Bank badges in logo colours; whole table rows open; card list polish | 2026-10-09 |  |
-| D-034 | v1.1 scope: sharing, reports, settings; v1 tasks archived | 2026-10-10 | D-058, D-060, D-064 |
+| D-034 | v1.1 scope: sharing, reports, settings; v1 tasks archived | 2026-10-10 | D-058, D-060, D-064, D-079 |
 | D-035 | Back closes sheets; dd/mm/yyyy date fields; month dropdowns; more bank badges | 2026-10-10 |  |
 | D-036 | One v1.1 migration: card type, invoice/receipt numbers, tables for later CRs | 2026-10-10 | D-049, D-053 |
 | D-037 | Settings page, the More regroup, and per-user themes | 2026-10-10 |  |
@@ -65,10 +65,10 @@ earlier decision, add its id to that row's "Later changed by".
 | D-040 | Statements by period, WhatsApp messages and reminders | 2026-10-10 |  |
 | D-041 | PDF engine and the due statement PDF | 2026-10-11 | D-049 |
 | D-042 | Invoice and money receipt | 2026-10-11 |  |
-| D-043 | Reports page: Cash book (+ Cash count), Sales report, Backup | 2026-10-11 |  |
-| D-044 | Profit view for any open month | 2026-10-11 |  |
-| D-045 | Per-account reports, the Investor report and the monthly partner pack | 2026-10-11 |  |
-| D-046 | Card details behind a fingerprint, with the CVV | 2026-10-12 | D-051, D-052, D-054 |
+| D-043 | Reports page: Cash book (+ Cash count), Sales report, Backup | 2026-10-11 | D-075, D-080 |
+| D-044 | Profit view for any open month | 2026-10-11 | D-080 |
+| D-045 | Per-account reports, the Investor report and the monthly partner pack | 2026-10-11 | D-080 |
+| D-046 | Card details behind a fingerprint, with the CVV | 2026-10-12 | D-051, D-052, D-054, D-079 |
 | D-047 | E2E runs on a production build with one login; per-CR E2E scope | 2026-10-11 | D-048, D-065 |
 | D-048 | Next.js 16.4 (Turbopack build) fixes the lost same-page taps | 2026-10-11 |  |
 | D-049 | Per-document PDF terms | 2026-10-11 |  |
@@ -96,6 +96,14 @@ earlier decision, add its id to that row's "Later changed by".
 | D-071 | The product is "Self-Balancing Bookkeeper"; the switch runs side by side (amends D-031) | 2026-10-28 | D-072 |
 | D-072 | The new app is tried on its own subdomain (amends D-071) | 2026-10-29 |  |
 | D-073 | One owner or several partners | 2026-10-30 |  |
+| D-074 | Return from a purchase's or a sale's entry sheet | 2026-10-30 |  |
+| D-075 | Expense statement: every cost by entry date | 2026-10-30 | D-080 |
+| D-076 | Reserved: WhatsApp from the linked business number (reference only, not ported yet) | 2026-10-30 |  |
+| D-077 | Long lists show 25 rows at a time | 2026-11-04 |  |
+| D-078 | Card fee kinds | 2026-11-04 |  |
+| D-079 | Alerts bell (card fees, card bills, dues, close, stock, profit owed) | 2026-11-04 | D-081 |
+| D-080 | Expense statement layout and filter; the breakdown's Expenses and Card fees lines | 2026-11-04 |  |
+| D-081 | Alerts: the fee always reminds, the close from the 1st, the card page's fee chip | 2026-11-05 |  |
 
 ---
 
@@ -564,3 +572,103 @@ earlier decision, add its id to that row's "Later changed by".
   seeds keep two partners.
 - **Docs changed:** PRD §4.1, SRS §4 (`people`), UIDD §3.
 - **Tasks:** CR-050.
+
+## D-074 — Return from a purchase's or a sale's entry sheet (2026-10-30)
+- **Source:** user feedback (2026-10-30): a purchase return should be one tap from the purchase.
+- **Decision** (UI only, no posting change): the entry sheet of a Purchase or a Sale has
+  **Return** in its footer (the user's pick over a ⋯ menu; a sale's buttons wrap on a phone) while
+  the entry stands and something is left to return; not on opening stock (opening / opening
+  correction) nor on a sale whose customer is inactive (the user's pick, 2026-11-04). It opens
+  the Return form already set to that
+  purchase (only its lots with stock) or that sale (its customer and bill). Built in the
+  reference first and ported here (CR-051); the reference numbers its D entries after D-073.
+- **Footer layout** (the user's pick, 2026-11-04; every entry sheet): the fixes (Delete,
+  Reverse) on the left, the everyday actions on the right in the order Return · Send ▸ (or Share
+  PDF) · Edit, so Send sits by Edit and Reverse is kept apart from Return. On a phone the
+  everyday row is the bottom one, near the thumb.
+- **Docs changed:** UIDD §4.5, §4.10.
+- **Tasks:** CR-051.
+
+## D-075 — Expense statement: every cost by entry date (2026-10-30)
+- **Source:** user feedback (2026-10-30): no report lists expenses or card fees entry by entry.
+- **Decision** (display only; tie-out tested): `/reports/expenses` lists every expense, card fee
+  and card cash-out fee **by entry date** (the user's pick), totals per category and a category
+  filter, with PDF, Excel and WhatsApp text. Profit still counts an expense in its For month and a
+  card fee on its date (unchanged, the user's pick), so a row whose For month differs is tagged
+  "for Oct" and the page notes it; the totals match the profit breakdown when no row is tagged.
+  Amends D-043 (the Reports list).
+- **Docs changed:** PRD §4.8; UIDD §4.9, §4.17.
+- **Tasks:** CR-052.
+
+## D-077 — Long lists show 25 rows at a time (2026-11-04)
+- **Source:** user feedback (2026-11-04): Capital history and the Journal grow without end.
+- **Decision** (UI only): the Journal, the statements without a period (customer, supplier,
+  capital, card Charges and credits), a customer's Bills and a partner's Profit moves show the
+  newest 25 rows, then one footer row: grey "Showing 25 of N" left, an outline **Show 25 more**
+  right (the last batch says what is left, "Show 5 more"). The user's picks: 25 (first 15, changed
+  while planning CR-054), fixed, no setting; the one-row footer on a phone and a desktop.
+  Balances are computed on the full history; only the display is sliced. A statement for a period
+  stays whole. The Journal's count and total cover every match; a filter change resets it to 25;
+  filtering stays in the browser, so rows are still sent in full. Server paging is for later (the
+  user's pick, at 10–30 entries a day): the Journal past ~10,000 entries or slow on a phone, a
+  statement once one account passes ~2,000 lines; then a /change-request.
+- **Docs changed:** PRD §4; UIDD §1, §4.8, §4.10.
+- **Tasks:** CR-054.
+
+## D-078 — Card fee kinds (2026-11-04)
+- **Source:** user feedback (2026-11-04): track what each card fee was (annual, SMS, fines, …).
+- **Decision** (no calculation changes): a Card fee picks a required kind: Annual fee · SMS /
+  alert · Late fee · Over-limit (the "excess" fee) · Interest · Cash advance · VAT · Other, stored
+  in `money_entries.category` (text, so no migration). Posting is unchanged (SRS §5); the close
+  screen keeps one card-fee total. Old `card fee/interest` rows stay valid and show as "Card fee".
+- **Docs changed:** SRS §4; UIDD §4.6, §4.10, §4.17.
+- **Tasks:** CR-055.
+
+## D-079 — Alerts bell (2026-11-04)
+- **Source:** user feedback (2026-11-04): cards run near 99% of the limit and a yearly fee then
+  causes an over-limit fine; nobody remembers when fees come. Other useful nudges were asked for.
+- **Decision:** a 🔔 in the top bar (phone + desktop) with a badge of Urgent + Soon; a tap opens
+  the Alerts sheet (Urgent red · Soon amber · FYI blue). Derived, nothing stored, no dismiss,
+  in-app only (no WhatsApp, no scheduler). Rules (SRS §15): the annual fee, due
+  on the statement date of the card's expiry month, with last year's recorded Annual + VAT fee as
+  the amount (no setup, the user's pick); card bills; customers not paying; the month not closed;
+  old stock; profit owed. Amends D-034 (one new always-visible item; Home unchanged) and D-046
+  (the server reads the **month** of a saved expiry without a fingerprint; nothing else, never
+  logged).
+- **Docs changed:** PRD §4.8; SRS §11, §15; UIDD §3, §5.
+- **Tasks:** CR-056.
+
+## D-080 — Expense statement layout and filter; the breakdown's Expenses line (2026-11-04)
+- **Source:** the user's picks while planning CR-052 (2026-11-04), from three page previews.
+- **Decision** (display only): the Expense statement shows the **Total spent** first, then a grey
+  line "12 entries · Cash ৳48,500 · Cards ৳3,000" (a ৳0 part left out), then **By category** as
+  tappable rows with a thin share bar and the %, then the Entries. A whole month has a
+  **‹ Oct 2026 ›** stepper (not past this month, not before the first entry's month); a custom range
+  keeps the range chip. A tagged row's "for Sep 2026" is an amber pill, and the note shows only
+  when a pill is on the page. **The filter narrows everything:** with `?cat=` only that category,
+  its total and its entries are shown, and the WhatsApp message, the PDF and the Excel hold only it.
+  The Report sheet's first chip is **the period on screen**, selected (the Cash book's day, the
+  statement's month or range), as on the Cash book. **The month's profit breakdown** (the month
+  page and close screen, the Net profit chart's month detail and the Monthly pack's Profit &
+  loss) shows one **Expenses** line and one **Card fees** line instead of a line per expense
+  category (the user's pick: the categories live in the Expense statement and the Expenses
+  chart); each is a row with › that opens the month's statement filtered to it ("Expenses only"
+  leaves the card fees out, so the totals match). A whole month's statement also explains the
+  gap the other way: an expense dated in another month whose For month is this one (October's
+  salary paid on 2 Nov) is named in a grey note under the Total ("Oct 2026's profit also counts
+  ৳30,000 dated in another month: Salary · 02 Nov 2026 ›"); the list stays by date (the user's
+  pick). Amends D-075, D-043, D-044 and D-045 (the pack's P&L lines).
+- **Docs changed:** UIDD §4.8, §4.9, §4.17.
+- **Tasks:** CR-052.
+
+## D-081 — Alerts: the fee always reminds, the close from the 1st, the card page's fee chip (2026-11-05)
+- **Source:** the user's picks while planning CR-056 (2026-11-05).
+- **Decision:** amends D-079 (SRS §15). The **annual fee** is Soon from 15 days before even when
+  the room covers it (fees are ৳5–10k; a missed one means an over-limit fine). It is Urgent from 3
+  days only when the room is short; an unknown amount counts as short below ৳10,000 (no figure
+  shown). It has no FYI, and it goes once this year's Annual fee is recorded. The **month close**
+  is Soon on the 1st–4th of the next month and Urgent from the 5th. The **card page** shows the
+  fee alert as a chip beside the status badge. Kept: the expiry month as the fee month, no waiver
+  setting, one row per customer, no dismiss.
+- **Docs changed:** PRD §4.8; SRS §15; UIDD §3, §4.8.
+- **Tasks:** CR-056.

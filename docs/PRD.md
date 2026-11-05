@@ -211,14 +211,22 @@ A role column exists from day 1 so the later roles need no redesign.
 - **PDFs** (shared through the phone's share sheet): the due statement for a date range, the sale
   invoice (`INV-0001`) and the money receipt (`MR-0001`). Customer documents never show cost or
   profit.
-- **Reports:** a Cash book (day book, with a cash count check), a Sales report, statements for a
-  date range, per-account reports (card, investor, partner, customer, supplier) and a monthly
+- **Reports:** a Cash book (day book, with a cash count check), a Sales report, an Expense
+  statement (every expense and card fee by date, D-075), statements for a date range, per-account reports (card, investor, partner, customer, supplier) and a monthly
   partner pack, as PDF, Excel or WhatsApp text. **Charts** of the same figures over time, on
   screen only (D-064).
 - **Saved details:** bank accounts of the business and of anyone in the app, to copy and share;
   card details (encrypted, revealed with a fingerprint; a card can hold its primary and
   supplementary numbers, D-054).
 - **Look:** Light, Dark and Night Owl themes per user; every sheet closes on the phone's Back.
+- **Alerts** (D-079, D-081): a 🔔 in the top bar opens what needs attention, as Urgent (red),
+  Soon (amber) or FYI (blue). It covers a card's annual fee coming on its expiry month's statement
+  (from 15 days before, red when the card has too little room for it; also shown on the card's
+  page), card bills due, customers who haven't paid for 30+ days, last month not closed, stock
+  older than 90 days and profit owed. Derived from the books, no setup, in-app only.
+- **Card fee kinds** (D-078): each card fee records what it was (annual, SMS, late fee,
+  over-limit, interest, cash advance, VAT, other).
+- **Long lists** (D-077) show 25 rows at a time, with "Show 25 more".
 - None of this changes a posting rule or a calculation (§1): every figure is read from the books.
 
 ### 4.9 AI assistant (separate track, D-057)
@@ -270,6 +278,7 @@ A role column exists from day 1 so the later roles need no redesign.
 | S16 | Any of these stories (S1–S18) | Books-balance check stays ✓ |
 | S17 | October is closed; in November a missed opening due of 20,000 for Selim is found → opening correction | Selim due +20,000; Opening difference +20,000 (10,000 per partner); no month's profit changes |
 | S18 | An October expense of 5,000 (for October) is reversed on 3 Nov after October is closed | November profit +5,000; October's closed numbers unchanged |
+| S19 | SCB Visa (expiry 01/29, statement 15th) had an Annual fee of 5,750 on last January's statement; on 1 Jan its Available ≈ is 1,200 (D-079) | The bell shows Soon: "annual fee ≈ ৳5,750 on 15 Jan … pay at least ৳4,550"; from 12 Jan it is Urgent; no figure in the books changes |
 
 ## 7. Data-quality issues found in the current workbooks (to fix at cutover)
 

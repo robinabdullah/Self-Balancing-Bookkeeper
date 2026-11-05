@@ -178,7 +178,7 @@ critical ones:
 | `supplier_payment` | supplier, amount, source (+card if card) |
 | `card_payment` | card, amount |
 | `card_cash_out` | card, card_charged, cash_received (≤ charged); amount = card_charged |
-| `card_fee` | card, amount, category = card fee/interest |
+| `card_fee` | card, amount, category = a fee kind (D-078): `annual` \| `sms` \| `late` \| `over_limit` \| `interest` \| `cash_advance` \| `vat` \| `other`. Entries saved before D-078 keep `card fee/interest` (read as "Card fee", no kind); a new or edited fee needs a kind. The kind is a label only: posting is unchanged (§5) |
 | `cashback` | amount, source (card → card_id; or cash) |
 | `expense` | amount, category, source (+card), for_month (default = month of date) |
 | `capital_in` / `capital_out` | person, amount; `capital_out` also source (+card if card; default cash, and a stored null = cash, D-060) |
@@ -466,6 +466,10 @@ leaves it blank; D-063).
     `{ window: true }` instead of a passkey reveals any saved number (`via: window`) and sets no new
     cookie, so the end never moves; an expired, tampered or other user's cookie → 401. The page
     counts its own 30 s from the fingerprint and asks for it again after that.
+  - **Alerts** (D-079) are the one other reader: in the api, `expiryMonths()` decrypts each
+    card's primary `expiry` and keeps only its month (1–12) for the fee alert (§15). No
+    fingerprint is needed for the month; the number, holder, year and CVV are never read for it;
+    nothing is logged, audited or sent to the browser except the alert's statement date.
   - **Edit / remove** of a saved number are allowed only within 10 minutes of the user's own
     reveal of that number (read from `audit_log`). Adding a number needs no reveal.
   - **Passkey set-up** needs the **login password** first, checked by a session-less Supabase
@@ -544,3 +548,61 @@ S1–S10 (`docs/TASKS-NEST.md`).
 - **Manual:** on a phone-sized browser as each partner, run purchase → sale → return → payment →
   card payment → cash-out → expense → close month → profit paid. The dashboard must be ✓, and the
   views must match the export.
+
+## 15. Alerts (D-079, D-081)
+
+Derived on every render (the layout's `/views/shell`, like the balance chip); nothing is stored and nothing is
+dismissed (an alert goes when its cause is fixed). `buildAlerts({ data, books, setup, feeMonths,
+lots, today })` in `packages/domain/src/alerts.ts` is pure and lives outside `engine/**` (`data` gives
+the raw entries and bill-date overrides, `setup` the limits, names, active flags and Walk-in). It
+returns the alerts `{ level, kind, title, detail, href, date, cardId? }[]`, sorted Urgent → Soon →
+FYI, then by date, and `noExpiryCards` (active cards with no saved expiry). `feeMonths` (card id →
+1–12) comes from `expiryMonths()` (§11); with no `CARD_SECRET_KEY` it is empty and no fee alert is
+made. One load per render (`AlertsService.loadAlerts()` in `apps/api/src/alerts/`, memoised by the
+render id) serves `/views/shell` and `/views/cards/:id`.
+
+Room = `available(credit_limit, balance)` (the card page's Available ≈; null when no limit is set).
+All thresholds are fixed constants.
+
+| Alert (kind) | 🔴 Urgent | 🟠 Soon | 🔵 FYI |
+|---|---|---|---|
+| **Annual fee** (`card_fee`): an active card's statement date in the expiry month is 0–15 days away, and this year's Annual fee isn't recorded yet | ≤ 3 days, and the room is short: room < amount, or room < ৳10,000 when the amount is unknown | every other case (from 15 days; with enough room, or no limit set) | — |
+| **Card bill** (`card_bill`): the earliest unpaid bill (`cardSummaries` status) | overdue or due today | due within 7 days | — |
+| **Customer due** (`customer`): balance > 0, days since their last standing payment (or since their first entry if they never paid); Walk-in left out | ≥ 60 days | 30–59 days | — |
+| **Month close** (`close`): `nextToClose` m is before today's month | from the 5th of m + 1 (so a month 2+ behind) | the 1st–4th of m + 1 | — |
+| **Old stock** (`stock`): lots with stock older than 90 days (`stockAge`) | — | — | one alert: "N phones older than 90 days" |
+| **Profit owed** (`profit`): a person's profit owed > 0 | — | — | one per person |
+
+**The annual fee:**
+- **Date:** the first bill month m whose month = the card's expiry month and whose statement
+  date (§6.1, with `card_bill_dates` overrides) is ≥ today.
+- **Amount:** the sum of the card's standing `card_fee` entries of kind `annual` and `vat` whose
+  bill month (§6.3) is m − 12 months. None → unknown (fees saved before D-078 have no kind and
+  don't count). VAT on other fees on that statement counts too, which errs high (the safe side).
+- **Already recorded:** a standing `annual` fee on the card in bill month m → no alert (Available ≈
+  already includes it).
+- **Room short** (Urgent from 3 days): room < amount; with the amount unknown, room <
+  `FEE_UNKNOWN_ROOM` = ৳10,000, a threshold only (the text shows no figure).
+- **Title** "Arif · SCB Visa · annual fee" (the card's name); the detail doesn't repeat it.
+- **Text**, known amount: "Annual fee ≈ ৳5,750 on 15 Jan. Available ≈ ৳1,200, so pay at least
+  ৳4,550 before then." (amount − room); with enough room: "… Available ≈ ৳9,000 covers it."
+- **Text**, unknown amount: "The annual fee usually comes with the 15 Jan statement (expiry
+  month). Available ≈ ৳1,200, so keep room for it."
+- **Text**, no limit set: "Annual fee ≈ ৳5,750 on 15 Jan. No limit is set, so Available ≈ isn't
+  known." / "The annual fee usually comes with the 15 Jan statement (expiry month). No limit is
+  set."
+- A text that shows Available ≈ ends with the card page's ≈ note (`help-text.ts`): "Available ≈ is
+  approximate — excludes personal spending not entered as Personal spend."
+- **The card page** shows the card's fee alert as a chip (UIDD §4.8).
+
+**Other texts** (title · detail): "{card} · bill" · "৳12,000 due 20 Nov · 3 days left";
+"{customer} · due" · "Owes ৳45,000 · last paid 62 days ago" (never paid: "no payment in 62
+days"); "Close Oct 2026" · "Oct 2026 is ready to close."; "Old stock" · "8 phones older than 90
+days"; "{person} · profit owed" · "৳X not paid or reinvested yet".
+
+**Links:** a fee or bill → the card page; a customer → the customer page; the close →
+`/months/<m>`; stock → `/stock`; profit owed → the person page.
+
+**Badge** = the count of Urgent + Soon. **Tie-out:** every amount shown equals the books figure it
+names (the card's balance and Available ≈, the bill's remaining, the customer's balance, profit
+owed).

@@ -15,6 +15,12 @@
      Full tables appear only at ≥ 1024px.
    - **No hover-only info.** Explanations use an ⓘ that toggles a short inline note.
    - No horizontal page scroll.
+   - **Long lists show 25 rows at a time** (D-077): the newest 25, then one footer row: grey
+     "Showing 25 of N" on the left and an outline **Show 25 more** button on the right (≥ 44px; the
+     last batch says "Show 7 more"; gone once all are shown). The same on a phone and a desktop table. After a tap, focus moves to the first
+     new row and the "Showing … of N" line is announced (`aria-live`). Balances are worked out on
+     the whole history, so every row's balance is right. Lists bounded by a period (a statement
+     for a period, the reports) stay whole.
    - **Back closes the top sheet** (D-035): with a sheet, picker or dialog open, the phone's Back
      closes it and stays on the page. A link inside a sheet replaces it in history, so Back from
      the new page returns to the page the sheet was on.
@@ -70,9 +76,24 @@
       by ৳X: net worth is ৳X more/less than "Whose it is". This is a data error, so tell the
       developer.";
   - next month to close (e.g. "Closing: Oct 2026");
+  - **🔔 Alerts** (D-079, D-081; rules in SRS §15), on the right (on a desktop, before the user
+    menu):
+    - a 44px bell with a badge = the count of Urgent + Soon ("9+" above 9), red when any alert is
+      Urgent, otherwise amber, and no badge at 0; its label reads "Alerts, 3 need attention" (or
+      "Alerts, all clear");
+    - a tap opens the **Alerts** sheet (a bottom sheet on a phone, a side sheet on a desktop; Back
+      closes it): groups **Urgent · Soon · FYI**, each with its heading and count. Each row: a
+      coloured dot **and** the level word (colour is never the only sign; red / amber / blue, the
+      card status badge colours), a bold title ("SCB Visa · annual fee"), one detail line (the
+      SRS §15 text) and the whole row a link to the card, customer, month, Stock or person
+      (≥ 44px; the link replaces the sheet in history, §1);
+    - nothing due: "All clear: nothing needs attention."; cards with no saved expiry: a muted
+      last line "2 cards have no expiry saved, so no fee alerts for them." linking to Saved
+      details;
+    - no dismiss and no settings: an alert goes when its cause is fixed.
   - user menu (sign out).
-  - **On mobile** the top bar shows only the app name and the balance chip (icon + short text).
-    "Closing: …" and sign-out move to **More**.
+  - **On mobile** the top bar shows only the app name, the balance chip (icon + short text) and
+    the 🔔. "Closing: …" and sign-out move to **More**.
 - **Bottom tab bar (mobile):** **Home · New · Stock · Accounts · More**. The desktop sidebar has
   no More (D-062; below).
   - **New** opens an action sheet, ordered by how often each is used: Sale, Payment in, Purchase,
@@ -164,7 +185,7 @@ Create and Edit use the same form.
 | Supplier payment | Money we paid a supplier we owe, from cash or a card. |
 | Card payment | Business cash paid into a card bill. |
 | Card cash-out | Cash taken out through a card. The difference is a fee (business expense). |
-| Card fee | A fee or interest charged on a card. It is a business expense. |
+| Card fee | A fee or interest charged on a card: annual, SMS, late fee, over-limit, interest, cash advance, VAT or other. It is a business expense. |
 | Cashback | Cashback received on a card or in cash. It counts as profit. |
 | Expense | A business cost (salary, rent, delivery …) for a month. |
 | Capital in / out | Money a person puts into, or takes out of, the business. Out can be paid by a card: the person's own spending that the business pays with the card's bill. |
@@ -278,6 +299,11 @@ shows the business logo and name (D-039).
     → refund goes to (defaults to the original source; required, with no default, for opening and
     opening-correction lots).
 - The notes box shows the stock change, the refund and the profit effect.
+- **From an entry** (D-074): the entry sheet's **Return** opens this form already set:
+  - a Purchase → **Purchase return**, Returned to seller, the lot picker listing only that
+    purchase's lots with stock (one lot is picked for you), the refund target from its source;
+  - a Sale → **Customer return**, that customer and that bill (one line is picked for you).
+  - Everything stays changeable; Cancel and Save go back to the entry sheet.
 
 ### 4.6 Money entry form (one form for all single-amount types)
 - **Type** is set by the New sheet and shown as the form title. A type picker appears only when
@@ -295,6 +321,13 @@ shows the business logo and name (D-039).
   - **Expense:** category chips (Salary · Delivery · POS/QR · Rent · Internet · Other), paid by
     Cash / Card, for month (defaults to the month of the date). Card fees and interest use the
     separate **Card fee** type.
+  - **Card fee** (D-078): card, amount and a required **Kind** as chips, like the expense
+    categories: Annual fee · SMS / alert · Late fee · Over-limit · Interest · Cash advance · VAT ·
+    Other (they wrap to a second row on a phone). Save without one: "Pick what the fee was". A
+    fee saved before D-078 opens with no chip picked; to save an edit, pick one. The kind is only
+    a label: every kind posts the same (SRS §5). Read as "Card fee · Annual fee" in the Journal,
+    the entry sheet and the card's Charges and credits; the bell reads the Annual and VAT fees
+    for the next annual-fee alert (SRS §15).
   - **Capital in/out, profit paid/reinvested:** person picker. Profit paid/reinvested shows the
     current **profit owed** and warns if the amount exceeds it.
     - **Capital out** also has **Paid by: Cash / Card** (default Cash) and, for Card, the card
@@ -370,6 +403,11 @@ shows the business logo and name (D-039).
     "Credit ৳X".
 
   The card detail shows:
+  - **Fee chip** (D-081): while the card has an annual-fee alert (SRS §15), a chip "Annual fee
+    15 Jan" sits beside the status badge, amber (Soon) or red (Urgent), with a dot and the level
+    word in its name (≥ 44px). A tap toggles an inline box in the same colour with the alert's
+    line ("… so pay at least ৳4,550 before then."). Otherwise nothing shows. The bill alert isn't
+    repeated (the status badge and Next due show it).
   - **Facts:** "Statement 5th · Due 20th", credit limit, available, next due, overdue, unbilled,
     remaining EMI.
   - **Statements** list: bill month, statement date (actual/est.), due date (actual/est.), amount,
@@ -410,7 +448,8 @@ shows the business logo and name (D-039).
   - Inactive rows have no main buttons, only ⋯ (See in Journal | Edit, and Bank accounts where
     the kind has them). Edit opens that row in Setup.
 - **Statement for a period** (D-040): ⋯ → Statement opens the **Report sheet** (`?report=1`):
-  Period chips (This month · Last month · a month ▾ · Custom From/To, dd/mm/yyyy) and **View on
+  Period chips (This month · Last month · a month ▾ · Custom From/To, dd/mm/yyyy; a report page
+  with a stepper adds **the period on screen** as a first chip, selected, D-080) and **View on
   screen** · **WhatsApp message** · on customers and suppliers **Share PDF** (§4.16, D-041). On a
   customer, when the business has saved accounts, an **Add How to pay** switch (off) sits under
   Share PDF; on, the accounts appear as chips (the only one picked for you) and go into the PDF.
@@ -434,6 +473,10 @@ shows the business logo and name (D-039).
     the message too; the Report sheet adds **Download Excel** (Statement · By model).
 - **Bills tab:** each bill shows its invoice number (`INV-0042`, D-042) after the date; each bill
   that isn't reversed has **Send ▸** (§4.15).
+- **25 at a time** (D-077, §1): a customer's, supplier's or person's statement and the card's
+  Charges and credits (without a period), the Bills tab and a person's profit moves show the
+  newest 25, then **Show 25 more**. With a period (`?from=&to=`) the statement is shown whole, with
+  its Opening, Totals and Closing. The card's Statements keep their own "Show all N bills".
 - **People:** list (name, kind, capital, profit owed) → detail:
   - capital in/out history and current capital;
   - cards supplied (with business balances);
@@ -450,8 +493,10 @@ shows the business logo and name (D-039).
   first", then the profit breakdown so far (step 1 below, read-only). No allocations, partner
   split, reminder or Close. A month after this month, or before the opening month, is "not found".
 - **Close screen (the next month to close):**
-  1. **Profit breakdown:** sale profit, returns, profit share, cashback, expenses by category,
-     fees → **Month profit**.
+  1. **Profit breakdown:** sale profit, returns, profit share, cashback, **Expenses** (one line),
+     **Card fees** → **Month profit** (D-080; the same lines in the Net profit chart's month detail
+     and the Monthly pack). The Expenses and Card fees rows (not ৳0) have a › and open the Expense
+     statement for that month, filtered to them (§4.17, D-075).
   2. **Investor allocations table:** one row per investor × (cash | card) with basis, rate %,
      amount (auto = basis × rate, editable), and a total. On mobile each row is a card: investor
      · cash/card, then basis × rate % = amount (editable). A row left without an amount (or with
@@ -475,6 +520,10 @@ shows the business logo and name (D-039).
   - **Clear**.
   - With exactly one type filtered, the count line shows the shown entries' total.
   - Changing a filter updates the URL in place, with no server round trip.
+- **25 at a time** (D-077, §1): the newest 25 matching entries, then "Showing 25 of 369" and
+  **Show 25 more**. The count line ("369 entries", and the total with one type) still counts every
+  match. Changing a filter or the search shows the first 25 again. Opening and closing an entry
+  sheet keeps what was shown.
 - **Row actions:** View · Edit · Delete (open months) · Reverse (dated in the original's month if
   it's still open, otherwise today). On mobile, tapping a row opens its detail, where these
   actions are buttons. Edit is the main button and Delete is red.
@@ -489,6 +538,14 @@ shows the business logo and name (D-039).
   matches it.
 - **Send ▸** (D-040) in the entry sheet of a Sale, Payment in, Return, Discount or Profit share
   (not reversed, not a reversal) opens the send preview on that customer's page (§4.15).
+- **Return** (D-074) in the entry sheet of a Purchase or a Sale (not reversed, not a reversal,
+  not opening stock, not a sale to an inactive customer, something left to return: a lot with
+  stock, a line with qty sold − returned > 0; a locked month
+  too, since the return is dated today) opens the filled Return form (§4.5).
+- **Footer** (D-074): two groups. The fixes (**Delete**, **Reverse**) on the left; the everyday
+  actions on the right: **Return** · **Send ▸** (or **Share PDF**) · **Edit** (the main button,
+  last). On a phone the fixes are the top row and the everyday actions the bottom row, e.g. a
+  sale: "Delete · Reverse" over "Return · Send ▸ · Edit".
 - A **reversed** Sale or Payment in has **Share PDF** in its entry sheet instead: the cancelled
   invoice / receipt (§4.16, D-042).
 - **History** tab: the audit log for the entry (who, when, which fields changed old → new). Each
@@ -655,14 +712,14 @@ shows the business logo and name (D-039).
   the lines / amount as they were and no dues.
 
 ### 4.17 Reports (D-043)
-- **List** (`/reports`, from More / the sidebar): **Charts** · Cash book · Sales report · Monthly
-  pack · Investor report · Backup all data (.xlsx) (→ §4.12).
+- **List** (`/reports`, from More / the sidebar): **Charts** · Cash book · Sales report · Expense
+  statement · Monthly pack · Investor report · Backup all data (.xlsx) (→ §4.12).
 - **As on** (D-045): a report for a period reads the books as on its last day (today when it runs
   to today). Only the Investor report's paid / reinvested and "Profit owed now" are as of now.
   An open month's report shows the grey note "Open month — figures can still change". A pack made
   before its month's close shows "Undistributed profit" where one made after shows "Profit owed"
   (same total). Card owners and share % are today's (Setup keeps no history).
-- **⤴ Share:** the Cash book and the Sales report have one Share icon in the title row; it opens
+- **⤴ Share:** the Cash book, the Sales report and the Expense statement have one Share icon in the title row; it opens
   the Report sheet (§4.8) with only the outputs that page has.
 - **Cash book** (`/reports/cash`; Home's Cash tile):
   - Today by default; a **‹ day ›** stepper (not past today, not before the first entry).
@@ -690,6 +747,37 @@ shows the business logo and name (D-039).
     - the PDF and Excel have it as a column; on a phone and in messages the pieces read "30 pcs
       × ৳15,700", or "29 pcs · avg ৳15,700" when returns or reversals changed the pieces.
   - Report sheet: View on screen · WhatsApp message · Share PDF · Download Excel.
+- **Expense statement** (`/reports/expenses`, D-075, D-080; this month by default): a whole
+  month shows a **‹ Oct 2026 ›** stepper (not past this month, not before the first entry's
+  month); a custom range shows the range chip as above.
+  - Every business cost **by its date**: Expenses (Salary, Delivery, POS/QR, Rent, Internet,
+    Other) and **Card fees** (a Card fee entry, and a card cash-out's fee = charged − received).
+    A Card fee row's Category reads its kind ("Card fee · Annual fee", D-078); the By category
+    table keeps one Card fees line.
+    Capital out by card is not a business cost and isn't listed.
+  - **Total spent** first (large), then a grey line "12 entries · Cash ৳48,500 · Cards ৳3,000"
+    (a ৳0 part is left out; Cards = card-paid expenses + card fees).
+  - **By category:** one row per category (name · Amount, then a thin share bar and the %),
+    largest first, Card fees last. Tapping a category filters (`?cat=`; a chip "Rent ✕" clears
+    it): only that category, its total and its entries are shown, and the outputs hold only it.
+    `?cat=expenses` ("Expenses only ✕", from the breakdown's Expenses row) keeps every expense
+    category and leaves out the card fees.
+    The PDF and Excel have it as a table (Category · Amount · Share, then **Total**).
+  - **Entries:** Date · Category · Paid from (Cash / the card) · Note · Amount, oldest first. A
+    reversal is a negative row on its own date. An expense whose For month differs shows an
+    amber pill "for Oct 2026" under its date. A row opens the entry sheet in place. On a phone a
+    list item; on desktop a table with a Total row.
+  - **A whole month** (D-080): when an expense dated in another month has this month as its For
+    month, a grey note under the Total names each one: "Oct 2026's profit also counts ৳30,000
+    dated in another month:", then "Salary · 02 Nov 2026 ›" (opens the entry). The PDF and the
+    message carry the same note.
+  - With any tagged row on the page, the grey note "Profit counts an expense in its For month, so this total
+    can differ from the month's profit". With none, the total for a whole month equals the profit
+    breakdown's expenses + fees.
+  - Empty: "No expenses in this period".
+  - Report sheet: the period on screen as a first chip (selected) + the usual periods; View on
+    screen · WhatsApp message (the categories and the total) · Share PDF (the categories, then the
+    entries) · Download Excel (sheets "By category" and "Entries").
 - **Investor report** (`/reports/investor`, D-045):
   - Without a person: a list of investors and partners (Name · Kind · Capital · Profit owed); a
     row opens `?person=`. None: "No investors or partners yet".
@@ -837,7 +925,8 @@ shows the business logo and name (D-039).
     partner's opening difference, the no-change row.
   - **Profit paid / reinvested** (only above the profit owed): "Pay {person}'s profit" / "{person}
     reinvests profit" · one sentence · rows · note "This is ৳X more than {person}'s profit owed (৳Y)."
-- **Empty states:** a short hint with a primary action button.
+- **Empty states:** a short hint with a primary action button. The Alerts sheet (§3) has no
+  button: "All clear: nothing needs attention."
 - **Loading:** skeleton rows.
 
 ## 6. Accessibility

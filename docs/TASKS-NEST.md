@@ -10,8 +10,10 @@ cited.
   `business2.<domain>` (N-7.2, 2026-10-29), on the same database.
 - **Session:** S11.
   - CR-049 is committed; N-6.3 is done: the repo is public (2026-10-30).
-  - CR-050 (D-073: a sole owner is one partner at 100%) is done, uncommitted.
-- **Next:** the user's review and commit of CR-050, then N-7.2's switch at a quiet time.
+  - CR-050 is committed.
+  - The reference's CR-051 … CR-056 are ported (2026-11-05), uncommitted; see "Ported from the
+    reference" under Change requests.
+- **Next:** the user's review and commit of the port, then N-7.2's switch at a quiet time.
 - **Blocked on:** —
 
 ## How to use
@@ -1544,3 +1546,90 @@ Feedback or a rule change found during the migration goes here, after its D entr
     files: the help texts are not in the page dumps); the denylist is empty outside `LICENSE`, which
     names the author on purpose (the user's call, 2026-10-30; the check excludes it, see "Denylist
     check" above).
+
+### Ported from the reference (2026-11-05)
+
+The reference built CR-051 … CR-056 after the port baseline (`cce0cc5`). They keep their ids, D
+entries and test ids here (the reference numbers after this repo's CR-050 and D-073). CR-053 /
+D-076 (WhatsApp from the business number) is not built there yet and is not ported. Each step
+ports one reference commit (`git -C D:/Projects/Mobile-Business-Lite show <sha>`) into the web /
+api / domain split; the reference's real names in its new tests become this repo's fictional ones.
+`a1d2414` (a charts-money test wait) is already here as `13d46c5`.
+
+- [x] **CR-051 Return from a purchase's or a sale's entry sheet** (2026-11-05)
+  - **Ref:** `10a76f4` · **Decision:** D-074 · **Docs:** UIDD §4.5, §4.10
+  - [x] CR-051.1 `packages/domain/src/prefill.ts`: `cleanReturnPrefill` and `returnLink` (one rule
+    for the button and the prefill), with a local return-options shape (domain can't import the api).
+  - [x] CR-051.2 api: `ReturnOptionsService.returnOptions({ purchaseId, exceptReturnId })`,
+    `leftToReturn(id)`; `lots.ts` filters by purchase; `GET /views/returns/new` takes
+    `kind`, `purchaseId`, `saleId` and returns the checked `initial`; `GET /views/entry/:id`
+    returns the Return link's params (or null).
+  - [x] CR-051.3 web: the entry sheet's Return and the footer in two groups (Delete · Reverse |
+    Return · Send / Share PDF · Edit); the return form takes `initial`; the Card fee About text.
+  - **Tests:** [x] U-CR-051.1 (`prefill.test.ts`) · [x] I-CR-051.1, I-CR-051.2, I-CR-051.3
+    (`return-actions.test.ts`, through the api; .3 = the two views) · [x] E-CR-051.1, E-CR-051.2 (`return.spec.ts`).
+  - **Acceptance:** as the reference's CR-051; the books balance.
+
+- [x] **CR-052 Expense statement** (2026-11-05)
+  - **Ref:** `ecc5803` · **Decision:** D-075, D-080 · **Docs:** PRD §4.8; UIDD §4.8, §4.9, §4.17
+  - [x] CR-052.1 `packages/domain/src/expense-report.ts` (rows, totals, filter, notes, the texts and
+    the sheets); `months-view` gives one Expenses and one Card fees line with their filter.
+  - [x] CR-052.2 api: `ReportsService.loadExpenses`, `GET /views/reports/expenses?from&to&cat`,
+    `/files/pdf/expenses` and `/files/xlsx/expenses`.
+  - [x] CR-052.3 web: `/reports/expenses` (+ its xlsx forwarder), the Reports list, the Report
+    sheet's period chip, the Cash book's `Step`, the breakdown rows on the month page.
+  - [x] CR-052.4 parity manifest: the page, its PDF and its workbook.
+  - **Tests:** [x] U-CR-052.1 … U-CR-052.4 (`expense-report.test.ts`, `months-view.test.ts`) ·
+    [x] I-CR-052.1 (`reports.test.ts`, `views-reports.test.ts`) · [x] E-CR-052.1, E-CR-052.2
+    (`reports.spec.ts`, `month-close.spec.ts`, a11y).
+  - **Acceptance:** the total ties out to `monthProfit` when no row is tagged; the books balance.
+
+- [x] **CR-054 Long lists show 25 at a time** (2026-11-05)
+  - **Ref:** `a7a12a8` · **Decision:** D-077 · **Docs:** PRD §4; UIDD §1, §4.8, §4.10
+  - [x] CR-054.1 `packages/domain/src/show-more.ts` (`PAGE`, `visibleRows`) and
+    `apps/web/src/components/show-more.tsx`.
+  - [x] CR-054.2 The Journal, statements without a period, the card's Charges and credits, a
+    customer's Bills and a person's Profit moves.
+  - **Tests:** [x] U-CR-054.1 (`show-more.test.ts`) · [x] E-CR-054.1, E-CR-054.2
+    (`long-lists.spec.ts`).
+  - **Acceptance:** balances, counts and totals still use every row.
+
+- [x] **CR-055 Card fee kinds** (2026-11-05)
+  - **Ref:** `50005b5` · **Decision:** D-078 · **Docs:** SRS §4; UIDD §4.6, §4.10, §4.17
+  - [x] CR-055.1 domain: `CARD_FEE_KINDS`, `cardFeeKindLabel`; a kind is required on a Card fee
+    (the api validates with the same schema); the "Card fee · {kind}" label.
+  - [x] CR-055.2 web: the Kind chips on the Card fee form.
+  - **Tests:** [x] U-CR-055.1 (`validation.test.ts`) · [x] I-CR-055.1 (`money-actions.test.ts`,
+    `reports.test.ts`) · [x] E-CR-055.1 (`money.spec.ts`, `entry-sheet.spec.ts`, a11y).
+  - **Acceptance:** every kind posts exactly as before; old fees read "Card fee".
+
+- [x] **CR-056 Alerts bell** (2026-11-05)
+  - **Ref:** `8f08c76` · **Decision:** D-079, D-081 · **Docs:** PRD §4.8, S19; SRS §11, §15;
+    UIDD §3, §4.8, §5
+  - [x] CR-056.1 `packages/domain/src/alerts.ts` (`buildAlerts`, pure) and `alert-level.ts`.
+  - [x] CR-056.2 api: `CardSecretsDataService.expiryMonths()` (the month only, never throws),
+    `StockService.allLots()`, `AlertsService.loadAlerts()`, each memoised per render;
+    `/views/shell` carries the alerts, `/views/cards/:id` the card's fee alert.
+  - [x] CR-056.3 web: the bell and its sheet in the top bar; the card page's fee chip.
+  - **Tests:** [x] U-CR-056.1 … U-CR-056.4 (`alerts.test.ts`) · [x] I-CR-056.1, I-CR-056.2 (`alerts.test.ts`:
+    `expiryMonths`, the shell's alerts, the card's fee, one load per render) · [x] E-CR-056.1
+    (`alerts.spec.ts`, a11y).
+  - **Acceptance:** every amount equals its books figure; the key never leaves the api.
+
+- **Result (2026-11-05):**
+  - typecheck + lint clean; `npm run build:api` ok; unit 757/757 (was 726).
+  - Integration 224/224 (was 216): the new I-CR-051.1–.3, I-CR-052.1, I-CR-055.1, I-CR-056.1 (×2),
+    I-CR-056.2. Expected views updated for the new fields: `/views/shell` `alerts`,
+    `/views/cards/:id` `fee`, `/views/entry/:id` `returnTo`, `/views/returns/new` `initial`.
+  - E2E (Night Owl, 360 + 1280): the touched specs 122 passed, 7 skipped (one-viewport tests);
+    every E-CR-051.1 … E-CR-056.1 ran on both sizes (list reporter); a11y `CR-05` 5/5. The bell is
+    on every page, so `ui-dark`, `shell` and `a11y` ran in every theme: 138 passed, 5 skipped.
+  - Parity against the reference at `8f08c76`: MATCH (214 files, +12 for the Expense statement's
+    pages, PDF and workbook).
+  - The denylist is empty. The reference's new tests used real names; they read Arif / Sumon /
+    Nadim here (the "profit owed" order in U-CR-056.3 follows the new names: by title).
+  - Also fixed: `views-admin.test.ts` I-N-4.6.2 had "2026-11" as its future month, which became
+    the current month on 1 Nov 2026 (CI run 41936080199). It now uses next month.
+- **Gate (all five):** typecheck, lint, unit, the touched integration files, the touched E2E specs
+  in Night Owl at 360 + 1280; parity against the reference at `8f08c76` (`npm run parity:ref`
+  re-exports it); the denylist is empty.
