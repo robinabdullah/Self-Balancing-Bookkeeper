@@ -107,5 +107,36 @@ export const EXPENSE_LABELS: Record<(typeof EXPENSE_CATEGORIES)[number], string>
 export const CARD_FEES = "card-fees";
 /** D-080: the Expense statement's "Expenses only" filter: every expense category, no card fees. */
 export const EXPENSES = "expenses";
-/** A card fee's fixed category (SRS §4). */
+/** The category every card fee had before D-078: read as "Card fee", with no kind. */
 export const CARD_FEE_CATEGORY = "card fee/interest";
+
+/** D-078 (SRS §4, UIDD §4.6): what a card fee was; stored in `money_entries.category`. */
+export const CARD_FEE_KINDS = [
+  "annual",
+  "sms",
+  "late",
+  "over_limit",
+  "interest",
+  "cash_advance",
+  "vat",
+  "other",
+] as const;
+export type CardFeeKind = (typeof CARD_FEE_KINDS)[number];
+
+/** The Kind chips' labels ("Card fee · Annual fee"). */
+export const CARD_FEE_LABELS: Record<CardFeeKind, string> = {
+  annual: "Annual fee",
+  sms: "SMS / alert",
+  late: "Late fee",
+  over_limit: "Over-limit",
+  interest: "Interest",
+  cash_advance: "Cash advance",
+  vat: "VAT",
+  other: "Other",
+};
+
+/** A card fee's kind label, or null (the legacy value, or none). */
+export const cardFeeKindLabel = (category: string | null | undefined): string | null =>
+  category && Object.hasOwn(CARD_FEE_LABELS, category)
+    ? CARD_FEE_LABELS[category as CardFeeKind]
+    : null;

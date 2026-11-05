@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
+import { entryLabel } from "@mbl/domain/journal/labels";
+import { CARD_FEES } from "@mbl/domain/charts/profit";
 import { postEntry } from "@mbl/domain/engine/post";
+import { costLabel } from "@mbl/domain/expense-report";
+import { CARD_FEE_CATEGORY, CARD_FEE_KINDS, cardFeeKindLabel } from "@mbl/domain/validation/fields";
 import { moneyEntrySchema } from "@mbl/domain/validation/money-entry";
 import {
   cardBillDateSchema,
@@ -63,7 +67,10 @@ const MONEY_TYPES: [Record<string, unknown>, string[]][] = [
     { type: "card_cash_out", cardId: CARD, cardCharged: "10,200", cashReceived: "10,000" },
     ["cardId", "cardCharged", "cashReceived"],
   ],
-  [{ type: "card_fee", cardId: CARD, amount: "750" }, ["cardId", "amount"]],
+  [
+    { type: "card_fee", cardId: CARD, amount: "750", category: "annual" },
+    ["cardId", "amount", "category"],
+  ],
   [{ type: "cashback", amount: "300", source: "cash" }, ["amount", "source"]],
   [
     { type: "expense", amount: "15,000", category: "salary", source: "cash" },
@@ -169,15 +176,38 @@ describe("U2.10.1 money entry schema: each type's required fields", () => {
     expect(parsed).toEqual({ ...base, type: "card_payment", cardId: CARD, amount: 10_000 });
   });
 
-  it("expense for_month defaults to the date's month; card fee gets its category", () => {
+  it("expense for_month defaults to the date's month", () => {
     const expense = { ...base, type: "expense", amount: "1", category: "rent", source: "cash" };
     expect(moneyEntrySchema.parse(expense)).toMatchObject({ forMonth: "2026-10" });
     expect(moneyEntrySchema.parse({ ...expense, forMonth: "2026-09" })).toMatchObject({
       forMonth: "2026-09",
     });
     expect(errorPaths(moneyEntrySchema, { ...expense, forMonth: "2026-13" })).toEqual(["forMonth"]);
+  });
+
+  it("U-CR-055.1 a card fee needs its kind; each kind passes; the legacy value reads as Card fee", () => {
     const fee = { ...base, type: "card_fee", cardId: CARD, amount: "750" };
-    expect(moneyEntrySchema.parse(fee)).toMatchObject({ category: "card fee/interest" });
+    expect(errorAt(moneyEntrySchema, fee, "category")).toBe("Pick what the fee was");
+    // An edit of a fee saved before D-078 must pick a kind too.
+    expect(errorAt(moneyEntrySchema, { ...fee, category: CARD_FEE_CATEGORY }, "category")).toBe(
+      "Pick what the fee was",
+    );
+    for (const kind of CARD_FEE_KINDS)
+      expect(moneyEntrySchema.parse({ ...fee, category: kind })).toMatchObject({ category: kind });
+    // The labels: "Card fee · {kind}"; the legacy value (or none) reads "Card fee".
+    const row = (detail: string | null) => ({ type: "card_fee", detail });
+    expect(entryLabel(row("annual"))).toBe("Card fee · Annual fee");
+    expect(entryLabel(row("over_limit"))).toBe("Card fee · Over-limit");
+    expect(entryLabel(row(CARD_FEE_CATEGORY))).toBe("Card fee");
+    expect(entryLabel(row(null))).toBe("Card fee");
+    const cost = (feeKind: string | null) => ({
+      kind: "card_fee" as const,
+      category: CARD_FEES,
+      feeKind,
+    });
+    expect(costLabel(cost("sms"))).toBe("Card fee · SMS / alert");
+    expect(costLabel(cost(CARD_FEE_CATEGORY))).toBe("Card fee");
+    expect(cardFeeKindLabel("constructor")).toBeNull();
   });
 
   it("an opening correction needs its kind's target, keeps only that one, never D itself", () => {

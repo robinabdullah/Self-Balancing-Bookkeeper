@@ -11,7 +11,7 @@ import {
 } from "../enums";
 import { monthOf } from "../dates";
 import {
-  CARD_FEE_CATEGORY,
+  CARD_FEE_KINDS,
   EXPENSE_CATEGORIES,
   date,
   money,
@@ -91,9 +91,14 @@ const cardCashOut = z
     return { ...v, amount: v.cardCharged };
   });
 
-const cardFee = z
-  .object({ ...base, type: z.literal("card_fee"), cardId, amount })
-  .transform((v) => ({ ...v, category: CARD_FEE_CATEGORY }));
+/** D-078: a new or edited fee needs its kind (a label only; the posting is the same). */
+const cardFee = z.object({
+  ...base,
+  type: z.literal("card_fee"),
+  cardId,
+  amount,
+  category: z.enum(CARD_FEE_KINDS, { error: "Pick what the fee was" }),
+});
 
 const cashback = z
   .object({ ...base, type: z.literal("cashback"), amount, ...paidBy })

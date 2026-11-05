@@ -101,6 +101,36 @@ test.describe("Money entry form (task 3.7)", () => {
     expect(await entries("expense")).toBe(1);
   });
 
+  test("E-CR-055.1 card fee: a kind is required; Annual fee reads in the Journal", async ({
+    page,
+  }) => {
+    const { ids, card, entries } = await seed();
+    await page.goto("/money/new?type=card_fee");
+    const dialog = page.getByRole("dialog", { name: "Card fee" });
+    await dialog.getByRole("button", { name: "Card", exact: true }).click();
+    await page.getByRole("option", { name: card }).click();
+    await dialog.getByRole("textbox", { name: "Amount" }).fill("1,150");
+    await dialog.getByRole("button", { name: "Save" }).click();
+    await expect(dialog.getByText("Pick what the fee was")).toBeVisible();
+    expect(await entries("card_fee")).toBe(0);
+
+    // The eight chips wrap; nothing scrolls sideways at 360px.
+    await expect(dialog.getByRole("radiogroup").getByRole("radio")).toHaveCount(8);
+    await noSideScroll(page, "horizontal scroll");
+    await dialog.getByRole("radio", { name: "Annual fee" }).check();
+    await expect(effectValue(dialog, card)).toHaveText(`+${inr(1_150)}`);
+    await dialog.getByRole("button", { name: "Save" }).click();
+    await page.waitForURL("/");
+    expect(await entries("card_fee")).toBe(1);
+    const [row] = await sql`select category from money_entries where card_id = ${ids.card}`;
+    expect(row.category).toBe("annual");
+
+    await page.goto(`/journal?who=${ids.card}`);
+    const list = page.getByRole("list", { name: "Entries" });
+    await expect(list.getByRole("listitem")).toHaveCount(1);
+    await expect(list.getByRole("link", { name: /Card fee · Annual fee/ })).toBeVisible();
+  });
+
   test("3.7.1 supplier payment from the purchase tip starts with that supplier", async ({
     page,
   }) => {

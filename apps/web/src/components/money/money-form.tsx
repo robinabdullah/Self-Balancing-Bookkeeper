@@ -22,7 +22,12 @@ import { forMonthChoices } from "@mbl/domain/month-choices";
 import { entryConfirm } from "@mbl/domain/confirms";
 import { type Names, previewEntry } from "@mbl/domain/preview";
 import { type SetupKind, dueText, setupNames } from "@mbl/domain/setup";
-import { EXPENSE_CATEGORIES, EXPENSE_LABELS } from "@mbl/domain/validation/fields";
+import {
+  CARD_FEE_KINDS,
+  CARD_FEE_LABELS,
+  EXPENSE_CATEGORIES,
+  EXPENSE_LABELS,
+} from "@mbl/domain/validation/fields";
 import { sendHref } from "@mbl/domain/href";
 import { moneyEntrySchema } from "@mbl/domain/validation/money-entry";
 import { SEND_TYPES } from "@mbl/domain/whatsapp";
@@ -54,6 +59,7 @@ const ABOUT: Partial<Record<MoneyType, AboutForm>> = {
 const aboutOf = (t: MoneyType) => ABOUT[t] ?? (t as AboutForm);
 
 const CATEGORY = EXPENSE_CATEGORIES.map((c) => [c, EXPENSE_LABELS[c]] as [typeof c, string]);
+const FEE_KIND = CARD_FEE_KINDS.map((k) => [k, CARD_FEE_LABELS[k]] as [typeof k, string]);
 const SETTLE: ["received" | "added_to_due", string][] = [
   ["received", "Received now"],
   ["added_to_due", "Add to his due"],
@@ -266,8 +272,9 @@ function TypeFields({
           <CashOrCard label="Paid by" card={card} />
         </>
       );
-    case "card_payment":
     case "card_fee":
+      return <CardFee amount={amount} card={card} />;
+    case "card_payment":
       return (
         <>
           {card}
@@ -427,6 +434,25 @@ function Expense({ amount, card }: { amount: React.ReactNode; card: React.ReactN
       {amount}
       <CashOrCard label="Paid by" card={card} />
       <MonthField start={monthOf(date)} />
+    </>
+  );
+}
+
+/** D-078: the fee's Kind; a fee saved before it (the legacy category) starts with none picked. */
+function CardFee({ amount, card }: { amount: React.ReactNode; card: React.ReactNode }) {
+  const [kind, setKind] = useState(useContext(FormInitial).category ?? "");
+  return (
+    <>
+      {card}
+      {amount}
+      <Choice
+        label="Kind"
+        name="category"
+        options={FEE_KIND}
+        value={kind}
+        onChange={setKind}
+        columns={3}
+      />
     </>
   );
 }

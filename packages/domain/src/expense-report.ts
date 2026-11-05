@@ -5,7 +5,7 @@ import type { Posted } from "./engine/post";
 import type { Sheet } from "./export";
 import { add, format, sub } from "./money";
 import { margin } from "./sales-report";
-import { EXPENSES, EXPENSE_CATEGORIES } from "./validation/fields";
+import { EXPENSES, EXPENSE_CATEGORIES, cardFeeKindLabel } from "./validation/fields";
 
 // D-075, D-080 (UIDD §4.17): the Expense statement. Every business cost by its entry date: the
 // expenses (by category) and the Card fees (a Card fee entry, and a cash-out's fee). Each row is
@@ -22,6 +22,8 @@ export type CostEntry = {
   kind: CostKind;
   /** An expense category, or `CARD_FEES`. */
   category: string;
+  /** A Card fee's stored kind (D-078; the legacy value or null for others). */
+  feeKind: string | null;
   /** The cost (a reversal's is negative). */
   amount: number;
   /** The month profit counts it in ("YYYY-MM"). */
@@ -77,6 +79,7 @@ export function costEntries(posted: Posted[], entries: StoredEntry[]): CostEntry
       createdAt: p.createdAt,
       kind,
       category: first.component === "fee" ? CARD_FEES : (first.category ?? "other"),
+      feeKind: kind === "card_fee" ? (entry.category ?? null) : null,
       amount: 0 - costs.reduce((s, e) => add(s, e.amount), 0),
       forMonth: monthOf(first.month ?? p.date),
       paidFrom: kind === "expense" && entry.source !== "card" ? "cash" : (entry.cardId ?? "cash"),
@@ -153,13 +156,17 @@ export function expenseReport(
   };
 }
 
-/** A row's Category: "Rent", "Card fee" or "Cash-out fee". */
-export const costLabel = (r: Pick<CostEntry, "kind" | "category">) =>
-  r.kind === "card_fee"
-    ? "Card fee"
+/** A row's Category: "Rent", "Card fee · Annual fee" ("Card fee" before D-078) or "Cash-out fee". */
+export function costLabel(r: Pick<CostEntry, "kind" | "category" | "feeKind">): string {
+  const fee = r.kind === "card_fee" && cardFeeKindLabel(r.feeKind);
+  return r.kind === "card_fee"
+    ? fee
+      ? `Card fee · ${fee}`
+      : "Card fee"
     : r.kind === "cash_out"
       ? "Cash-out fee"
       : categoryLabel(r.category);
+}
 
 /** "Cash", or the card's name. */
 export const paidFromLabel = (r: Pick<CostEntry, "paidFrom">, name: (id: string) => string) =>

@@ -87,6 +87,7 @@ for (const theme of THEMES) {
         "/reports/sales",
         "/settings",
         "/money/new?type=card_payment",
+        "/money/new?type=card_fee", // CR-055: the Kind chips
         "/sales/new",
         "/purchases/new",
       ];

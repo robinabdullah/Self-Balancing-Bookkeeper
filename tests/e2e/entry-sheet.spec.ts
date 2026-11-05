@@ -176,9 +176,14 @@ test.describe("E-CR-013.3 entry details open in place", () => {
     expect(new URL(page.url()).searchParams.get("from")).toBe(`${base}?entry=${other}`);
     const form = page.getByRole("dialog", { name: "Edit Card fee" });
     await form.getByRole("textbox", { name: "Amount" }).fill("350");
+    // D-078: a fee saved before the kinds opens with none picked; Save needs one.
+    await expect(form.getByRole("radio", { checked: true })).toHaveCount(0);
+    await form.getByRole("button", { name: "Save" }).click();
+    await expect(form.getByText("Pick what the fee was")).toBeVisible();
+    await form.getByRole("radio", { name: "Late fee" }).check();
     await form.getByRole("button", { name: "Save" }).click();
     await page.waitForURL(`${base}?entry=${other}`);
-    await expect(page.getByRole("dialog", { name: "Card fee" })).toContainText("৳350");
+    await expect(page.getByRole("dialog", { name: "Card fee · Late fee" })).toContainText("৳350");
 
     // Delete from the supplier page lands back on the supplier, without the row.
     const pay = await seedMoney({

@@ -2,9 +2,11 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { addMonths, dhakaToday, formatMonth, monthOf } from "@mbl/domain/dates";
+import { monthProfit } from "@mbl/domain/engine/months";
 import { type Effect, type MoneyEntry, type Partner, postEntry } from "@mbl/domain/engine/post";
 import { receivedAt } from "@mbl/domain/cash-out";
 import { parse, plain } from "@mbl/domain/money";
+import { CARD_FEE_CATEGORY, CARD_FEE_KINDS } from "@mbl/domain/validation/fields";
 import { expectBalanced, posted } from "../engine/invariant";
 import { partnerApi } from "./api";
 import { localSql } from "./local-db";
@@ -181,7 +183,7 @@ describe("Money entry actions (task 3.7)", () => {
         ],
       ],
       [
-        { type: "card_fee", cardId: card, amount: "1,250.50" },
+        { type: "card_fee", cardId: card, amount: "1,250.50", category: "late" },
         [fx("card", A, card), fx("profit", -A, undefined, thisMonth)],
       ],
       [
@@ -408,6 +410,31 @@ describe("Money entry actions (task 3.7)", () => {
       fx("card", parse("2,80,000")!, ids.card),
       fx("profit", -fee, undefined, thisMonth),
     ]);
+  });
+
+  it("I-CR-055.1 a Card fee of each kind posts as before; the month's card-fee total is one sum", async () => {
+    // A fee saved before D-078 (the legacy category) sits beside the new ones.
+    await sql`insert into money_entries (id, date, type, amount, card_id, category, created_by)
+      values (${randomUUID()}, ${today}, 'card_fee', 50.00, ${ids.card}, ${CARD_FEE_CATEGORY}, ${userId})`;
+    let total = parse("50")!;
+    for (const [i, kind] of CARD_FEE_KINDS.entries()) {
+      const amount = (i + 1) * 10_000; // different amounts: no duplicate warning
+      total += amount;
+      const { id } = await saved(
+        await saveMoneyEntry(
+          entry({ type: "card_fee", cardId: ids.card, amount: plain(amount), category: kind }),
+        ),
+      );
+      const [row] = await sql`select category from money_entries where id = ${id}`;
+      expect(row.category).toBe(kind);
+      expect(await effectsOf(id)).toEqual([
+        fx("card", amount, ids.card),
+        fx("profit", -amount, undefined, thisMonth),
+      ]);
+    }
+    const all = (await stored()).map((e) => posted(e, partners));
+    expectBalanced(all);
+    expect(monthProfit(all, thisMonth, today).components.fee).toBe(-total);
   });
 });
 

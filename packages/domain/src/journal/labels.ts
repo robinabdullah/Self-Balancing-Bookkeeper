@@ -1,4 +1,5 @@
 import { LABEL } from "../money/types";
+import { cardFeeKindLabel } from "../validation/fields";
 import { invoiceLabel, receiptLabel } from "../whatsapp";
 
 // What the Journal calls each entry (UIDD §4.10): the type, with a purchase's "paid by" or a
@@ -44,13 +45,18 @@ export const DETAIL: Record<string, string> = {
 const byCard = (row: Pick<JournalRow, "type" | "detail">) =>
   row.type === "capital_out" && row.detail === "card";
 
-/** "Purchase · Supplier credit", "Purchase return · Damaged / lost", "Capital out · Card". */
+/**
+ * "Purchase · Supplier credit", "Purchase return · Damaged / lost", "Capital out · Card", "Card
+ * fee · Annual fee" (D-078; a fee saved before it reads "Card fee").
+ */
 export function entryLabel(row: Pick<JournalRow, "type" | "detail">): string {
   const type = TYPE_LABEL[row.type] ?? row.type;
   const detail =
-    (row.type === "purchase" || row.type === "purchase_return" || byCard(row)) &&
-    row.detail &&
-    DETAIL[row.detail];
+    row.type === "card_fee"
+      ? cardFeeKindLabel(row.detail)
+      : (row.type === "purchase" || row.type === "purchase_return" || byCard(row)) &&
+        row.detail &&
+        DETAIL[row.detail];
   return detail ? `${type} · ${detail}` : type;
 }
 

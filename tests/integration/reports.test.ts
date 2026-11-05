@@ -344,7 +344,7 @@ describe("CR-052 Expense statement", () => {
         cardId: card,
       }),
     );
-    ok(await money({ type: "card_fee", amount: "1,150", cardId: card }));
+    ok(await money({ type: "card_fee", amount: "1,150", cardId: card, category: "annual" }));
     ok(
       await money({
         type: "card_cash_out",
@@ -420,7 +420,13 @@ describe("CR-052 Expense statement", () => {
     const byCat = wb.getWorksheet("By category")!;
     expect(byCat.getRow(2).getCell(1).value).toBe("Card fees");
     expect(byCat.getRow(3).getCell(2).value).toBe(1_350);
-    expect(wb.getWorksheet("Entries")!.rowCount).toBe(4); // header, the fee, the cash-out, Total
+    const entries = wb.getWorksheet("Entries")!;
+    expect(entries.rowCount).toBe(4); // header, the fee, the cash-out, Total
+    // D-078 (CR-055): a Card fee's Category reads its kind; By category keeps one Card fees line.
+    expect([2, 3].map((n) => entries.getRow(n).getCell(3).value)).toEqual([
+      "Card fee · Annual fee",
+      "Cash-out fee",
+    ]);
 
     const [{ n: after }] = await sql`select count(*)::int as n from audit_log`;
     expect(after).toBe(before);
