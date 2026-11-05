@@ -11,9 +11,10 @@ cited.
 - **Session:** S11.
   - CR-049 is committed; N-6.3 is done: the repo is public (2026-10-30).
   - CR-050 is committed.
-  - The reference's CR-051 … CR-056 are ported (2026-11-05), uncommitted; see "Ported from the
-    reference" under Change requests.
-- **Next:** the user's review and commit of the port, then N-7.2's switch at a quiet time.
+  - The reference's CR-051 … CR-056 are ported and pushed to `dev` (2026-11-05); see "Ported
+    from the reference" under Change requests.
+- **Next:** green CI, then `dev` → `main` and a release to `business2`; then N-7.2's switch at
+  a quiet time.
 - **Blocked on:** —
 
 ## How to use
