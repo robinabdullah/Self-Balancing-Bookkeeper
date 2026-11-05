@@ -3,10 +3,13 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@mbl/db";
 import { addDays, dhakaToday, formatDate } from "@mbl/domain/dates";
 import { type Effect, type Entry, type Partner, postEntry } from "@mbl/domain/engine/post";
-import { parse } from "@mbl/domain/money";
+import { parse, plain } from "@mbl/domain/money";
+import { cleanReturnPrefill } from "@mbl/domain/prefill";
 import { expectBalanced, posted } from "../engine/invariant";
 import type { Result } from "@mbl/domain/result";
+import { ReturnOptionsService } from "../../apps/api/src/returns/return-options.service";
 import { partnerApi } from "./api";
+import { service } from "./services";
 import { localSql } from "./local-db";
 
 // Task 3.6 (PRD §4.2; SRS §4 returns, §5, §8; UIDD §4.5; D-011). N-3.5: through the api (the
@@ -373,5 +376,133 @@ describe("Return actions (task 3.6)", () => {
     // On the purchase date itself it saves.
     await saved(await saveReturn(purchaseReturn(lotId, { date: twoDaysAgo })));
     expect(await sql`select id from returns`).toHaveLength(1);
+  });
+});
+
+// CR-051 (D-074; UIDD §4.5, §4.10): the return opened from a purchase's or a sale's entry sheet.
+describe("Return from an entry sheet (CR-051)", () => {
+  const purchaseOf = async (lotId: string) =>
+    (await sql`select purchase_id from purchase_lines where id = ${lotId}`)[0]
+      .purchase_id as string;
+  const setup = { customers: [{ id: ids.customer, active: true }] };
+  const options = () => service(api.app, ReturnOptionsService);
+
+  it("I-CR-051.1 a purchase's options list only its lots with stock; used up → none", async () => {
+    const { lotId } = await s2(); // 10 bought, 3 sold: 7 left
+    const otherLot = await lot(addDays(today, -1), 2, "17000");
+    const purchaseId = await purchaseOf(lotId);
+
+    const { lots, lines } = await options().returnOptions({ purchaseId });
+    expect(lots.map((l) => [l.id, l.purchaseId, l.remaining])).toEqual([[lotId, purchaseId, 7]]);
+    expect(lines).toHaveLength(1); // the bill lines stay whole: the kind can still change
+    expect((await options().returnOptions()).lots.map((l) => l.id).sort()).toEqual([lotId, otherLot].sort());
+
+    // The other purchase, returned in full to the seller, has nothing left.
+    const otherId = await purchaseOf(otherLot);
+    await saved(
+      await saveReturn(
+        purchaseReturn(otherLot, { lines: [{ lotId: otherLot, qty: "2", unitAmount: "17,000" }] }),
+      ),
+    );
+    expect((await options().returnOptions({ purchaseId: otherId })).lots).toEqual([]);
+    expect(await options().leftToReturn(otherId)).toEqual({ lots: [], lines: [] });
+    expect(
+      cleanReturnPrefill(
+        { kind: "purchase", purchaseId: otherId },
+        await options().leftToReturn(otherId),
+        setup,
+      ).initial,
+    ).toEqual({});
+
+    // A sale's lines by its id; a bad id asks nothing of the database.
+    const [{ sale_id: saleId }] = await sql`select sale_id from sale_lines`;
+    expect((await options().leftToReturn(saleId)).lines.map((l) => [l.saleId, l.left])).toEqual([
+      [saleId, 3],
+    ]);
+    expect(await options().leftToReturn("nope")).toEqual({ lots: [], lines: [] });
+  });
+
+  it("I-CR-051.2 the prefilled purchase and customer returns save and post as SRS §5", async () => {
+    const { lotId, lineId } = await s2();
+    const purchaseId = await purchaseOf(lotId);
+
+    // Purchase: the prefill + the form's defaults (qty 1, refund at the lot's cost, to the
+    // lot's source: the supplier).
+    const opts = await options().returnOptions({ purchaseId });
+    const { initial: p } = cleanReturnPrefill({ kind: "purchase", purchaseId }, opts, setup);
+    expect(p).toEqual({ kind: "purchase", reason: "returned", "lines.0.lotId": lotId });
+    const [theLot] = opts.lots;
+    const purchaseRet = {
+      id: randomUUID(),
+      date: today,
+      note: "",
+      kind: p.kind,
+      reason: p.reason,
+      refundTo: "supplier",
+      supplierId: theLot.supplierId,
+      lines: [{ lotId: p["lines.0.lotId"], qty: "1", unitAmount: plain(theLot.unitCost) }],
+    };
+    await saved(await saveReturn(purchaseRet));
+    expect(await remaining(lotId)).toBe(6);
+    const purchaseEffects = await effectsOf(purchaseRet.id); // books balance
+    expect(purchaseEffects).toContainEqual({ account: "stock", amount: -parse("17,700")! });
+    expect(purchaseEffects).toContainEqual({
+      account: "supplier_due",
+      amount: -parse("17,700")!,
+      id: ids.supplier,
+    });
+
+    // Customer: the prefill + the form's defaults (qty 1, refund at the sale price).
+    const [{ sale_id: saleId }] = await sql`select sale_id from sale_lines where id = ${lineId}`;
+    const { lines } = await options().returnOptions();
+    const { initial: c } = cleanReturnPrefill(
+      { kind: "customer", saleId },
+      { lines, lots: [] },
+      setup,
+    );
+    expect(c).toEqual({
+      kind: "customer",
+      customerId: ids.customer,
+      saleId,
+      "lines.0.saleLineId": lineId,
+    });
+    const customerRet = customerReturn(c["lines.0.saleLineId"], "1", {
+      customerId: c.customerId,
+      lines: [
+        { saleLineId: c["lines.0.saleLineId"], qty: "1", unitAmount: plain(lines[0].unitPrice) },
+      ],
+    });
+    await saved(await saveReturn(customerRet));
+    expect(await remaining(lotId)).toBe(7);
+    expect(await effectsOf(customerRet.id)).toEqual([
+      { account: "stock", amount: parse("17,700")! },
+      { account: "customer_due", amount: -parse("18,000")!, id: ids.customer },
+      { account: "profit", amount: -parse("300")!, month, component: "customer_return" },
+    ]);
+    expect((await options().leftToReturn(saleId)).lines[0].left).toBe(2);
+  });
+
+  it("I-CR-051.3 the api: the entry view's Return params and the prefilled /views/returns/new", async () => {
+    const { lotId, lineId } = await s2();
+    const purchaseId = await purchaseOf(lotId);
+    const [{ sale_id: saleId }] = await sql`select sale_id from sale_lines where id = ${lineId}`;
+    type Entry = { returnTo: unknown } | null;
+    expect((await api.read<Entry>(`/views/entry/${purchaseId}`))!.returnTo).toEqual({
+      kind: "purchase",
+      purchaseId,
+    });
+    expect((await api.read<Entry>(`/views/entry/${saleId}`))!.returnTo).toEqual({
+      kind: "customer",
+      saleId,
+    });
+
+    type New = { initial: Record<string, string>; lots: { id: string }[] };
+    const set = await api.read<New>(`/views/returns/new?kind=purchase&purchaseId=${purchaseId}`);
+    expect(set.initial).toEqual({ kind: "purchase", reason: "returned", "lines.0.lotId": lotId });
+    expect(set.lots.map((l) => l.id)).toEqual([lotId]);
+    // An id the form can't use: dropped, every lot listed.
+    const dropped = await api.read<New>(`/views/returns/new?kind=purchase&purchaseId=${saleId}`);
+    expect(dropped.initial).toEqual({});
+    expect(dropped.lots.map((l) => l.id)).toEqual([lotId]);
   });
 });

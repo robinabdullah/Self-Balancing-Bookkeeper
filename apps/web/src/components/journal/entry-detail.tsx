@@ -52,6 +52,8 @@ import { editPath, entryTitle, isOpening, whoOf } from "@mbl/domain/journal/labe
 // month while it is open, otherwise today; never before the original). A reversed entry and a
 // reversal have no Edit (D-026). The actions check everything again on the server. D-061: the
 // entry's rows ("What it did"), negated in the Delete dialog, and the reversal's in Reverse.
+// D-074: Return (a purchase or sale with something left to return) opens the filled return form;
+// the footer has the fixes on the left and the everyday actions on the right.
 
 const DELETE: Record<JournalRow["table"], (input: unknown) => Promise<Result>> = {
   purchase: deletePurchase,
@@ -83,11 +85,14 @@ export function EntryDetail({
   posting,
   cards,
   billDates,
+  returnHref,
 }: Props & {
   /** The entry as the books hold it (D-061); null: no rows. */
   posting: Posting | null;
   cards: Card[];
   billDates: BillDates[];
+  /** D-074: the filled Return form, or null (nothing left to return, opening stock, …). */
+  returnHref: string | null;
 }) {
   const router = useRouter();
   const { row } = entry;
@@ -182,32 +187,51 @@ export function EntryDetail({
           )}
         </div>
 
-        <div className="flex flex-wrap justify-end gap-2 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          {!row.locked && (
-            <Button
-              variant="outline"
-              // Red, and still ≥ 4.5:1 on the sheet in every theme (UIDD §6).
-              className="min-h-11 border-red-300 px-4 text-red-700 hover:text-red-800 dark:border-red-900 dark:text-red-300 dark:hover:text-red-300"
-              onClick={() => setDeleting(true)}
-            >
-              Delete
-            </Button>
+        {/* D-074: the fixes on the left (on a phone, the top row); the everyday actions on the
+            right, Edit last (on a phone, the bottom row, near the thumb). */}
+        <div className="flex flex-col gap-2 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center">
+          {(!row.locked || canReverse) && (
+            <div className="flex flex-wrap gap-2">
+              {!row.locked && (
+                <Button
+                  variant="outline"
+                  // Red, and still ≥ 4.5:1 on the sheet in every theme (UIDD §6).
+                  className="min-h-11 border-red-300 px-4 text-red-700 hover:text-red-800 dark:border-red-900 dark:text-red-300 dark:hover:text-red-300"
+                  onClick={() => setDeleting(true)}
+                >
+                  Delete
+                </Button>
+              )}
+              {canReverse && (
+                <Button
+                  variant="outline"
+                  className="min-h-11 px-4"
+                  onClick={() => setReversing(true)}
+                >
+                  Reverse
+                </Button>
+              )}
+            </div>
           )}
-          {canReverse && (
-            <Button variant="outline" className="min-h-11 px-4" onClick={() => setReversing(true)}>
-              Reverse
-            </Button>
-          )}
-          {send && (
-            <Button asChild variant="outline" className="min-h-11 px-4">
-              <Link href={send}>Send ▸</Link>
-            </Button>
-          )}
-          {cancelledPdf && <SharePdfButton href={cancelledPdf} />}
-          {canEdit && (
-            <Button asChild className="min-h-11 px-4">
-              <Link href={editHref}>Edit</Link>
-            </Button>
+          {(returnHref || send || cancelledPdf || canEdit) && (
+            <div className="flex flex-wrap justify-end gap-2 sm:ml-auto">
+              {returnHref && (
+                <Button asChild variant="outline" className="min-h-11 px-4">
+                  <Link href={returnHref}>Return</Link>
+                </Button>
+              )}
+              {send && (
+                <Button asChild variant="outline" className="min-h-11 px-4">
+                  <Link href={send}>Send ▸</Link>
+                </Button>
+              )}
+              {cancelledPdf && <SharePdfButton href={cancelledPdf} />}
+              {canEdit && (
+                <Button asChild className="min-h-11 px-4">
+                  <Link href={editHref}>Edit</Link>
+                </Button>
+              )}
+            </div>
           )}
         </div>
 

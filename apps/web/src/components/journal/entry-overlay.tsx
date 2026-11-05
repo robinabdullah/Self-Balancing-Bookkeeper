@@ -1,5 +1,6 @@
 import { cache } from "react";
 import type { EntryView } from "@mbl/api/views/home.controller";
+import { entryHref, withQuery } from "@mbl/domain/href";
 import { api } from "@/api/client";
 import { EntryDetail } from "./entry-detail";
 
@@ -7,6 +8,7 @@ import { EntryDetail } from "./entry-detail";
 // Journal, card, customer, supplier and person. Closing returns to `closeHref` (the same page).
 // D-061: the entry as the books hold it (and its original, for a reversal) feeds "What it did".
 // N-4.2: one `/views/entry/:id` read, once per render (`cache`).
+// D-074: the api says whether a purchase / sale can be returned; the link comes back to this sheet.
 const entryView = cache((id: string) => api<EntryView>(`/views/entry/${encodeURIComponent(id)}`));
 
 /**
@@ -24,7 +26,7 @@ export async function EntryOverlay({ id, closeHref }: { id: string; closeHref: s
         That entry no longer exists.
       </p>
     );
-  const { entry, names, posting, cards, billDates } = view;
+  const { entry, names, posting, cards, billDates, returnTo } = view;
   return (
     <EntryDetail
       key={entry.row.id}
@@ -34,6 +36,10 @@ export async function EntryOverlay({ id, closeHref }: { id: string; closeHref: s
       posting={posting}
       cards={cards}
       billDates={billDates}
+      returnHref={
+        returnTo &&
+        withQuery("/returns/new", { ...returnTo, from: entryHref(closeHref, entry.row.id) })
+      }
     />
   );
 }

@@ -85,6 +85,8 @@ type Props = {
   lines: BillLine[];
   lots: ReturnLot[];
   edit?: EditValues;
+  /** D-074: a new return opened from an entry sheet starts set to it (`cleanReturnPrefill`). */
+  initial?: Record<string, string>;
   /** Where Save and Cancel go back to (D-032). */
   from?: string;
 };
@@ -96,9 +98,11 @@ export function ReturnForm(props: Props) {
   return useHydrated() ? <Return {...props} id={id} /> : <SkeletonRows />;
 }
 
-function Return({ data, lines, lots, edit, from, id }: Props & { id: string }) {
+function Return({ data, lines, lots, edit, initial, from, id }: Props & { id: string }) {
   const modal = usePageModal(from ?? (edit ? `/journal?entry=${id}` : "/"));
-  const [kind, setKind] = useState<Kind>((edit?.values.kind as Kind) ?? "customer");
+  const [kind, setKind] = useState<Kind>(
+    ((edit?.values.kind ?? initial?.kind) as Kind) ?? "customer",
+  );
   const title = KINDS.find(([k]) => k === kind)?.[1] ?? "return";
   const names: Names = setupNames(data);
   const entry = (f: Fields) => entryOf(f, lines, lots);
@@ -109,7 +113,7 @@ function Return({ data, lines, lots, edit, from, id }: Props & { id: string }) {
       title={edit ? `Edit ${title.toLowerCase()}` : "New return"}
       about={kind === "customer" ? "customer_return" : "purchase_return"}
       meta={edit ? { id, updatedAt: edit.updatedAt } : { id }}
-      initial={edit?.values}
+      initial={edit?.values ?? initial}
       submit={saveReturn}
       undo={edit ? undefined : deleteReturn}
       send={(saved, f) => (f.kind === "customer" ? sendHref(f.customerId, saved.id) : null)}
@@ -206,7 +210,7 @@ function CustomerReturn({ data, lines }: { data: SetupData; lines: BillLine[] })
         name="lines.0.unitAmount"
         help="return_refund_per_unit"
         defaultValue={
-          lineId === stored["lines.0.saleLineId"]
+          lineId === stored["lines.0.saleLineId"] && stored["lines.0.unitAmount"]
             ? stored["lines.0.unitAmount"]
             : line
               ? plain(line.unitPrice)
@@ -260,7 +264,7 @@ function PurchaseReturn({ data, lots }: { data: SetupData; lots: ReturnLot[] }) 
             name="lines.0.unitAmount"
             help="return_refund_per_unit"
             defaultValue={
-              same && stored["lines.0.unitAmount"] !== "0"
+              same && stored["lines.0.unitAmount"] && stored["lines.0.unitAmount"] !== "0"
                 ? stored["lines.0.unitAmount"]
                 : lot
                   ? plain(lot.unitCost)

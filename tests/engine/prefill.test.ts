@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TYPES } from "@mbl/domain/money/types";
 import { quickActions } from "@/components/shell/nav";
-import { cleanPrefill } from "@mbl/domain/prefill";
+import { cleanPrefill, cleanReturnPrefill, returnLink } from "@mbl/domain/prefill";
 import type { SetupData } from "../../apps/api/src/setup/setup-data.service";
 
 // U-CR-013.7 / U-CR-013.8 (D-032): forms opened from a page. Synthetic ids.
@@ -245,5 +245,98 @@ describe("U-CR-019.3 ⋯ Manage → Bank accounts (D-039)", () => {
       { label: "Card details", href: "/cards/c?from=x&secret=1" },
     ]);
     expect(manage("customer", { id: WALK_IN, active: true, isSystem: true }, "/c")).toEqual([]);
+  });
+});
+
+describe("U-CR-051.1 cleanReturnPrefill (D-074)", () => {
+  const [PURCHASE, OTHER_PURCHASE, OPENING, LOT_A, LOT_B, LOT_C, LOT_OPEN] = [
+    20, 21, 22, 23, 24, 25, 26,
+  ].map(id);
+  const [SALE, USED_SALE, OLD_SALE, LINE_A, LINE_B, LINE_USED, LINE_OLD] = [
+    30, 31, 32, 33, 34, 35, 36,
+  ].map(id);
+  const lot = (id: string, purchaseId: string, createdAt: string, source = "cash") => ({
+    id,
+    purchaseId,
+    source: source as "cash",
+    remaining: 2,
+    createdAt,
+  });
+  const options = {
+    // Newer line first in the list: the first lot is the purchase's first line, by createdAt.
+    lots: [
+      lot(LOT_B, PURCHASE, "2026-10-01T10:00:01Z"),
+      lot(LOT_A, PURCHASE, "2026-10-01T10:00:00Z"),
+      lot(LOT_C, OTHER_PURCHASE, "2026-10-01T09:00:00Z"),
+      lot(LOT_OPEN, OPENING, "2026-09-01T00:00:00Z", "opening"),
+    ],
+    lines: [
+      { id: LINE_USED, saleId: SALE, customerId: CUST, left: 0 },
+      { id: LINE_A, saleId: SALE, customerId: CUST, left: 1 },
+      { id: LINE_B, saleId: SALE, customerId: CUST, left: 2 },
+      { id: LINE_USED, saleId: USED_SALE, customerId: CUST, left: 0 },
+      { id: LINE_OLD, saleId: OLD_SALE, customerId: OLD_CUST, left: 1 },
+    ],
+  };
+  const initial = (params: Record<string, string | string[] | undefined>) =>
+    cleanReturnPrefill(params, options, setup).initial;
+
+  it("a purchase → Purchase return, Returned to seller, its first lot with stock", () => {
+    expect(
+      cleanReturnPrefill(
+        { kind: "purchase", purchaseId: PURCHASE, from: "/journal?entry=x" },
+        options,
+        setup,
+      ),
+    ).toEqual({
+      initial: { kind: "purchase", reason: "returned", "lines.0.lotId": LOT_A },
+      from: "/journal?entry=x",
+    });
+  });
+
+  it("a sale → Customer return, its customer and bill, its first line with something left", () => {
+    expect(initial({ kind: "customer", saleId: SALE })).toEqual({
+      kind: "customer",
+      customerId: CUST,
+      saleId: SALE,
+      "lines.0.saleLineId": LINE_A,
+    });
+  });
+
+  it("drops a missing kind, an unknown, foreign or used-up id, opening stock, an inactive customer", () => {
+    for (const params of [
+      { purchaseId: PURCHASE }, // no kind
+      { saleId: SALE },
+      { kind: "customer", purchaseId: PURCHASE }, // the wrong kind for the id
+      { kind: "purchase", saleId: SALE },
+      { kind: "purchase", purchaseId: id(99) }, // unknown
+      { kind: "customer", saleId: id(99) },
+      { kind: "purchase", purchaseId: "nope" },
+      { kind: "customer", saleId: [SALE, SALE] },
+      { kind: "customer", saleId: USED_SALE }, // nothing left to return
+      { kind: "purchase", purchaseId: OPENING }, // opening stock (the user's pick)
+      { kind: "customer", saleId: OLD_SALE }, // an inactive customer
+    ]) {
+      expect(initial(params), JSON.stringify(params)).toEqual({});
+    }
+  });
+
+  it("returnLink: the entry sheet's link only when the form can start set to it", () => {
+    const from = "/journal?entry=" + PURCHASE;
+    const link = (table: string, rowId: string) =>
+      returnLink({ table, id: rowId }, options, setup, from);
+    const params = (href: string | null) =>
+      Object.fromEntries(new URL(href!, "http://x").searchParams);
+    expect(params(link("purchase", PURCHASE))).toEqual({
+      kind: "purchase",
+      purchaseId: PURCHASE,
+      from,
+    });
+    expect(params(link("sale", SALE))).toEqual({ kind: "customer", saleId: SALE, from });
+    expect(link("purchase", OPENING)).toBeNull();
+    expect(link("sale", USED_SALE)).toBeNull();
+    expect(link("sale", OLD_SALE)).toBeNull();
+    expect(link("return", SALE)).toBeNull();
+    expect(link("money", PURCHASE)).toBeNull();
   });
 });

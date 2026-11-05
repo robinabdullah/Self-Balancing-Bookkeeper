@@ -133,6 +133,7 @@ describe("I-N-4.2.1 each view has what web's page computed", () => {
         },
         cards: data.cards,
         billDates: data.billDates,
+        returnTo: null, // CR-051: a reversal has no Return
       }),
     );
     expect(body.posting.original.id).toBe(stored.reversesId);

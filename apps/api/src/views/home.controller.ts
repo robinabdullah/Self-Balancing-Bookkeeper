@@ -2,9 +2,11 @@ import { Controller, Get, Param } from "@nestjs/common";
 import { cardAlerts, cardDues, topDues } from "@mbl/domain/dashboard";
 import { monthOf } from "@mbl/domain/dates";
 import { parse } from "@mbl/domain/money";
+import { returnParams } from "@mbl/domain/prefill";
 import { setupNames } from "@mbl/domain/setup";
 import { BooksService } from "../books/books.service";
 import { JournalService } from "../journal/journal.service";
+import { ReturnOptionsService } from "../returns/return-options.service";
 import { SetupDataService } from "../setup/setup-data.service";
 import { StockService } from "../stock/stock.service";
 
@@ -18,6 +20,7 @@ export class HomeViewsController {
     private readonly setup: SetupDataService,
     private readonly stock: StockService,
     private readonly journal: JournalService,
+    private readonly returnOptions: ReturnOptionsService,
   ) {}
 
   /**
@@ -85,10 +88,11 @@ export class HomeViewsController {
    */
   @Get("entry/:id")
   async entry(@Param("id") id: string) {
-    const [entry, setup, { data }] = await Promise.all([
+    const [entry, setup, { data }, left] = await Promise.all([
       this.journal.loadEntry(id),
       this.setup.loadSetup(),
       this.books.loadBooks(),
+      this.returnOptions.leftToReturn(id),
     ]);
     if (!entry) return null;
     const stored = data.entries.find((e) => e.id === id);
@@ -106,6 +110,9 @@ export class HomeViewsController {
         : null,
       cards: data.cards,
       billDates: data.billDates,
+      // D-074: a purchase's lots with stock / a sale's open lines decide its Return link; web
+      // adds the `from` (the sheet itself).
+      returnTo: returnParams(entry.row, left, setup),
     };
   }
 }

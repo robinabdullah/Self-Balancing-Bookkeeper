@@ -21,6 +21,8 @@ type Options = {
   modelIds?: string[];
   /** Only these lots. */
   lotIds?: string[];
+  /** Only this purchase's lots (D-074: a return from its entry sheet). */
+  purchaseId?: string;
   /** Leave this sale's own lines out of the moves: an edit can reuse the units it holds. */
   exceptSaleId?: string;
   /** Leave this return's own lines out of the moves (a return's edit or Undo). */
@@ -36,12 +38,13 @@ const inList = (ids: string[]) =>
   );
 
 export async function stockLots(q: Tx | Db, opts: Options = {}): Promise<(StockLot & LotInfo)[]> {
-  const { modelIds, lotIds, exceptSaleId, exceptReturnId, lock } = opts;
+  const { modelIds, lotIds, purchaseId, exceptSaleId, exceptReturnId, lock } = opts;
   if (modelIds?.length === 0 || lotIds?.length === 0) return [];
   const only: SQL = sql.join(
     [
       modelIds ? sql`and l.model_id in (${inList(modelIds)})` : sql``,
       lotIds ? sql`and l.id in (${inList(lotIds)})` : sql``,
+      purchaseId ? sql`and l.purchase_id = ${purchaseId}` : sql``,
     ],
     sql` `,
   );

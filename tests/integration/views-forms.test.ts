@@ -107,14 +107,14 @@ describe("I-N-4.3.1 each form view has what web's page computed", () => {
   it("/views/returns/new", async () => {
     const [data, options] = await Promise.all([setupDataSvc().loadSetup(), returnOptionsSvc().returnOptions()]);
     const { body } = await get("/views/returns/new").expect(200);
-    expect(body).toEqual(json({ data, ...options }));
+    expect(body).toEqual(json({ data, ...options, initial: {} }));
     expect(body.lines.length).toBeGreaterThan(0);
   });
 
   it("/views/returns/:id/edit", async () => {
     const id = seeded.refs.return;
     const edit = await entriesSvc().editValues("return", id);
-    const [data, options] = await Promise.all([setupDataSvc().loadSetup(), returnOptionsSvc().returnOptions(id)]);
+    const [data, options] = await Promise.all([setupDataSvc().loadSetup(), returnOptionsSvc().returnOptions({ exceptReturnId: id })]);
     const { body } = await get(`/views/returns/${id}/edit`).expect(200);
     expect(body).toEqual(json({ edit, data, ...options }));
     expect(body.edit.id).toBe(id);

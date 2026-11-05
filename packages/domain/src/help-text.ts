@@ -17,7 +17,8 @@ export const aboutText = {
   supplier_payment: "Money we paid a supplier we owe, from cash or a card.",
   card_payment: "Business cash paid into a card bill.",
   card_cash_out: "Cash taken out through a card. The difference is a fee (business expense).",
-  card_fee: "A fee or interest charged on a card. It is a business expense.",
+  card_fee:
+    "A fee or interest charged on a card: annual, SMS, late fee, over-limit, interest, cash advance, VAT or other. It is a business expense.",
   cashback: "Cashback received on a card or in cash. It counts as profit.",
   expense: "A business cost (salary, rent, delivery …) for a month.",
   capital:

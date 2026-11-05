@@ -1,5 +1,7 @@
-import { Controller, Get, Inject, NotFoundException, Param } from "@nestjs/common";
+import { Controller, Get, Inject, NotFoundException, Param, Query } from "@nestjs/common";
 import type { Db } from "@mbl/db/client";
+import { cleanReturnPrefill } from "@mbl/domain/prefill";
+import { rowId } from "@mbl/domain/validation/fields";
 import { loadCalendar } from "../action/runner";
 import { BooksService } from "../books/books.service";
 import { DB } from "../db/db.module";
@@ -70,14 +72,26 @@ export class FormViewsController {
     return { edit, data, dues, billDates: books.billDates };
   }
 
-  /** UIDD §4.5: the bill lines and lots the return picks from. */
+  /**
+   * UIDD §4.5: the bill lines and lots the return picks from. D-074: from a purchase's or a sale's
+   * entry sheet (`kind` + `purchaseId` / `saleId`) it starts set to it (`initial`), and a purchase
+   * lists only its own lots; an id it can't use is dropped and the form gets every lot.
+   */
   @Get("returns/new")
-  async returnNew() {
+  async returnNew(@Query() q: Record<string, string | undefined>) {
+    const params = { kind: q.kind, purchaseId: q.purchaseId, saleId: q.saleId };
+    const purchaseId =
+      params.kind === "purchase" && rowId.safeParse(params.purchaseId).success
+        ? params.purchaseId
+        : undefined;
     const [data, options] = await Promise.all([
       this.setup.loadSetup(),
-      this.returnOptions.returnOptions(),
+      this.returnOptions.returnOptions(purchaseId ? { purchaseId } : {}),
     ]);
-    return { data, ...options };
+    const { initial } = cleanReturnPrefill(params, options, data);
+    const all =
+      purchaseId && !initial.kind ? await this.returnOptions.returnOptions() : options;
+    return { data, ...all, initial };
   }
 
   /** UIDD §3, §4.10: the stored return; its own units count as still to return / in stock. */
@@ -87,7 +101,7 @@ export class FormViewsController {
     if (!edit) throw new NotFoundException();
     const [data, options] = await Promise.all([
       this.setup.loadSetup(),
-      this.returnOptions.returnOptions(id),
+      this.returnOptions.returnOptions({ exceptReturnId: id }),
     ]);
     return { edit, data, ...options };
   }
