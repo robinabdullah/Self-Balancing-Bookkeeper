@@ -107,7 +107,7 @@ export default async function PersonPage({
       <h3 className="mt-4 mb-2 text-sm font-semibold">Allocated per month</h3>
       <Allocations rows={allocations} />
       <h3 className="mt-4 mb-2 text-sm font-semibold">Paid and reinvested</h3>
-      <ProfitMoves lines={profitMoves} base={base} />
+      <ProfitMoves lines={profitMoves} base={base} whole={range != null} />
     </>
   );
 }

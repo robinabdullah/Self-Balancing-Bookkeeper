@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { Amount } from "@/components/amount";
 import { BankBadge } from "@/components/cards/bank-badge";
 import { StatusBadge } from "@/components/cards/card-list";
+import { ShowMore, useShowMore } from "@/components/show-more";
 import { EmptyState } from "@/components/states";
 import type { StatementLine } from "@mbl/domain/accounts";
 import type { CardRow } from "@mbl/domain/card-view";
@@ -12,7 +15,8 @@ import { format } from "@mbl/domain/money";
 
 // UIDD §4.8 (task 4.5): a person's cards ("Owner · Card", D-022) with their business balances,
 // profit allocated per closed month, and the entries that moved their profit owed (paid,
-// reinvested, opening). A row opens the card or the entry.
+// reinvested, opening). A row opens the card or the entry. D-077: the profit moves show the newest
+// 25, then Show 25 more; for a period (`whole`) every one.
 
 const KIND: Record<Allocation["kind"], string> = {
   cash: "Cash investment",
@@ -64,27 +68,33 @@ export function Allocations({ rows }: { rows: Allocation[] }) {
 export function ProfitMoves({
   lines,
   base,
+  whole = false,
 }: {
   lines: (StatementLine & { label: string })[];
   /** This page's URL: an entry opens over it (D-032). */
   base: string;
+  /** A period's moves: every one, no Show more. */
+  whole?: boolean;
 }) {
+  const { list } = useShowMore(lines, whole);
   if (lines.length === 0) return <EmptyState hint="No profit paid or reinvested yet." />;
   return (
-    <ul aria-label="Profit paid and reinvested" className="divide-y rounded-lg border">
-      {lines.map((l) => (
-        <li key={l.entryId} className="px-3">
-          <Link
-            href={entryHref(base, l.entryId)}
-            scroll={false}
-            className="grid min-h-11 grid-cols-[1fr_auto] gap-x-3 py-2"
-          >
-            <span className="font-medium">{l.label}</span>
-            <Amount poisha={l.amount} className="text-right font-medium" />
-            <span className="text-muted-foreground col-span-2 text-sm">{formatDate(l.date)}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <ShowMore list={list}>
+      <ul aria-label="Profit paid and reinvested" className="divide-y rounded-lg border">
+        {list.shown.map((l, i) => (
+          <li key={l.entryId} data-row={i} className="px-3">
+            <Link
+              href={entryHref(base, l.entryId)}
+              scroll={false}
+              className="grid min-h-11 grid-cols-[1fr_auto] gap-x-3 py-2"
+            >
+              <span className="font-medium">{l.label}</span>
+              <Amount poisha={l.amount} className="text-right font-medium" />
+              <span className="text-muted-foreground col-span-2 text-sm">{formatDate(l.date)}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </ShowMore>
   );
 }

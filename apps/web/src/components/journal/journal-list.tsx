@@ -8,6 +8,7 @@ import { DMY_ERROR, DateInput } from "@/components/forms/date-fields";
 import { inputClass } from "@/components/forms/field";
 import { PickerField } from "@/components/forms/picker";
 import { InfoNote } from "@/components/info-note";
+import { ShowMore, useShowMore } from "@/components/show-more";
 import { EmptyState } from "@/components/states";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +41,7 @@ import { TYPE_LABEL, entryTitle, whoOf } from "@mbl/domain/journal/labels";
 // searchable picker), period (all time, this / last month, a month, a custom range) and search
 // (label, who, note). With one type filtered the count line shows the total. 🔒 on locked rows; a
 // reversed row links to its reversal and back. A row opens over the Journal, filters kept.
+// D-077: the newest 25 matches, then Show 25 more; a filter or search change shows 25 again.
 
 const PERIOD_NOTE =
   "A month also lists entries marked “for” that month, e.g. September’s salary paid on 5 October.";
@@ -64,6 +66,7 @@ export function JournalList({ rows, names, people, initial, today, firstMonth }:
   // `history.replaceState`), so a reload or a shared link shows the same list.
   const setFilter = (f: JournalFilter) => {
     setFilterState(f);
+    resetRows();
     replaceUrl(withQuery("/journal", toQuery(f)));
   };
   const base = withQuery("/journal", toQuery(filter));
@@ -83,6 +86,7 @@ export function JournalList({ rows, names, people, initial, today, firstMonth }:
   };
   const text = (r: JournalRow) => `${entryTitle(r)} ${whoOf(r, names)} ${r.note}`;
   const shown = rows.filter((r) => matches(r, filter, today, text(r)));
+  const { list, reset: resetRows } = useShowMore(shown);
   const byId = new Map(rows.map((r) => [r.id, r]));
   const active = activeCount(filter);
   const total = filteredTotal(shown, filter);
@@ -164,22 +168,26 @@ export function JournalList({ rows, names, people, initial, today, firstMonth }:
           )}
         </EmptyState>
       ) : (
-        <ul aria-label="Entries" className="divide-y rounded-lg border">
-          {shown.map((row) => (
-            <Row key={row.id} row={row} names={names} byId={byId} base={base} />
-          ))}
-        </ul>
+        <ShowMore list={list}>
+          <ul aria-label="Entries" className="divide-y rounded-lg border">
+            {list.shown.map((row, i) => (
+              <Row key={row.id} index={i} row={row} names={names} byId={byId} base={base} />
+            ))}
+          </ul>
+        </ShowMore>
       )}
     </div>
   );
 }
 
 function Row({
+  index,
   row,
   names,
   byId,
   base,
 }: {
+  index: number;
   row: JournalRow;
   names: Record<string, string>;
   byId: Map<string, JournalRow>;
@@ -199,7 +207,7 @@ function Row({
     );
   };
   return (
-    <li className="px-3">
+    <li data-row={index} className="px-3">
       <Link
         href={entryHref(base, row.id)}
         scroll={false}

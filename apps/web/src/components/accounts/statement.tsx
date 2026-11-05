@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Amount } from "@/components/amount";
+import { ShowMore, useShowMore } from "@/components/show-more";
 import { EmptyState } from "@/components/states";
 import { rowClass, rowLinkClass } from "@/components/tables/row-link";
 import type { StatementLine, StatementRange } from "@mbl/domain/accounts";
@@ -15,6 +18,8 @@ import { cn } from "@/lib/utils";
 // (task 4.5) shows In / Out; a card (D-040) Charges / Credits.
 // For a period (`range`, D-040) the lines come oldest first between an Opening balance row and the
 // period's Totals and Closing balance rows.
+// D-077: without a period, the newest 25 lines, then Show 25 more (each keeps its own balance);
+// a period's statement is whole.
 
 type Line = StatementLine & { label: string };
 type Props = {
@@ -34,6 +39,7 @@ const HEADS = {
 };
 
 export function Statement({ kind, lines, range, base, label = "Statement" }: Props) {
+  const { list } = useShowMore(lines, range != null);
   if (lines.length === 0 && !range) return <EmptyState hint="No entries yet." />;
   const pick = (up: number | null, down: number | null) =>
     kind === "supplier" ? [down, up] : [up, down];
@@ -44,11 +50,11 @@ export function Statement({ kind, lines, range, base, label = "Statement" }: Pro
   const totals = range && pick(range.up, range.down);
 
   return (
-    <>
+    <ShowMore list={list}>
       <ul aria-label={label} className="divide-y rounded-lg border lg:hidden">
         {range && <BalanceItem label="Opening balance" poisha={range.opening} />}
-        {lines.map((l) => (
-          <li key={l.entryId} className="px-3">
+        {list.shown.map((l, i) => (
+          <li key={l.entryId} data-row={i} className="px-3">
             <Link
               href={href(l)}
               scroll={false}
@@ -90,8 +96,8 @@ export function Statement({ kind, lines, range, base, label = "Statement" }: Pro
           </thead>
           <tbody className="divide-y">
             {range && <BalanceRow label="Opening balance" poisha={range.opening} />}
-            {lines.map((l) => (
-              <tr key={l.entryId} className={rowClass}>
+            {list.shown.map((l, i) => (
+              <tr key={l.entryId} data-row={i} className={rowClass}>
                 <td className="px-3 py-2">{formatDate(l.date)}</td>
                 <td className="px-3 py-2">
                   <Link href={href(l)} scroll={false} className={cn("text-primary", rowLinkClass)}>
@@ -125,7 +131,7 @@ export function Statement({ kind, lines, range, base, label = "Statement" }: Pro
           </tbody>
         </table>
       </div>
-    </>
+    </ShowMore>
   );
 }
 

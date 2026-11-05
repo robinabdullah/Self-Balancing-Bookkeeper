@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Amount } from "@/components/amount";
+import { ShowMore, useShowMore } from "@/components/show-more";
 import { EmptyState } from "@/components/states";
 import { formatDate, formatMonth } from "@mbl/domain/dates";
 import type { CardMove, EmiPlan } from "@mbl/domain/engine/cards";
@@ -9,6 +12,7 @@ import { cn } from "@/lib/utils";
 // UIDD §4.8 (task 4.4.2): a card's charges and credits (newest first; a charge shows its bill)
 // and its EMI plans (item, total, n months, billed so far, remaining). A row opens the entry over
 // the card page (`base`, D-032). D-058: a reversed entry and its reversal are greyed, on no bill.
+// D-077: the charges and credits show the newest 25, then Show 25 more.
 
 type Labelled<T> = T & { label: string };
 
@@ -21,35 +25,38 @@ export function CardMoves({
   moves: (Labelled<CardMove> & { emi?: string })[];
   base: string;
 }) {
+  const { list } = useShowMore(moves);
   if (moves.length === 0) return <EmptyState hint="No charges or credits yet." />;
   return (
-    <ul aria-label="Charges and credits" className="divide-y rounded-lg border">
-      {moves.map((m, i) => (
-        <li key={`${m.entryId}-${i}`} className="px-3">
-          <Link
-            href={entryHref(base, m.entryId)}
-            scroll={false}
-            className={cn(
-              "grid min-h-11 grid-cols-[1fr_auto] gap-x-3 py-2",
-              (m.reversed || m.reversal) && "text-muted-foreground",
-            )}
-          >
-            <span className="font-medium">{m.label}</span>
-            <Amount
-              poisha={m.amount}
+    <ShowMore list={list}>
+      <ul aria-label="Charges and credits" className="divide-y rounded-lg border">
+        {list.shown.map((m, i) => (
+          <li key={`${m.entryId}-${i}`} data-row={i} className="px-3">
+            <Link
+              href={entryHref(base, m.entryId)}
+              scroll={false}
               className={cn(
-                "text-right font-medium",
+                "grid min-h-11 grid-cols-[1fr_auto] gap-x-3 py-2",
                 (m.reversed || m.reversal) && "text-muted-foreground",
               )}
-            />
-            <span className="text-muted-foreground text-sm">{formatDate(m.date)}</span>
-            <span className="text-muted-foreground text-right text-sm">
-              <MoveNote move={m} />
-            </span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+            >
+              <span className="font-medium">{m.label}</span>
+              <Amount
+                poisha={m.amount}
+                className={cn(
+                  "text-right font-medium",
+                  (m.reversed || m.reversal) && "text-muted-foreground",
+                )}
+              />
+              <span className="text-muted-foreground text-sm">{formatDate(m.date)}</span>
+              <span className="text-muted-foreground text-right text-sm">
+                <MoveNote move={m} />
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </ShowMore>
   );
 }
 
