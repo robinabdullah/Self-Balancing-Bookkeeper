@@ -52,6 +52,7 @@ import { ReportLinesService } from "./reports/report-lines.service";
 import { ReportsService } from "./reports/reports.service";
 import { ShellController } from "./shell/shell.controller";
 import { ReturnOptionsService } from "./returns/return-options.service";
+import { AlertsService } from "./alerts/alerts.service";
 import { StockService } from "./stock/stock.service";
 import { ReportViewsController } from "./views/reports.controller";
 import { AdminViewsController } from "./views/admin.controller";
@@ -100,6 +101,7 @@ import { OverlayViewsController } from "./views/overlays.controller";
     EntriesService,
     StockService,
     ReturnOptionsService,
+    AlertsService,
     SetupService,
     MoneyService,
     PurchaseService,

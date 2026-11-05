@@ -100,3 +100,40 @@ export const viewHelp = {
   expenseStatement:
     "Profit counts an expense in its For month, so this total can differ from the month's profit.",
 } as const;
+
+/** The ≈ note after a fee alert that shows Available ≈ (SRS §15). */
+const approx = `Available ≈ is ${viewHelp.available}.`;
+
+/**
+ * SRS §15 (D-079, D-081): the Alerts sheet's texts. Amounts and dates come in already formatted
+ * ("৳5,750", "15 Jan"); the title names the card, so a fee's detail doesn't repeat it.
+ */
+export const alertText = {
+  feeTitle: (card: string) => `${card} · annual fee`,
+  /** `room` = Available ≈, null without a limit; `pay` = amount − room when the room is short. */
+  feeKnown: (amount: string, day: string, room: string | null, pay: string | null) =>
+    room == null
+      ? `Annual fee ≈ ${amount} on ${day}. No limit is set, so Available ≈ isn't known.`
+      : pay == null
+        ? `Annual fee ≈ ${amount} on ${day}. Available ≈ ${room} covers it. ${approx}`
+        : `Annual fee ≈ ${amount} on ${day}. Available ≈ ${room}, so pay at least ${pay} before then. ${approx}`,
+  feeUnknown: (day: string, room: string | null) =>
+    `The annual fee usually comes with the ${day} statement (expiry month). ` +
+    (room == null ? "No limit is set." : `Available ≈ ${room}, so keep room for it. ${approx}`),
+  /** The card page's chip. */
+  feeChip: (day: string) => `Annual fee ${day}`,
+  billTitle: (card: string) => `${card} · bill`,
+  bill: (amount: string, day: string, left: string) => `${amount} due ${day} · ${left}`,
+  dueTitle: (customer: string) => `${customer} · due`,
+  due: (owes: string, days: number, paid: boolean) =>
+    paid ? `${owes} · last paid ${days} days ago` : `${owes} · no payment in ${days} days`,
+  closeTitle: (month: string) => `Close ${month}`,
+  close: (month: string) => `${month} is ready to close.`,
+  stockTitle: "Old stock",
+  stock: (units: number) => `${units} ${units === 1 ? "phone" : "phones"} older than 90 days`,
+  profitTitle: (person: string) => `${person} · profit owed`,
+  profit: (amount: string) => `${amount} not paid or reinvested yet`,
+  allClear: "All clear: nothing needs attention.",
+  noExpiry: (n: number) =>
+    `${n} ${n === 1 ? "card has" : "cards have"} no expiry saved, so no fee alerts for ${n === 1 ? "it" : "them"}.`,
+} as const;

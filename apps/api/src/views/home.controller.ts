@@ -32,7 +32,7 @@ export class HomeViewsController {
     const [{ books, asOf }, setup, lots, journal] = await Promise.all([
       this.books.loadBooks(),
       this.setup.loadSetup(),
-      this.stock.lots(),
+      this.stock.allLots(),
       this.journal.loadJournal(),
     ]);
     const month = monthOf(asOf);

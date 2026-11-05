@@ -261,6 +261,33 @@ for (const theme of THEMES) {
       expect(await scan(page, "books balance sheet")).toEqual([]);
     });
 
+    // E-CR-056.1 (D-079, D-081): the Alerts sheet, and a card page's fee chip opened. A card whose
+    // statement is 10 days ahead in its expiry month has a fee alert (the amount unknown: Soon).
+    test(`CR-056 the Alerts sheet and the fee chip have no axe violations (${theme})`, async ({
+      page,
+    }) => {
+      const statement = dhaka(10);
+      const s = await seedAccounts({ statementDay: Number(statement.slice(8)) });
+      await seedCardDetails(s.ids.card, {
+        number: "4111 1111 1111 1111",
+        expiry: `${statement.slice(5, 7)}/29`,
+      });
+      await page.reload();
+      await page
+        .getByRole("banner")
+        .getByRole("button", { name: /^Alerts,/ })
+        .click();
+      await expect(page.getByRole("dialog", { name: "Alerts" })).toBeVisible();
+      const found = await scan(page, "alerts sheet");
+      await page.goBack(); // Back closes it (D-035), with no deferred history step to race the goto
+      await expect(page.getByRole("dialog", { name: "Alerts" })).toBeHidden();
+      await page.goto(`/cards/${s.ids.card}`);
+      await page.getByRole("button", { name: /Annual fee/ }).click();
+      await expect(page.getByRole("note")).toBeVisible();
+      found.push(...(await scan(page, "card page fee chip")));
+      expect(found).toEqual([]);
+    });
+
     // E-CR-016.5 (D-036): the card form with its Type chips and the amber name note.
     test(`the card form with its Type note has no axe violations (${theme})`, async ({ page }) => {
       await page.goto("/setup?tab=card");

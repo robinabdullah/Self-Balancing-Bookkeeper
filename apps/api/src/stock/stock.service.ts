@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { desc } from "drizzle-orm";
 import type { Db } from "@mbl/db/client";
 import { sales } from "@mbl/db/schema";
+import { memo } from "../auth/memo";
 import { DB } from "../db/db.module";
 import { stockLots } from "./lots";
 
@@ -14,6 +15,11 @@ export class StockService {
 
   lots(opts?: Parameters<typeof stockLots>[1]) {
     return stockLots(this.db, opts);
+  }
+
+  /** Every lot, once per render (`memo`): Home and the Alerts bell (CR-056) share one read. */
+  allLots() {
+    return memo("lots", () => stockLots(this.db));
   }
 
   /** UIDD §4.4: the sale form's customer defaults to the last one used. */

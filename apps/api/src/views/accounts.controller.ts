@@ -18,6 +18,7 @@ import { setupNames } from "@mbl/domain/setup";
 import { rowId } from "@mbl/domain/validation/fields";
 import { AccountReportsService } from "../account-reports/account-reports.service";
 import { AccountsService } from "../accounts/accounts.service";
+import { AlertsService } from "../alerts/alerts.service";
 import { BooksService } from "../books/books.service";
 import { CardDetailService } from "../cards/card-detail.service";
 import { ChartsService } from "../charts/charts.service";
@@ -62,6 +63,7 @@ export class AccountViewsController {
     private readonly cards: CardDetailService,
     private readonly reports: AccountReportsService,
     private readonly charts: ChartsService,
+    private readonly alerts: AlertsService,
   ) {}
 
   /**
@@ -202,12 +204,13 @@ export class AccountViewsController {
   async card(@Param("id") id: string, @Query() q: Range) {
     known(id);
     const range = parseRange(q);
-    const [{ books, asOf }, setup, journal, extra, cardReport] = await Promise.all([
+    const [{ books, asOf }, setup, journal, extra, cardReport, { alerts }] = await Promise.all([
       this.books.loadBooks(),
       this.setup.loadSetup(),
       this.journal.loadJournal(),
       this.cards.cardDetailData(id),
       range ? this.reports.loadStatementExtras("card", id, range.from, range.to) : null,
+      this.alerts.loadAlerts(),
     ]);
     const card = found(setup.cards.find((c) => c.id === id));
     const [row] = cardRows([card], books.cards);
@@ -238,6 +241,8 @@ export class AccountViewsController {
       plans: emiPlans.map((p) => ({ ...p, label: extra.emiItems[p.entryId] ?? label(p.entryId) })),
       today: asOf,
       first: journal.at(-1)?.date ?? null,
+      // D-081: the card's annual-fee alert, as a chip beside its status badge (the bell has it too).
+      fee: alerts.find((a) => a.kind === "card_fee" && a.cardId === id) ?? null,
     };
   }
 }

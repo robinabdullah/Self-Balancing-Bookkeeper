@@ -12,7 +12,7 @@ import { TOP } from "./customers";
 // value = the books' stock; an age lists its models through `stockByModel`. Top models sold = the
 // window's Sales report By model. Pure; integer poisha.
 
-type AgeLot = StockLot & { imeiNote: string | null; source?: string };
+export type AgeLot = StockLot & { imeiNote: string | null; source?: string };
 
 /** The four ages: `key` = the first day (the `?age=` value), `to` = the last (none: 91 and on);
  * `short` = the chart's axis label (all four fit at 360 px). */

@@ -6,6 +6,7 @@ import { appName, logoSrc } from "@mbl/domain/business";
 import { breakdown } from "@mbl/domain/dashboard";
 import { formatMonth } from "@mbl/domain/dates";
 import { nextToClose } from "@mbl/domain/engine/months";
+import { AlertsService } from "../../apps/api/src/alerts/alerts.service";
 import { BooksService } from "../../apps/api/src/books/books.service";
 import { BusinessService } from "../../apps/api/src/business/business.service";
 import { seedParity } from "../../scripts/parity/seed";
@@ -43,9 +44,10 @@ const get = (path: string, renderId?: string) =>
 
 describe("first slice (N-2.5)", () => {
   it("I-N-2.5.2 /views/shell has the web layout's name, logo, email, Closing and balance", async () => {
-    const [{ data, books, asOf }, business] = await Promise.all([
+    const [{ data, books, asOf }, business, alerts] = await Promise.all([
       service(app, BooksService).loadBooks(),
       service(app, BusinessService).getBusiness(),
+      service(app, AlertsService).loadAlerts(), // CR-056: the bell
     ]);
     const month = nextToClose(data.closed, data.entries[0]?.date ?? null, asOf);
     const expected = {
@@ -54,6 +56,7 @@ describe("first slice (N-2.5)", () => {
       email: partner.email,
       closing: { label: `Closing: ${formatMonth(month)}`, href: `/months/${month}` },
       balance: breakdown(books),
+      alerts,
     };
     const { body } = await get("/views/shell").expect(200);
     expect(body).toEqual(JSON.parse(JSON.stringify(expected)));

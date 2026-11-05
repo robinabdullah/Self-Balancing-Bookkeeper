@@ -10,13 +10,14 @@ import { CardBills } from "@/components/cards/card-bills";
 import { CardSecretsOverlay } from "@/components/cards/card-secrets-overlay";
 import { CardMoves, EmiPlans } from "@/components/cards/card-detail";
 import { StatusBadge } from "@/components/cards/card-list";
+import { FeeChip } from "@/components/cards/fee-chip";
 import { InfoNote } from "@/components/info-note";
 import { EntryOverlay, preloadEntry } from "@/components/journal/entry-overlay";
 import { ordinal } from "@mbl/domain/card-view";
 import { dhakaToday, formatDate } from "@mbl/domain/dates";
 import { withQuery } from "@mbl/domain/href";
 import { parseRange } from "@mbl/domain/journal-filter";
-import { viewHelp } from "@mbl/domain/help-text";
+import { alertText, viewHelp } from "@mbl/domain/help-text";
 import { format } from "@mbl/domain/money";
 import { rowId } from "@mbl/domain/validation/fields";
 import type { CardView } from "@mbl/api/views/accounts.controller";
@@ -62,6 +63,7 @@ export default async function CardPage({
     plans,
     today: asOf,
     first,
+    fee,
   } = await api<CardView>(withQuery(`/views/cards/${id}`, { ...range }));
   const balanceText =
     row.balance < 0 ? `Card credit ${format(0 - row.balance)}` : `Balance ${format(row.balance)}`;
@@ -99,8 +101,11 @@ export default async function CardPage({
         due={balanceText}
         phone={null}
       >
-        <p className="mt-1">
+        <p className="mt-1 flex flex-wrap items-center gap-x-2">
           <StatusBadge status={row.status} />
+          {fee && (
+            <FeeChip alert={fee} label={alertText.feeChip(formatDate(fee.date).slice(0, 6))} />
+          )}
         </p>
         <dl className="mt-3 grid grid-cols-2 gap-x-4 text-sm lg:grid-cols-4">
           {facts.map(([term, value], i) => (

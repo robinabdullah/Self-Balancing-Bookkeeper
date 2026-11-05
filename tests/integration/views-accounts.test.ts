@@ -259,6 +259,7 @@ describe("I-N-4.5.1 each account view has what web's page computed", () => {
         })),
         today: asOf,
         first: journal.at(-1)?.date ?? null,
+        fee: null, // CR-056: no saved expiry in the seed, so no fee chip (alerts.test.ts has one)
       };
       expect((await get(`/views/cards/${id}`).expect(200)).body).toEqual(
         json({ ...common, periodBills: null, lines: [], period: null }),
